@@ -1,0 +1,12 @@
+MEX {
+	global:
+		mexFunction;
+		mexfilerequiredapiversion;
+		emlrtMexFcnProperties;
+		sprdmpF5;
+		sprdmpF5_initialize;
+		sprdmpF5_terminate;
+		sprdmpF5_atexit;
+	local:
+		*;
+};

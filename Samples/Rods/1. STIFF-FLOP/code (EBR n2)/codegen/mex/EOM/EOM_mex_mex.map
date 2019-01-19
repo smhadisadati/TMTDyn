@@ -1,0 +1,20 @@
+MEX {
+	global:
+		mexFunction;
+		mexfilerequiredapiversion;
+		emlrtMexFcnProperties;
+		EOM;
+		MEXGlobalSyncInFunction;
+		MEXGlobalSyncOutFunction;
+		b_emlrt_marshallIn;
+		emlrt_checkEscapedGlobals;
+		emlrt_marshallIn;
+		emlrt_marshallOut;
+		emlrt_synchGlobalsFromML;
+		emlrt_synchGlobalsToML;
+		EOM_initialize;
+		EOM_terminate;
+		EOM_atexit;
+	local:
+		*;
+};
