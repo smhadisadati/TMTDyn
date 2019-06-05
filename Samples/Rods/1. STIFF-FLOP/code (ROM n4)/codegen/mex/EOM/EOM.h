@@ -24,8 +24,8 @@
 #include "EOM_types.h"
 
 /* Function Declarations */
-extern void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T
-                *b_par, real_T dz_data[], int32_T dz_size[1]);
+extern void EOM(const emlrtStack *sp, real_T t, const real_T z[48], const
+                struct0_T *b_par, real_T dz_data[], int32_T dz_size[1]);
 
 #endif
 

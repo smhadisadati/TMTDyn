@@ -24,8 +24,7 @@
 #include "rjtipF_types.h"
 
 /* Function Declarations */
-extern void rjtipF_api(const mxArray * const prhs[3], int32_T nlhs, const
-  mxArray *plhs[1]);
+extern void rjtipF_api(const mxArray * const prhs[3], const mxArray *plhs[1]);
 
 #endif
 

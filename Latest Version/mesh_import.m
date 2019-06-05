@@ -24,32 +24,33 @@ makeIGESmex ;
 lines = iges2matlab( mesh.file_name ) ;
 
 % transform lines
-for i = 1 : numel( lines ) % find fixed points and masses
-    if strcmp( lines{i}.name , 'LINE' )
-        
-        % init. geom.
-        mesh.Q = [ 1 0 0 0 ].';
-        mesh.TQ = [ 1 0 0 0 ; 0 0 0 0 ].';
-        [ ~ , nj_tr ] = size( mesh.tr ) ; % number of transforamtions in a joint
-        for i3 = 1 : nj_tr
-            [ Q_temo , TQ_temo ] = TQ_mat( [ mesh.tr(i3).trans , mesh.tr(i3).rot ] );
-            mesh.Q = Q_mult( mesh.Q , Q_temo ) ;
-            mesh.TQ = TQ_mult( mesh.TQ , TQ_temo ) ;
+mesh.Q = [ 1 0 0 0 ].'; % init. geom.
+mesh.TQ = [ 1 0 0 0 ; 0 0 0 0 ].';
+[ ~ , nj_tr ] = size( mesh.tr ) ; % number of transforamtions in a joint
+for i3 = 1 : nj_tr
+    [ Q_temo , TQ_temo ] = TQ_mat( [ mesh.tr(i3).trans , mesh.tr(i3).rot ] );
+    mesh.Q = Q_mult( mesh.Q , Q_temo ) ;
+    mesh.TQ = TQ_mult( mesh.TQ , TQ_temo ) ;
+end
+TQ = mesh.TQ ;
+
+if min( min( double( TQ ) == [ 1 0 0 0 ; 0 0 0 0 ].' ) ) == 0 % if there is TQ
+    parfor i = 1 : numel( lines )
+        if strcmp( lines{i}.name , 'LINE' ) % trans. lines
+            TQ_p1 = TQ_mult( TQ , [ 1 0 0 0 ; 0 lines{i}.p1'*1e-3 ].' ) ; % mm to m
+            TQ_p2 = TQ_mult( TQ , [ 1 0 0 0 ; 0 lines{i}.p2'*1e-3 ].' ) ;
+            lines_tr{i}.p1 = TQ_p1(2:4,2) ; % transformed
+            lines_tr{i}.p2 = TQ_p2(2:4,2) ;
         end
-        
-        TQ_p1 = TQ_mult( mesh.TQ , [ 1 0 0 0 ; 0 lines{i}.p1'*1e-3 ].' ) ; % mm to m
-        TQ_p2 = TQ_mult( mesh.TQ , [ 1 0 0 0 ; 0 lines{i}.p2'*1e-3 ].' ) ; 
-        
-        lines_tr{i}.p1 = TQ_p1(2:4,2) ; % transformed
-        lines_tr{i}.p2 = TQ_p2(2:4,2) ;
-        
     end
+else
+    lines_tr = lines ;
 end
 
 % Plot the IGES object
 plotIGES( lines ) ; hold on
 view( [ -1 -1 2 ] ) ;
-pause( 1e-1 ) ;
+pause( 1 ) ;
 
 % list the imported entities
 points = zeros(1,6) ; % [ x_p y_p z_p i_b i_jl end_no ]
@@ -182,29 +183,33 @@ pause(1e-1)
 function [ Q , TQ ] = TQ_mat( r )
 % Q = [ q0 r1 r2 r3 ] ; % quaternion format
 % Q1 & Q2 are cloumn vectors
+% global unit_quat
 
 switch numel( r )                
         
     case 5 % single rotations: Euler angles
         i = double( r(4) );
         x = r(5);
-        
-        switch i
-            case 1
-                Q = [ cos( x / 2 ) sin( x / 2 )*[ 1 0 0 ] ].';
-            case 2
-                Q = [ cos( x / 2 ) sin( x / 2 )*[ 0 1 0 ] ].';
-            case 3
-                Q = [ cos( x / 2 ) sin( x / 2 )*[ 0 0 1 ] ].';
-            otherwise
-                Q = [ 1 0 0 0 ].';
+        Q = sym( zeros( 4 , 1 ) ) ;
+        if i == 1 ||  i == 2 || i == 3
+            Q(1) = cos( x / 2 ) ;
+            Q(i+1) = sin( x / 2 ) ;
+        else
+            Q = [ 1 0 0 0 ].' ;
         end
-        
+
     case 6 % variable curvature with piecewise constant strain assumption in each elements
-        Q = [ 1 r(4:6)/2 ].';
+        Q = [ 1 r(4:6)/2 ].' ;
         
-    case 7 % 4-element euler angle rot. vector
-        Q = [ cos( r(4) / 2 ) sin( r(4) / 2 )*r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ;
+    case 7
+        if r(4) == 0 % unit quaternion
+            Q = [ sqrt( 1 - r(5:7) * r(5:7).' ) r(5:7) ].' ; % avoid singularity
+            % Q = [ 0 r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ; % no imaginary part but singular
+        else
+            % unit_quat = 0 ; % there is at least one non-unit quaternion in the model
+            Q = r(4:7).' / sqrt( r(4:7) * r(4:7).' ) ; % 4DOF quat.
+            % Q = [ cos( r(4) ) sin( r(4) )*r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ; % 4DOF axis-angle
+        end
 
 end
 

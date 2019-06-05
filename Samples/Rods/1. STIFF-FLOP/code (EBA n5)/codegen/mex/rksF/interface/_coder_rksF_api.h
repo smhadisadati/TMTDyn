@@ -24,8 +24,7 @@
 #include "rksF_types.h"
 
 /* Function Declarations */
-extern void rksF_api(const mxArray * const prhs[3], int32_T nlhs, const mxArray *
-                     plhs[1]);
+extern void rksF_api(const mxArray * const prhs[3], const mxArray *plhs[1]);
 
 #endif
 

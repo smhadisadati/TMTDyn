@@ -150,8 +150,7 @@ static real_T i_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
   return ret;
 }
 
-void rjtipF_api(const mxArray * const prhs[3], int32_T nlhs, const mxArray *
-                plhs[1])
+void rjtipF_api(const mxArray * const prhs[3], const mxArray *plhs[1])
 {
   real_T (*r_jtip)[18];
   real_T (*in1)[34];
@@ -162,7 +161,6 @@ void rjtipF_api(const mxArray * const prhs[3], int32_T nlhs, const mxArray *
     NULL                               /* prev */
   };
 
-  (void)nlhs;
   st.tls = emlrtRootTLSGlobal;
   r_jtip = (real_T (*)[18])mxMalloc(sizeof(real_T [18]));
 

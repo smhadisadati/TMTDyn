@@ -29,62 +29,62 @@
 static emlrtRTEInfo emlrtRTEI = { 4,   /* lineNo */
   5,                                   /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pName */
 };
 
-static emlrtRSInfo emlrtRSI = { 9,     /* lineNo */
+static emlrtRSInfo emlrtRSI = { 10,    /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo b_emlrtRSI = { 11,  /* lineNo */
+static emlrtRSInfo b_emlrtRSI = { 12,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo c_emlrtRSI = { 26,  /* lineNo */
+static emlrtRSInfo c_emlrtRSI = { 27,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo d_emlrtRSI = { 27,  /* lineNo */
+static emlrtRSInfo d_emlrtRSI = { 28,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo e_emlrtRSI = { 28,  /* lineNo */
+static emlrtRSInfo e_emlrtRSI = { 29,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo f_emlrtRSI = { 34,  /* lineNo */
+static emlrtRSInfo f_emlrtRSI = { 36,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo g_emlrtRSI = { 35,  /* lineNo */
+static emlrtRSInfo g_emlrtRSI = { 37,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo h_emlrtRSI = { 36,  /* lineNo */
+static emlrtRSInfo h_emlrtRSI = { 38,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo i_emlrtRSI = { 42,  /* lineNo */
+static emlrtRSInfo i_emlrtRSI = { 45,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo j_emlrtRSI = { 48,  /* lineNo */
+static emlrtRSInfo j_emlrtRSI = { 51,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
-static emlrtRSInfo k_emlrtRSI = { 54,  /* lineNo */
+static emlrtRSInfo k_emlrtRSI = { 57,  /* lineNo */
   "EOM",                               /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pathName */
 };
 
 static emlrtRSInfo pc_emlrtRSI = { 21, /* lineNo */
@@ -104,71 +104,71 @@ static emlrtRTEInfo c_emlrtRTEI = { 88,/* lineNo */
   "/usr/local/MATLAB/R2018b/toolbox/eml/lib/matlab/ops/eml_mtimes_helper.m"/* pName */
 };
 
-static emlrtRTEInfo d_emlrtRTEI = { 41,/* lineNo */
+static emlrtRTEInfo d_emlrtRTEI = { 44,/* lineNo */
   9,                                   /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pName */
 };
 
-static emlrtRTEInfo e_emlrtRTEI = { 33,/* lineNo */
+static emlrtRTEInfo e_emlrtRTEI = { 35,/* lineNo */
   9,                                   /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pName */
 };
 
-static emlrtRTEInfo f_emlrtRTEI = { 25,/* lineNo */
+static emlrtRTEInfo f_emlrtRTEI = { 26,/* lineNo */
   9,                                   /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m"/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m"/* pName */
 };
 
 static emlrtBCInfo emlrtBCI = { -1,    /* iFirst */
   -1,                                  /* iLast */
-  9,                                   /* lineNo */
+  10,                                  /* lineNo */
   13,                                  /* colNo */
   "u",                                 /* aName */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m",/* pName */
   0                                    /* checkKind */
 };
 
-static emlrtDCInfo emlrtDCI = { 9,     /* lineNo */
+static emlrtDCInfo emlrtDCI = { 10,    /* lineNo */
   13,                                  /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m",/* pName */
   1                                    /* checkKind */
 };
 
 static emlrtBCInfo b_emlrtBCI = { -1,  /* iFirst */
   -1,                                  /* iLast */
-  9,                                   /* lineNo */
+  10,                                  /* lineNo */
   9,                                   /* colNo */
   "u",                                 /* aName */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m",/* pName */
   0                                    /* checkKind */
 };
 
 static emlrtBCInfo c_emlrtBCI = { 1,   /* iFirst */
   48,                                  /* iLast */
-  8,                                   /* lineNo */
+  9,                                   /* lineNo */
   8,                                   /* colNo */
   "z",                                 /* aName */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m",/* pName */
   0                                    /* checkKind */
 };
 
-static emlrtDCInfo b_emlrtDCI = { 8,   /* lineNo */
+static emlrtDCInfo b_emlrtDCI = { 9,   /* lineNo */
   8,                                   /* colNo */
   "EOM",                               /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/EOM.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/EOM.m",/* pName */
   1                                    /* checkKind */
 };
 
 /* Function Definitions */
-void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
-         real_T dz_data[], int32_T dz_size[1])
+void EOM(const emlrtStack *sp, real_T t, const real_T z[48], const struct0_T
+         *b_par, real_T dz_data[], int32_T dz_size[1])
 {
   real_T alpha1;
   int32_T i0;
@@ -179,11 +179,13 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
   int32_T loop_ub;
   int32_T iv0[2];
   real_T uq_data[48];
+  struct0_T c_par;
   real_T TMT[576];
   real_T TMfd[24];
   real_T w_vd_j[24];
   real_T w_sd[24];
   real_T w_in[24];
+  real_T s0;
   real_T ds;
   int32_T s;
   real_T M[36];
@@ -195,12 +197,12 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
   ptrdiff_t m_t;
   ptrdiff_t n_t;
   ptrdiff_t k_t;
-  real_T y[6];
-  real_T in[6];
   ptrdiff_t lda_t;
   ptrdiff_t ldb_t;
   ptrdiff_t ldc_t;
   char_T TRANSA;
+  real_T y[6];
+  real_T in[6];
   char_T TRANSB;
   real_T a[144];
   real_T b_y[576];
@@ -265,24 +267,28 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
     memcpy(&uq_data[0], &u_data[0], (uint32_T)(loop_ub * (int32_T)sizeof(real_T)));
   }
 
+  c_par = *b_par;
   st.site = &b_emlrtRSI;
-  int_mid_step(&st, t, z, b_par);
+  int_mid_step(&st, t, z, &c_par);
   memset(&TMT[0], 0, 576U * sizeof(real_T));
   memset(&TMfd[0], 0, 24U * sizeof(real_T));
   memset(&w_vd_j[0], 0, 24U * sizeof(real_T));
   memset(&w_sd[0], 0, 24U * sizeof(real_T));
   memset(&w_in[0], 0, 24U * sizeof(real_T));
-  ds = b_par->rom.mass[0] / b_par->n_int;
-  if (b_par->rom.mass[0] == 0.0) {
+  s0 = 1.0E-6;
+  ds = c_par.rom.mass[0] / c_par.n_int;
+  if (c_par.rom.mass[0] == 0.0) {
     ds = 1.0;
+    s0 = 0.0;
   }
 
-  i0 = (int32_T)(((b_par->rom.mass[0] - 1.0E-6) + (ds - 1.0E-6)) / ds);
-  emlrtForLoopVectorCheckR2012b(1.0E-6, ds, b_par->rom.mass[0] - 1.0E-6,
-    mxDOUBLE_CLASS, i0, &f_emlrtRTEI, sp);
+  alpha1 = c_par.rom.mass[0] - s0;
+  i0 = (int32_T)((alpha1 + (ds - s0)) / ds);
+  emlrtForLoopVectorCheckR2012b(s0, ds, alpha1, mxDOUBLE_CLASS, i0, &f_emlrtRTEI,
+    sp);
   for (s = 0; s < i0; s++) {
     st.site = &c_emlrtRSI;
-    massF1(&st, b_par->var, z, 1.0E-6 + (real_T)s * ds, M, T, Dd, fg);
+    massF1(&st, c_par.var, z, s0 + (real_T)s * ds, M, T, Dd, fg);
     st.site = &d_emlrtRSI;
     for (i = 0; i < 6; i++) {
       for (k = 0; k < 24; k++) {
@@ -381,17 +387,20 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
     }
   }
 
-  ds = b_par->rom.mass[1] / b_par->n_int;
-  if (b_par->rom.mass[1] == 0.0) {
+  s0 = 1.0E-6;
+  ds = c_par.rom.mass[1] / c_par.n_int;
+  if (c_par.rom.mass[1] == 0.0) {
     ds = 1.0;
+    s0 = 0.0;
   }
 
-  i0 = (int32_T)(((b_par->rom.mass[1] - 1.0E-6) + (ds - 1.0E-6)) / ds);
-  emlrtForLoopVectorCheckR2012b(1.0E-6, ds, b_par->rom.mass[1] - 1.0E-6,
-    mxDOUBLE_CLASS, i0, &e_emlrtRTEI, sp);
+  alpha1 = c_par.rom.mass[1] - s0;
+  i0 = (int32_T)((alpha1 + (ds - s0)) / ds);
+  emlrtForLoopVectorCheckR2012b(s0, ds, alpha1, mxDOUBLE_CLASS, i0, &e_emlrtRTEI,
+    sp);
   for (s = 0; s < i0; s++) {
     st.site = &f_emlrtRSI;
-    massF2(&st, b_par->var, z, M, T, Dd, fg);
+    massF2(&st, c_par.var, z, M, T, Dd, fg);
     st.site = &g_emlrtRSI;
     for (i = 0; i < 6; i++) {
       for (k = 0; k < 24; k++) {
@@ -490,17 +499,20 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
     }
   }
 
-  ds = b_par->rom.sprdmp[24] / b_par->n_int;
-  if (b_par->rom.sprdmp[24] == 0.0) {
+  s0 = 1.0E-6;
+  ds = c_par.rom.sprdmp[24] / c_par.n_int;
+  if (c_par.rom.sprdmp[24] == 0.0) {
     ds = 1.0;
+    s0 = 0.0;
   }
 
-  i0 = (int32_T)(((b_par->rom.sprdmp[24] - 1.0E-6) + (ds - 1.0E-6)) / ds);
-  emlrtForLoopVectorCheckR2012b(1.0E-6, ds, b_par->rom.sprdmp[24] - 1.0E-6,
-    mxDOUBLE_CLASS, i0, &d_emlrtRTEI, sp);
+  alpha1 = c_par.rom.sprdmp[24] - s0;
+  i0 = (int32_T)((alpha1 + (ds - s0)) / ds);
+  emlrtForLoopVectorCheckR2012b(s0, ds, alpha1, mxDOUBLE_CLASS, i0, &d_emlrtRTEI,
+    sp);
   for (s = 0; s < i0; s++) {
     st.site = &i_emlrtRSI;
-    b_sprdmpF25(&st, b_par->var, z, 1.0E-6 + (real_T)s * ds, T, fg, y, in);
+    b_sprdmpF25(&st, c_par.var, z, s0 + (real_T)s * ds, T, fg, y, in);
     for (i = 0; i < 24; i++) {
       alpha1 = 0.0;
       for (k = 0; k < 6; k++) {
@@ -534,7 +546,7 @@ void EOM(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T *b_par,
   }
 
   st.site = &j_emlrtRSI;
-  loadsF1(&st, b_par->var, z, T, fg);
+  loadsF1(&st, c_par.var, z, T, fg);
 
   /*  EOM */
   for (i = 0; i < 24; i++) {

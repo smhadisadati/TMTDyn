@@ -1,12 +1,13 @@
 function fval = EOM_eq ( z )
 global par_i
 par = par_i ;
+par.t_equil_i;
 z = [ z 0*z ]' ;
 
 u = z( par.nq + par.nlambda + 1 : end ) ;
 uq = u( 1 : par.nq ) ;
 
-par = int_mid_step( par.t_equil_i , z , par ) ;
+[ z , par ] = int_mid_step( par.t_equil_i , z , par ) ;
 
 fj_k = fj_kF( par.var , z.' ) ; 
 fj_vd = fj_vdF( par.var , z.' ) ;

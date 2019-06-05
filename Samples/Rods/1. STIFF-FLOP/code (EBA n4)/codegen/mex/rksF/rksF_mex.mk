@@ -1,4 +1,6 @@
-MATLAB_ROOT = /usr/local/MATLAB/R2018b
+START_DIR = C:\Users\ss17282\Desktop\129D3~1.STI\code
+
+MATLAB_ROOT = C:\PROGRA~1\MATLAB\R2017b
 MAKEFILE = rksF_mex.mk
 
 include rksF_mex.mki
@@ -15,7 +17,7 @@ SRC_FILES =  \
 	c_mexapi_version.c
 
 MEX_FILE_NAME_WO_EXT = rksF_mex
-MEX_FILE_NAME = $(MEX_FILE_NAME_WO_EXT).mexa64
+MEX_FILE_NAME = $(MEX_FILE_NAME_WO_EXT).mexw64
 TARGET = $(MEX_FILE_NAME)
 
 SYS_LIBS = 
@@ -23,11 +25,13 @@ SYS_LIBS =
 
 #
 #====================================================================
-# gmake makefile fragment for building MEX functions using Unix
-# Copyright 2007-2016 The MathWorks, Inc.
+# gmake makefile fragment for building MEX functions using MinGW
+# Copyright 2015-2017 The MathWorks, Inc.
 #====================================================================
 #
 
+SHELL = cmd
+LD = $(LINKER)
 OBJEXT = o
 .SUFFIXES: .$(OBJEXT)
 
@@ -43,55 +47,35 @@ SYS_INCLUDE = $(ML_INCLUDES)
 
 # Additional includes
 
-SYS_INCLUDE += -I "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/rksF"
-SYS_INCLUDE += -I "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code"
-SYS_INCLUDE += -I "./interface"
-SYS_INCLUDE += -I "$(MATLAB_ROOT)/extern/include"
+SYS_INCLUDE += -I "$(START_DIR)\codegen\mex\rksF"
+SYS_INCLUDE += -I "$(START_DIR)"
+SYS_INCLUDE += -I ".\interface"
+SYS_INCLUDE += -I "$(MATLAB_ROOT)\extern\include"
 SYS_INCLUDE += -I "."
 
-EML_LIBS = -lemlrt -lcovrt -lut -lmwmathutil 
+EML_LIBS = -llibemlrt -llibcovrt -llibut -llibmwmathutil 
 SYS_LIBS += $(CLIBS) $(EML_LIBS)
 
-
 EXPORTFILE = $(MEX_FILE_NAME_WO_EXT)_mex.map
-ifeq ($(Arch),maci)
-  EXPORTOPT = -Wl,-exported_symbols_list,$(EXPORTFILE)
-  COMP_FLAGS = -c $(CFLAGS)
-  CXX_FLAGS = -c $(CXXFLAGS)
-  LINK_FLAGS = $(filter-out %mexFunction.map, $(LDFLAGS))
-else ifeq ($(Arch),maci64)
-  EXPORTOPT = -Wl,-exported_symbols_list,$(EXPORTFILE)
-  COMP_FLAGS = -c $(CFLAGS)
-  CXX_FLAGS = -c $(CXXFLAGS)
-  LINK_FLAGS = $(filter-out %mexFunction.map, $(LDFLAGS)) -Wl,-rpath,@loader_path
-else
-  EXPORTOPT = -Wl,--version-script,$(EXPORTFILE)
-  COMP_FLAGS = -c $(CFLAGS) $(OMPFLAGS)
-  CXX_FLAGS = -c $(CXXFLAGS) $(OMPFLAGS)
-  LINK_FLAGS = $(filter-out %mexFunction.map, $(LDFLAGS)) 
-endif
+EXPORTOPT = -Wl,--version-script,$(EXPORTFILE)
+LINK_FLAGS = $(filter-out /export:mexFunction, $(LINKFLAGS))
+COMP_FLAGS = $(CFLAGS) $(OMPFLAGS)
+CXX_FLAGS = $(CXXFLAGS) $(OMPFLAGS)
+LINK_FLAGS = $(LINKFLAGS) 
 LINK_FLAGS += $(OMPLINKFLAGS)
-ifeq ($(Arch),maci)
-  LINK_FLAGS += -L$(MATLAB_ROOT)/sys/os/maci
-endif
 ifeq ($(EMC_CONFIG),optim)
-  ifeq ($(Arch),mac)
-    COMP_FLAGS += $(CDEBUGFLAGS)
-    CXX_FLAGS += $(CXXDEBUGFLAGS)
-  else
-    COMP_FLAGS += $(COPTIMFLAGS)
-    CXX_FLAGS += $(CXXOPTIMFLAGS)
-  endif
-  LINK_FLAGS += $(LDOPTIMFLAGS)
+  COMP_FLAGS += $(OPTIMFLAGS)
+  CXX_FLAGS += $(OPTIMFLAGS)
+  LINK_FLAGS += $(LINKOPTIMFLAGS)
 else
-  COMP_FLAGS += $(CDEBUGFLAGS)
-  CXX_FLAGS += $(CXXDEBUGFLAGS)
-  LINK_FLAGS += $(LDDEBUGFLAGS)
+  COMP_FLAGS += $(DEBUGFLAGS)
+  CXX_FLAGS += $(DEBUGFLAGS)
+  LINK_FLAGS += $(LINKDEBUGFLAGS)
 endif
 LINK_FLAGS += -o $(TARGET)
 LINK_FLAGS += 
 
-CCFLAGS = $(COMP_FLAGS) -std=c99   $(USER_INCLUDE) $(SYS_INCLUDE)
+CCFLAGS = $(COMP_FLAGS)   $(USER_INCLUDE) $(SYS_INCLUDE)
 CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 %.$(OBJEXT) : %.c
@@ -102,10 +86,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 # Additional sources
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.c
+%.$(OBJEXT) : $(START_DIR)/%.c
 	$(CC) $(CCFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/rksF/%.c
+%.$(OBJEXT) : $(START_DIR)\codegen\mex\rksF/%.c
 	$(CC) $(CCFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.c
@@ -113,10 +97,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.cpp
+%.$(OBJEXT) : $(START_DIR)/%.cpp
 	$(CXX) $(CPPFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/rksF/%.cpp
+%.$(OBJEXT) : $(START_DIR)\codegen\mex\rksF/%.cpp
 	$(CXX) $(CPPFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.cpp
@@ -124,10 +108,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.cu
+%.$(OBJEXT) : $(START_DIR)/%.cu
 	$(CC) $(CCFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/rksF/%.cu
+%.$(OBJEXT) : $(START_DIR)\codegen\mex\rksF/%.cu
 	$(CC) $(CCFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.cu
@@ -138,6 +122,7 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 $(TARGET): $(OBJLIST) $(MAKEFILE)
 	$(LD) $(EXPORTOPT) $(OBJLIST) $(LINK_FLAGS) $(SYS_LIBS)
+	@cmd /C "echo Build completed using compiler $(EMC_COMPILER)"
 
 #====================================================================
 

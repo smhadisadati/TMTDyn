@@ -18,9 +18,6 @@ SRC_FILES =  \
 	massF1.c \
 	massF2.c \
 	loadsF1.c \
-	mldivide.c \
-	xgetrf.c \
-	warning.c \
 	_coder_EOM_eq_info.c \
 	_coder_EOM_eq_api.c \
 	_coder_EOM_eq_mex.c \
@@ -30,7 +27,7 @@ MEX_FILE_NAME_WO_EXT = EOM_eq_mex
 MEX_FILE_NAME = $(MEX_FILE_NAME_WO_EXT).mexa64
 TARGET = $(MEX_FILE_NAME)
 
-SYS_LIBS = -lmwblas -lmwlapack 
+SYS_LIBS = -lmwblas 
 
 
 #
@@ -55,8 +52,8 @@ SYS_INCLUDE = $(ML_INCLUDES)
 
 # Additional includes
 
-SYS_INCLUDE += -I "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/EOM_eq"
-SYS_INCLUDE += -I "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code"
+SYS_INCLUDE += -I "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/codegen/mex/EOM_eq"
+SYS_INCLUDE += -I "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code"
 SYS_INCLUDE += -I "./interface"
 SYS_INCLUDE += -I "$(MATLAB_ROOT)/extern/include"
 SYS_INCLUDE += -I "."
@@ -103,8 +100,8 @@ endif
 LINK_FLAGS += -o $(TARGET)
 LINK_FLAGS +=  -L"$(MATLAB_ROOT)/bin/glnxa64"
 
-CCFLAGS = $(COMP_FLAGS) -std=c99  -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRUCTURE -DMW_HAVE_LAPACK_DECLS  $(USER_INCLUDE) $(SYS_INCLUDE)
-CPPFLAGS = $(CXX_FLAGS) -std=c++11  -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRUCTURE -DMW_HAVE_LAPACK_DECLS  $(USER_INCLUDE) $(SYS_INCLUDE)
+CCFLAGS = $(COMP_FLAGS) -std=c99   $(USER_INCLUDE) $(SYS_INCLUDE)
+CPPFLAGS = $(CXX_FLAGS) -std=c++11   $(USER_INCLUDE) $(SYS_INCLUDE)
 
 %.$(OBJEXT) : %.c
 	$(CC) $(CCFLAGS) "$<"
@@ -114,10 +111,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11  -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRU
 
 # Additional sources
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.c
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/%.c
 	$(CC) $(CCFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/EOM_eq/%.c
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/codegen/mex/EOM_eq/%.c
 	$(CC) $(CCFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.c
@@ -125,10 +122,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11  -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRU
 
 
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.cpp
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/%.cpp
 	$(CXX) $(CPPFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/EOM_eq/%.cpp
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/codegen/mex/EOM_eq/%.cpp
 	$(CXX) $(CPPFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.cpp
@@ -136,10 +133,10 @@ CPPFLAGS = $(CXX_FLAGS) -std=c++11  -DHAVE_LAPACK_CONFIG_H -DLAPACK_COMPLEX_STRU
 
 
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/%.cu
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/%.cu
 	$(CC) $(CCFLAGS) "$<"
 
-%.$(OBJEXT) : /home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/codegen/mex/EOM_eq/%.cu
+%.$(OBJEXT) : /home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1.\ STIFF-FLOP/code/codegen/mex/EOM_eq/%.cu
 	$(CC) $(CCFLAGS) "$<"
 
 %.$(OBJEXT) : interface/%.cu

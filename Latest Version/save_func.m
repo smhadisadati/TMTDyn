@@ -12,6 +12,7 @@ toc( par.timer )
 opv = par.opv ;
 vars = { par.sym , [ q lambda u dlambda dlambda ] , s } ;
 vars_mex = '{ zeros( 1 , numel( par.sym ) ) , zeros( 1 , numel( [ q lambda u dlambda ] ) ) , 0 }' ;
+pause( 1e-1 )
 
 n_m
 n_sd
@@ -41,7 +42,7 @@ switch par.derive_collect
         end
         if n_cn ~= 0
             parfor i = 1 : n_cn
-                matlabFunction ( sym( cnst(i).T ) , sym( cnst(i).D ) , sym( cnst(i).in ) , ...
+                matlabFunction ( sym( cnst(i).r ) , sym( cnst(i).T ) , sym( cnst(i).D ) , sym( cnst(i).in ) , ...
                     'file' , sprintf('code/cnstF%i.m', i) , 'vars' , vars , 'Optimize' , opv );
             end
         end
@@ -95,6 +96,9 @@ switch par.derive_collect
             end
         end
         if n_cn ~= 0
+            parfor i = 1 : n_cn
+                matlabFunction ( sym( cnst(i).r ) ,'file' , sprintf('code/cnstR%i.m', i) , 'vars' , vars , 'Optimize' , opv );
+            end
             parfor i = 1 : n_cn
                 matlabFunction ( sym( cnst(i).T ) ,'file' , sprintf('code/cnstT%i.m', i) , 'vars' , vars , 'Optimize' , opv );
             end

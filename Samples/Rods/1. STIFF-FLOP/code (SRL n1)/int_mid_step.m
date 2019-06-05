@@ -1,11 +1,11 @@
-function par = int_mid_step( t , z , par )
+function [ z , par ] = int_mid_step( t , z , par )
 
 lambda = 1 ;
-% l = 0 ;
-% for i = 0 : par.n_m - 2
-%     l = l + z(i*6+3) ;
-% end
-% lambda = 1 + l / par.var(5) ;
+l = 0 ;
+for i = 0 : par.n_m - 2
+    l = l + z(i*6+3) ;
+end
+lambda = 1 + l / par.var(5) ;
 
 % input p & ext. forces
 % temp = interp1( par.f_ex(:,1) , [ par.f_ex(:,2:7) par.p(:,2:4) ] , t , 'nearest' ) ;

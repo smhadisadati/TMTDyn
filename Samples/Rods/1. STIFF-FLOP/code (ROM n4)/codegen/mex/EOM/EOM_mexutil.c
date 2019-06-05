@@ -16,11 +16,11 @@
 #include "EOM_data.h"
 
 /* Function Declarations */
-static real_T w_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
+static real_T u_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
   emlrtMsgIdentifier *msgId);
 
 /* Function Definitions */
-static real_T w_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
+static real_T u_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
   emlrtMsgIdentifier *msgId)
 {
   real_T ret;
@@ -55,7 +55,7 @@ real_T b_emlrt_marshallIn(const emlrtStack *sp, const mxArray *u, const
   emlrtMsgIdentifier *parentId)
 {
   real_T y;
-  y = w_emlrt_marshallIn(sp, emlrtAlias(u), parentId);
+  y = u_emlrt_marshallIn(sp, emlrtAlias(u), parentId);
   emlrtDestroyArray(&u);
   return y;
 }

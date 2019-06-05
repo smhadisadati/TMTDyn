@@ -25,7 +25,10 @@ static void rksF_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs, const
 static void rksF_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs, const
   mxArray *prhs[3])
 {
+  int32_T n;
+  const mxArray *inputs[3];
   const mxArray *outputs[1];
+  int32_T b_nlhs;
   emlrtStack st = { NULL,              /* site */
     NULL,                              /* tls */
     NULL                               /* prev */
@@ -44,11 +47,28 @@ static void rksF_mexFunction(int32_T nlhs, mxArray *plhs[1], int32_T nrhs, const
                         "rksF");
   }
 
+  /* Temporary copy for mex inputs. */
+  for (n = 0; n < nrhs; n++) {
+    inputs[n] = prhs[n];
+    if (*emlrtBreakCheckR2012bFlagVar != 0) {
+      emlrtBreakCheckR2012b(&st);
+    }
+  }
+
   /* Call the function. */
-  rksF_api(prhs, nlhs, outputs);
+  rksF_api(inputs, outputs);
 
   /* Copy over outputs to the caller. */
-  emlrtReturnArrays(1, plhs, outputs);
+  if (nlhs < 1) {
+    b_nlhs = 1;
+  } else {
+    b_nlhs = nlhs;
+  }
+
+  emlrtReturnArrays(b_nlhs, plhs, outputs);
+
+  /* Module termination. */
+  rksF_terminate();
 }
 
 void mexFunction(int32_T nlhs, mxArray *plhs[], int32_T nrhs, const mxArray
@@ -56,14 +76,12 @@ void mexFunction(int32_T nlhs, mxArray *plhs[], int32_T nrhs, const mxArray
 {
   mexAtExit(rksF_atexit);
 
+  /* Initialize the memory manager. */
   /* Module initialization. */
   rksF_initialize();
 
   /* Dispatch the entry-point. */
   rksF_mexFunction(nlhs, plhs, nrhs, prhs);
-
-  /* Module termination. */
-  rksF_terminate();
 }
 
 emlrtCTX mexFunctionCreateRootTLS(void)

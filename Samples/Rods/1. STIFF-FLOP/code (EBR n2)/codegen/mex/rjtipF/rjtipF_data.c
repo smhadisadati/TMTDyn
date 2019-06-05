@@ -16,9 +16,10 @@
 
 /* Variable Definitions */
 emlrtCTX emlrtRootTLSGlobal = NULL;
+const volatile char_T *emlrtBreakCheckR2012bFlagVar = NULL;
 emlrtContext emlrtContextGlobal = { true,/* bFirstTime */
   false,                               /* bInitialized */
-  131467U,                             /* fVersionInfo */
+  131451U,                             /* fVersionInfo */
   NULL,                                /* fErrorFunction */
   "rjtipF",                            /* fFunctionName */
   NULL,                                /* fRTCallStack */
@@ -27,14 +28,34 @@ emlrtContext emlrtContextGlobal = { true,/* bFirstTime */
   NULL                                 /* fSigMem */
 };
 
-emlrtRSInfo emlrtRSI = { 69,           /* lineNo */
+emlrtRSInfo emlrtRSI = { 64,           /* lineNo */
   "rjtipF",                            /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/rjtipF.m"/* pathName */
+  "C:\\Users\\ss17282\\Desktop\\1. STIFF-FLOP\\code\\rjtipF.m"/* pathName */
 };
 
-emlrtRSInfo b_emlrtRSI = { 49,         /* lineNo */
+emlrtRSInfo b_emlrtRSI = { 65,         /* lineNo */
+  "rjtipF",                            /* fcnName */
+  "C:\\Users\\ss17282\\Desktop\\1. STIFF-FLOP\\code\\rjtipF.m"/* pathName */
+};
+
+emlrtRSInfo c_emlrtRSI = { 66,         /* lineNo */
+  "rjtipF",                            /* fcnName */
+  "C:\\Users\\ss17282\\Desktop\\1. STIFF-FLOP\\code\\rjtipF.m"/* pathName */
+};
+
+emlrtRSInfo d_emlrtRSI = { 67,         /* lineNo */
+  "rjtipF",                            /* fcnName */
+  "C:\\Users\\ss17282\\Desktop\\1. STIFF-FLOP\\code\\rjtipF.m"/* pathName */
+};
+
+emlrtRSInfo e_emlrtRSI = { 68,         /* lineNo */
+  "rjtipF",                            /* fcnName */
+  "C:\\Users\\ss17282\\Desktop\\1. STIFF-FLOP\\code\\rjtipF.m"/* pathName */
+};
+
+emlrtRSInfo f_emlrtRSI = { 49,         /* lineNo */
   "power",                             /* fcnName */
-  "/usr/local/MATLAB/R2018b/toolbox/eml/lib/matlab/ops/power.m"/* pathName */
+  "C:\\Program Files\\MATLAB\\R2017b\\toolbox\\eml\\lib\\matlab\\ops\\power.m"/* pathName */
 };
 
 /* End of code generation (rjtipF_data.c) */

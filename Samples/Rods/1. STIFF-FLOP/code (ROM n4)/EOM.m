@@ -4,13 +4,13 @@ if t > t_report
     t 
     t_report = t + par.t_rep ; 
 end
+t ;
 
 u = z( par.nq + par.nlambda + 1 : end ) ;
 uq = u( 1 : par.nq ) ;
 
-par = int_mid_step( t , z , par ) ;
+[ z , par ] = int_mid_step( t , z , par ) ;
 
-s0 = 1e-6 ;
 fj_k = fj_kF( par.var , z.' ) ; 
 fj_vd = fj_vdF( par.var , z.' ) ;
 fj_in = fj_inF( par.var , z.' ) ;
@@ -20,24 +20,27 @@ w_vd_j = zeros(24,1) ; w_sd = zeros(24,1) ; w_in = zeros(24,1) ;
 w_f = zeros(24,1) ;
 Tc = [] ; dc = [] ;
 
+s0 = 1e-6 ;
 ds = par.rom.mass(1) / par.n_int ;
-if par.rom.mass(1) == 0 ; ds = 1 ; end
+if par.rom.mass(1) == 0 ; ds = 1 ; s0 = 0 ; end
 for s = s0 : ds : par.rom.mass(1) - s0
     [ M , T , Dd , fg ] = massF1( par.var , z.' , s ) ;
     TMT = TMT + T.' * M * T * ds ;
     TMfd = TMfd + T.' * M * ( - Dd * uq + fg ) * ds ;
 end
 
+s0 = 1e-6 ;
 ds = par.rom.mass(2) / par.n_int ;
-if par.rom.mass(2) == 0 ; ds = 1 ; end
+if par.rom.mass(2) == 0 ; ds = 1 ; s0 = 0 ; end
 for s = s0 : ds : par.rom.mass(2) - s0
     [ M , T , Dd , fg ] = massF2( par.var , z.' , s ) ;
     TMT = TMT + T.' * M * T * ds ;
     TMfd = TMfd + T.' * M * ( - Dd * uq + fg ) * ds ;
 end
 
+s0 = 1e-6 ;
 ds = par.rom.sprdmp(25) / par.n_int ;
-if par.rom.sprdmp(25) == 0 ; ds = 1 ; end
+if par.rom.sprdmp(25) == 0 ; ds = 1 ; s0 = 0 ; end
 for s = s0 : ds : par.rom.sprdmp(25) - s0
     [ Tt , kx , vd , in ] = sprdmpF25( par.var , z.' , s ) ;
     w_vd_j = w_vd_j + Tt * vd * ds ;

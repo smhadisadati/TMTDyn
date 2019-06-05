@@ -16,9 +16,6 @@
 #include "_coder_rjtipF_mex.h"
 #include "rjtipF_data.h"
 
-/* Variable Definitions */
-static const volatile char_T *emlrtBreakCheckR2012bFlagVar = NULL;
-
 /* Function Definitions */
 void rjtipF_initialize(void)
 {

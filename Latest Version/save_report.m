@@ -41,7 +41,7 @@ switch par.derive_collect
         end
         if n_cn ~= 0
             parfor i = 1 : n_cn
-                matlabFunction ( sym( cnst(i).T ) , sym( cnst(i).D ) , ...
+                matlabFunction ( sym( cnst(i).r ) , sym( cnst(i).T ) , sym( cnst(i).D ) , ...
                     'file' , sprintf('code/cnstF%i.m', i) , 'vars' , vars , 'Optimize' , opv );
             end
         end
@@ -95,6 +95,9 @@ switch par.derive_collect
             end
         end
         if n_cn ~= 0
+            parfor i = 1 : n_cn
+                matlabFunction ( sym( cnst(i).r ) ,'file' , sprintf('code/cnstT%i.m', i) , 'vars' , vars , 'Optimize' , opv );
+            end
             parfor i = 1 : n_cn
                 matlabFunction ( sym( cnst(i).T ) ,'file' , sprintf('code/cnstT%i.m', i) , 'vars' , vars , 'Optimize' , opv );
             end

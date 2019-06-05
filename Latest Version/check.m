@@ -35,12 +35,12 @@ else
 	if ~isfield( par , 'opv' ) || isempty( par.opv )
 		par.opv = true ;
 	end
-	if ~isfield( par , 'derive_collect' ) || isempty( par.derive_collect )
-		par.derive_collect = 1 ;
-	end
 	if ~isfield( par , 'derive_mex' ) || isempty( par.derive_mex )
 		par.derive_mex = 1 ;
 		par.derive = 1 ;
+	end
+	if par.derive_mex == 1 || ~isfield( par , 'derive_collect' ) || isempty( par.derive_collect )
+		par.derive_collect = 1 ;
 	end
 	if ~isfield( par , 'Anim' ) || isempty( par.Anim )
 		par.Anim = 1 ;
@@ -162,13 +162,9 @@ for i_j = 1 : numel( joint )
         for i2 = 1 : numel( rotrans )
             if isinf( rotrans(i2) )
                 nq = nq + 1 ;
-                init = 0 ;
-                % if numel( rotrans ) == 7 && i2 == 4 % for quaternions, better define inti. axis
-                %     init = 1 ;
-                % end
                 if ~isfield( joint(i_j) , 'dof' ) || isempty( joint(i_j).dof ) || numel( joint(i_j).dof ) < nq
                     joint(i_j).dof(nq).equal2 = [] ;
-                    joint(i_j).dof(nq).init = ones(n_mesh,1) * init ;
+                    joint(i_j).dof(nq).init = zeros(n_mesh,1) ;
                     joint(i_j).dof(nq).spring.coeff = zeros(n_mesh,1) ;
                     joint(i_j).dof(nq).spring.init = zeros(n_mesh,1) ;
                     joint(i_j).dof(nq).spring.compr = ones(n_mesh,1) ;
@@ -195,7 +191,7 @@ for i_j = 1 : numel( joint )
                         end
                     end
                     if ~isfield( joint(i_j).dof(nq) ,'init' ) || isempty( joint(i_j).dof(nq).init )
-                        joint(i_j).dof(nq).init = ones(n_mesh,1) * init ;
+                        joint(i_j).dof(nq).init = zeros(n_mesh,1) ;
                     else if numel( joint(i_j).dof(nq).init ) == 1
                             joint(i_j).dof(nq).init = joint(i_j).dof(nq).init * ones(n_mesh,1) ;
                         end
@@ -307,7 +303,7 @@ for i_j = 1 : numel( joint )
             end
         end
         if ~isfield( joint(i_j) , 'dir' ) || isempty( joint(i_j).dir )
-            joint(i_j).dir = zeros(n_mesh,6) ;
+            joint(i_j).dir = zeros(n_mesh,1) ;
         else if numel( joint(i_j).dir(:,1) ) == 1
                 joint(i_j).dir = ones(n_mesh,1) * joint(i_j).dir(1,:) ;
             end
@@ -411,13 +407,22 @@ for i_j = 1 : numel( joint )
                 if numel(joint(i_j).control(1,:)) < 6
                     joint(i_j).control = [ joint(i_j).control , zeros(n_mesh,6-numel(joint(i_j).control(1,:))) ] ;
                 end
-            end            
+            end          
+			if ~isfield( joint(i_j) ,'refbody' ) || isempty( joint(i_j).refbody )
+				joint(i_j).refbody = ones(n_mesh,1) * [ 0 1 ] ;
+			else if numel( joint(i_j).refbody(1,:) ) == 1
+					joint(i_j).refbody(:,2) = 1 ;
+				 end
+				 if numel( joint(i_j).refbody(:,1) ) == 1
+				 	joint(i_j).refbody = ones(n_mesh,1) * joint(i_j).refbody(1,:) ;
+				 end
+			end  
             if ~isfield( joint(i_j) , 'spring' ) || isempty( joint(i_j).spring )
                 joint(i_j).spring.coeff = zeros(n_mesh,6) ;
                 joint(i_j).spring.init = zeros(n_mesh,6) ;
                 joint(i_j).spring.compr = ones(n_mesh,6) ;
             end 
-            if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).fixed )
+            if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).damp )
                 joint(i_j).damp.visc = zeros(n_mesh,6) ;
                 joint(i_j).damp.pow = ones(n_mesh,6) ;
             end 
@@ -501,6 +506,9 @@ for i_j = 1 : numel( joint )
     end
     if ~isfield( joint(i_j) , 'control' )
         joint(i_j).control = [] ;
+    end 
+    if ~isfield( joint(i_j) , 'refbody' )
+        joint(i_j).refbody = [] ;
     end 
 end
 
@@ -599,13 +607,12 @@ for i_l = 1 : numel( exload )
     end
     if ~isfield( exload(i_l) ,'refbody' ) || isempty( exload(i_l).refbody )
         exload(i_l).refbody = ones(n_mesh,1) * [ 0 1 ] ;
-    else if numel( exload(i_l).refbody ) == 1
-		    exload(i_l).refbody(2) = 1 ;
-		    exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(2) ;
-		 else if numel( exload(i_l).refbody(:,1) ) == 1
-		    	 exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(2) ;
-	    	  end
-         end
+    else if numel( exload(i_l).refbody(1,:) ) == 1
+		    exload(i_l).refbody(:,2) = 1 ;
+		 end
+		 if numel( exload(i_l).refbody(:,1) ) == 1
+		 	exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(1,:) ;
+	     end
     end
     
     if ~isfield( exload(i_l) ,'tr' ) || isempty( exload(i_l).tr )
@@ -649,7 +656,7 @@ for i_d = 1 : numel( mesh )
     if ~isfield( mesh(i_d) ,'joint' ) || isempty( mesh(i_d).joint ) || numel( mesh(i_d).joint ) ~= 2
         error( 'mesh(i_d).joint' ) ;
     end
-    if ~isfield( mesh(i_d) ,'tr' ) || isempty( mesh(i_d).tr )
+    if ~isfield( mesh(i_d) ,'tr' ) || isempty( exload(i_l).tr )
         mesh(i_d).tr.trans = [ 0 0 0 ] ;
         mesh(i_d).tr.rot = [ 0 0 ] ;
     end   

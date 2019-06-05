@@ -8,5 +8,5 @@ end
 
 [ ~ , n ] = size( x ) ;
 for i = 1 : n
-    y(:,i) = smooth( x(:,i) , step ) ;
+    y(:,i) = smooth( x(:,i) , step , 'moving' ) ;
 end

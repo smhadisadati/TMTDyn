@@ -18,7 +18,7 @@
 static emlrtRTEInfo emlrtRTEI = { 19,  /* lineNo */
   5,                                   /* colNo */
   "error",                             /* fName */
-  "/usr/local/MATLAB/R2018b/toolbox/shared/coder/coder/+coder/+internal/error.m"/* pName */
+  "C:\\Program Files\\MATLAB\\R2017b\\toolbox\\shared\\coder\\coder\\+coder\\+internal\\error.m"/* pName */
 };
 
 /* Function Definitions */
@@ -26,8 +26,8 @@ void error(const emlrtStack *sp)
 {
   static const char_T varargin_1[4] = { 's', 'q', 'r', 't' };
 
-  emlrtErrorWithMessageIdR2018a(sp, &emlrtRTEI, "Coder:toolbox:ElFunDomainError",
-    "Coder:toolbox:ElFunDomainError", 3, 4, 4, varargin_1);
+  emlrtErrorWithMessageIdR2012b(sp, &emlrtRTEI, "Coder:toolbox:ElFunDomainError",
+    3, 4, 4, varargin_1);
 }
 
 /* End of code generation (error.c) */

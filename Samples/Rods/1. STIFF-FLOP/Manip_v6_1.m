@@ -19,21 +19,21 @@ pause( 1e-2 )
 
 %% initialization
 % study specific parameters
-study = 1 ; % 1: ROM, 2: Series Rigid Link (SRL), 3: Discretized Relative States (EBR), 4: Discretized Absolute States (EBA)
+study = 2 ; % 1: ROM, 2: Series Rigid Link (SRL), 3: Discretized Relative States (EBR), 4: Discretized Absolute States (EBA)
 exp_case = [ 1 1 inf ] ; % [ case star_sequence end_sequence ]
 
 % derivation
-par.derive = 0 ; % set 1 to rederive in TMT
+par.derive = 1 ; % set 1 to rederive in TMT
 par.derive_collect = 1 ; % collect in 1: single struct., 2: seperte struct.s, 3: seperate func.s, 4: C func.s
 par.derive_mex = 0 ; % use Matlab codegen, automatically sets par.derive_collect = 1
 par.opv = true ; % optimize results
 
 % controls
-par.Anim = 1 ; % animation on (1) or off (0)
+par.Anim = 0 ; % animation on (1) or off (0)
 par.movie = 0 ; % save movie[ ~ , rks , par ] = AnimEOM_mex( t , z , par );
-par.equil = 1 ; % 1: static analysis with Matlab func.s, 2: with C-mex func.s
+par.equil = 0 ; % 1: static analysis with Matlab func.s, 2: with C-mex func.s
 par.modal = 0 ; % 1: linear modal analysis with Matlab func.s, 2: with C-mex func.s
-par.simdyn = 3 ; % 1: dyn. sim. with Matlab func.s, 2: with C-mex func.s
+par.simdyn = 0 ; % 1: dyn. sim. with Matlab func.s, 2: with C-mex func.s
 
 % other parameters
 par.t_rep = 5e-1 ; % sim report time
@@ -85,7 +85,7 @@ sigma_s = 1.4 * 1300 ; % silicon density
 
 switch study    
     case 1 % ROM
-        n_r = 2 ; % ROM polynomial order
+        n_r = 5 ; % ROM polynomial order
         E_s =205e3 ; % 130e3, 205e3        
         mu_pow = 2 ; % < 1: rate thining, > 1: rate thikening
         mu_x = 1e-1 ; % 1e-1
@@ -96,7 +96,7 @@ switch study
         mu_zz = 1e-5 ;
 
     case 2 % SRL
-        n_s = 2 ; % manipulator segments
+        n_s = 3 ; % manipulator segments
         E_s =205e3 ; % 130e3, 205e3        
         mu_pow = 2 ; % < 1: rate thining, > 1: rate thikening
         mu_x = 1e-1 ; % 1e-1
@@ -107,7 +107,7 @@ switch study
         mu_zz = 1e-5 ;
         
     case 3 % EBR
-        n_s = 2 ; % manipulator segments
+        n_s = 5 ; % manipulator segments
         E_s =205e3 ; % 130e3, 205e3        
         mu_pow = 2 ; % < 1: rate thining, > 1: rate thikening
         mu_x = 1e2 ; % 1e-1
@@ -118,7 +118,7 @@ switch study
         mu_zz = 5e-1 ;
         
     case 4 % EBA
-        n_s = 2 ; % manipulator segments
+        n_s = 6 ; % manipulator segments
         E_s =205e3 ; % 130e3, 205e3        
         mu_pow = 2 ; % < 1: rate thining, > 1: rate thikening
         mu_x = 1e2 ; % 1e-1
@@ -134,13 +134,13 @@ par.var = [ sigma_s, E_s, r_s1, r_s2, l_s, mu_x, mu_y, mu_z, mu_xx, mu_yy, ...
     mu_zz, mu_pow, g_x, g_y, g_z, m_f, l_f, r_f, r_p1, r_o, gamma, zeros(1,12) , 1 ] ;
 
 
-% %% derivation simplification
-% sigma_s_sym = sigma_s ; E_s_sym = E_s; r_s1_sym = r_s1; r_s2_sym = r_s2;
-% l_s_sym = l_s ; mu_x_sym = mu_x; mu_y_sym = mu_y; mu_z_sym = mu_z;
-% mu_xx_sym = mu_xx; mu_yy_sym = mu_yy; mu_zz_sym = mu_zz; mu_pow_sym  = mu_pow;
-% g_xsym = g_x; g_ysym = g_y; g_zsym = g_z; m_f_sym = m_f; l_f_sym = l_f;
-% r_f_sym = r_f; r_p1_sym = r_p1 ; r_o_sym = r_o; gamma_sym = gamma;
-% p2_sym = p1_sym; p4_sym = p3_sym; p6_sym = p5_sym;
+%% derivation simplification
+sigma_s_sym = sigma_s ; E_s_sym = E_s; r_s1_sym = r_s1; r_s2_sym = r_s2;
+l_s_sym = l_s ; mu_x_sym = mu_x; mu_y_sym = mu_y; mu_z_sym = mu_z;
+mu_xx_sym = mu_xx; mu_yy_sym = mu_yy; mu_zz_sym = mu_zz; mu_pow_sym  = mu_pow;
+g_xsym = g_x; g_ysym = g_y; g_zsym = g_z; m_f_sym = m_f; l_f_sym = l_f;
+r_f_sym = r_f; r_p1_sym = r_p1 ; r_o_sym = r_o; gamma_sym = gamma;
+p2_sym = p1_sym; p4_sym = p3_sym; p6_sym = p5_sym;
 
 %% preprocess
 switch study    

@@ -51,7 +51,7 @@ void mldivide(const emlrtStack *sp, const real_T A[144], real_T B[12])
   int32_T info;
   real_T temp;
   int32_T kAcol;
-  int32_T i3;
+  int32_T i4;
   int32_T i;
   emlrtStack st;
   emlrtStack b_st;
@@ -87,8 +87,8 @@ void mldivide(const emlrtStack *sp, const real_T A[144], real_T B[12])
   for (info = 0; info < 12; info++) {
     kAcol = 12 * info;
     if (B[info] != 0.0) {
-      i3 = info + 2;
-      for (i = i3; i < 13; i++) {
+      i4 = info + 2;
+      for (i = i4; i < 13; i++) {
         B[i - 1] -= B[info] * b_A[(i + kAcol) - 1];
       }
     }

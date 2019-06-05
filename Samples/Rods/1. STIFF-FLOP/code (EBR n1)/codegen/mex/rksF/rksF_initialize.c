@@ -16,9 +16,6 @@
 #include "_coder_rksF_mex.h"
 #include "rksF_data.h"
 
-/* Variable Definitions */
-static const volatile char_T *emlrtBreakCheckR2012bFlagVar = NULL;
-
 /* Function Definitions */
 void rksF_initialize(void)
 {

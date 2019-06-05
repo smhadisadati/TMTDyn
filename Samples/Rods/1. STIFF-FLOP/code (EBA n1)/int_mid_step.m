@@ -1,9 +1,9 @@
-function par = int_mid_step( t , z , par )
+function [ z , par ] = int_mid_step( t , z , par )
 
 lambda = 1 ;
-% l = 0 ;
-% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF7( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
-% lambda = 1 + l / par.var(5) ; 
+l = 0 ;
+[ ~ , ~ , ~ , ~ , dl ] = sprdmpF7( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+lambda = 1 + l / par.var(5) ; 
 
 % input p & ext. forces
 % temp = interp1( par.f_ex(:,1) , [ par.f_ex(:,2:7) par.p(:,2:4) ] , t , 'nearest' ) ;

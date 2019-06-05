@@ -1,4 +1,4 @@
-function par = int_mid_step( t , z , par )
+function [ z , par ] = int_mid_step( t , z , par )
 
 lambda = 1 ;
 % l = 0 ;

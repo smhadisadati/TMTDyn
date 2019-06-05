@@ -1,4 +1,4 @@
-function save_mex( q , u , lambda , s , par , ...
+function save_mex( q , u , lambda , dlambda , s , par , ...
     mass , sprdmp , cnst , loads , ...
     nq , nlambda , q0 , n_m , n_sd , n_cn , n_ex , ...
     M , T , fj_k , fj_vd , fj_in , fj_sdi , fj_k_mat , fj_vd_mat , ...
@@ -11,13 +11,13 @@ toc( par.timer )
 % matlabpool('open', 4);
 opv = par.opv ;
 vars = { par.sym , [ q lambda u ] , s } ;
-vars_mex = '{ zeros( 1 , numel( par.sym ) ) , zeros( 1 , numel( [ q lambda u ] ) ) , 0 }' ;
-vars_mex_num = { zeros( 1 , numel( par.sym ) ) , zeros( 1 , numel( [ q lambda u ] ) ) , 0 } ;
+vars_mex = '{ zeros( 1 , numel( par.sym ) ) , zeros( 1 , numel( [ q lambda u dlambda ] ) ) , 0 }' ;
+vars_mex_num = { zeros( 1 , numel( par.sym ) ) , zeros( 1 , numel( [ q lambda u dlambda ] ) ) , 0 } ;
 
-if par.derive_mex
+if par.derive_mex && par.derive_collect == 3
     save_select = 1 : 22 ;
 else
-    save_select = [ 3 , 4 , 5 , 6 , 14 , 20 ] ; % dof.s and Animation only
+    save_select = [ 14 , 20 ] ; % , 3 , 4 , 5 , 6  ] ; % dof.s and Animation only
 end
 
 cd code

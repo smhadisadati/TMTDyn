@@ -150,14 +150,13 @@ static real_T i_emlrt_marshallIn(const emlrtStack *sp, const mxArray *src, const
   return ret;
 }
 
-void rksF_api(const mxArray * const prhs[3], int32_T nlhs, const mxArray *plhs[1])
+void rksF_api(const mxArray * const prhs[3], const mxArray *plhs[1])
 {
   emlrtStack st = { NULL,              /* site */
     NULL,                              /* tls */
     NULL                               /* prev */
   };
 
-  (void)nlhs;
   st.tls = emlrtRootTLSGlobal;
   mxMalloc(0U);
 

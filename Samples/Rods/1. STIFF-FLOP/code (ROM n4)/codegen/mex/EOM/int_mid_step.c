@@ -20,29 +20,29 @@
 /* Variable Definitions */
 static emlrtRSInfo m_emlrtRSI = { 8,   /* lineNo */
   "int_mid_step",                      /* fcnName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m"/* pathName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m"/* pathName */
 };
 
 static emlrtRTEInfo i_emlrtRTEI = { 7, /* lineNo */
   9,                                   /* colNo */
   "int_mid_step",                      /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m"/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m"/* pName */
 };
 
 static emlrtDCInfo c_emlrtDCI = { 16,  /* lineNo */
   20,                                  /* colNo */
   "int_mid_step",                      /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m",/* pName */
   1                                    /* checkKind */
 };
 
 static emlrtBCInfo d_emlrtBCI = { 1,   /* iFirst */
-  1094,                                /* iLast */
+  1109,                                /* iLast */
   16,                                  /* lineNo */
   20,                                  /* colNo */
   "par.f_ex",                          /* aName */
   "int_mid_step",                      /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m",/* pName */
   0                                    /* checkKind */
 };
 
@@ -52,14 +52,14 @@ static emlrtBCInfo e_emlrtBCI = { 1,   /* iFirst */
   6,                                   /* colNo */
   "par.rom.sprdmp",                    /* aName */
   "int_mid_step",                      /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m",/* pName */
   0                                    /* checkKind */
 };
 
 static emlrtDCInfo d_emlrtDCI = { 5,   /* lineNo */
   6,                                   /* colNo */
   "int_mid_step",                      /* fName */
-  "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/int_mid_step.m",/* pName */
+  "/home/hadi/Safe/MEGAsync/Hadi/TMTDyn/Code/TMTDyn/Beta/v1.0/Rods/1. STIFF-FLOP/code/int_mid_step.m",/* pName */
   1                                    /* checkKind */
 };
 
@@ -68,7 +68,7 @@ void int_mid_step(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T 
                   b_par)
 {
   real_T l;
-  int32_T i1;
+  int32_T i2;
   real_T ds;
   int32_T s;
   real_T unusedU0[144];
@@ -86,21 +86,21 @@ void int_mid_step(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T 
     emlrtIntegerCheckR2012b(b_par->n_sd, &d_emlrtDCI, sp);
   }
 
-  i1 = (int32_T)b_par->n_sd;
-  if ((i1 < 1) || (i1 > 25)) {
-    emlrtDynamicBoundsCheckR2012b(i1, 1, 25, &e_emlrtBCI, sp);
+  i2 = (int32_T)b_par->n_sd;
+  if ((i2 < 1) || (i2 > 25)) {
+    emlrtDynamicBoundsCheckR2012b(i2, 1, 25, &e_emlrtBCI, sp);
   }
 
-  ds = b_par->rom.sprdmp[i1 - 1] / b_par->n_int;
+  ds = b_par->rom.sprdmp[i2 - 1] / b_par->n_int;
   if (b_par->rom.sprdmp[(int32_T)b_par->n_sd - 1] == 0.0) {
     ds = 1.0;
   }
 
-  i1 = (int32_T)(((b_par->rom.sprdmp[(int32_T)b_par->n_sd - 1] - 1.0E-6) + (ds -
+  i2 = (int32_T)(((b_par->rom.sprdmp[(int32_T)b_par->n_sd - 1] - 1.0E-6) + (ds -
     1.0E-6)) / ds);
   emlrtForLoopVectorCheckR2012b(1.0E-6, ds, b_par->rom.sprdmp[(int32_T)
-    b_par->n_sd - 1] - 1.0E-6, mxDOUBLE_CLASS, i1, &i_emlrtRTEI, sp);
-  for (s = 0; s < i1; s++) {
+    b_par->n_sd - 1] - 1.0E-6, mxDOUBLE_CLASS, i2, &i_emlrtRTEI, sp);
+  for (s = 0; s < i2; s++) {
     st.site = &m_emlrtRSI;
     sprdmpF25(&st, b_par->var, z, 1.0E-6 + (real_T)s * ds, unusedU0, unusedU1,
               unusedU2, unusedU3, dl);
@@ -115,19 +115,19 @@ void int_mid_step(const emlrtStack *sp, real_T t, const real_T z[48], struct0_T 
   /*  input p & ext. forces */
   /*  temp = interp1( par.f_ex(:,1) , [ par.f_ex(:,2:7) par.p(:,2:4) ] , t , 'nearest' ) ; */
   ds = muDoubleScalarFloor(t / 0.05);
-  i1 = (int32_T)ds;
-  if (ds != i1) {
+  i2 = (int32_T)ds;
+  if (ds != i2) {
     emlrtIntegerCheckR2012b(ds, &c_emlrtDCI, sp);
   }
 
-  if ((i1 < 1) || (i1 > 1094)) {
-    emlrtDynamicBoundsCheckR2012b(i1, 1, 1094, &d_emlrtBCI, sp);
+  if ((i2 < 1) || (i2 > 1109)) {
+    emlrtDynamicBoundsCheckR2012b(i2, 1, 1109, &d_emlrtBCI, sp);
   }
 
   ds = b_par->var[4];
   for (s = 0; s < 6; s++) {
-    b_par->var[21 + s] = b_par->p[(i1 + 1094 * (1 + iv5[s])) - 1];
-    b_par->var[s + 27] = b_par->f_ex[(i1 + 1094 * (1 + s)) - 1];
+    b_par->var[21 + s] = b_par->p[(i2 + 1109 * (1 + iv5[s])) - 1];
+    b_par->var[s + 27] = b_par->f_ex[(i2 + 1109 * (1 + s)) - 1];
   }
 
   b_par->var[33] = l / ds;

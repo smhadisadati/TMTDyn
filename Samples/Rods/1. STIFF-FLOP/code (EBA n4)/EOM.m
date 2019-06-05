@@ -4,11 +4,12 @@ if t > t_report
     t 
     t_report = t + par.t_rep ; 
 end
+t ;
 
 u = z( par.nq + par.nlambda + 1 : end ) ;
 uq = u( 1 : par.nq ) ;
 
-par = int_mid_step( t , z , par ) ;
+[ z , par ] = int_mid_step( t , z , par ) ;
 
 fj_k = fj_kF( par.var , z.' ) ; 
 fj_vd = fj_vdF( par.var , z.' ) ;

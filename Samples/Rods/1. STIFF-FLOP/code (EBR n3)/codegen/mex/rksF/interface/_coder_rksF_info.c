@@ -19,27 +19,23 @@ mxArray *emlrtMexFcnProperties(void)
 {
   mxArray *xResult;
   mxArray *xEntryPoints;
-  const char * fldNames[6] = { "Name", "NumberOfInputs", "NumberOfOutputs",
-    "ConstantInputs", "FullPath", "TimeStamp" };
+  const char * fldNames[4] = { "Name", "NumberOfInputs", "NumberOfOutputs",
+    "ConstantInputs" };
 
   mxArray *xInputs;
   const char * b_fldNames[4] = { "Version", "ResolvedFunctions", "EntryPoints",
     "CoverageInfo" };
 
-  xEntryPoints = emlrtCreateStructMatrix(1, 1, 6, fldNames);
+  xEntryPoints = emlrtCreateStructMatrix(1, 1, 4, fldNames);
   xInputs = emlrtCreateLogicalMatrix(1, 3);
   emlrtSetField(xEntryPoints, 0, "Name", emlrtMxCreateString("rksF"));
   emlrtSetField(xEntryPoints, 0, "NumberOfInputs", emlrtMxCreateDoubleScalar(3.0));
   emlrtSetField(xEntryPoints, 0, "NumberOfOutputs", emlrtMxCreateDoubleScalar
                 (1.0));
   emlrtSetField(xEntryPoints, 0, "ConstantInputs", xInputs);
-  emlrtSetField(xEntryPoints, 0, "FullPath", emlrtMxCreateString(
-    "/home/hadi/MEGAsync/Hadi/AutoTMTDyn/Code/AutoTMTDyn/Beta/v1.0/code/rksF.m"));
-  emlrtSetField(xEntryPoints, 0, "TimeStamp", emlrtMxCreateDoubleScalar
-                (737431.00432870374));
   xResult = emlrtCreateStructMatrix(1, 1, 4, b_fldNames);
   emlrtSetField(xResult, 0, "Version", emlrtMxCreateString(
-    "9.5.0.944444 (R2018b)"));
+    "9.3.0.713579 (R2017b)"));
   emlrtSetField(xResult, 0, "ResolvedFunctions", (mxArray *)
                 emlrtMexFcnResolvedFunctionsInfo());
   emlrtSetField(xResult, 0, "EntryPoints", xEntryPoints);

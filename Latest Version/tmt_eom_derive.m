@@ -53,12 +53,12 @@ fprintf( 'TMT derive... \n' )
 par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
 toc( par.timer )
 
-% global unit_quat
+global unit_quat
 unit_quat = 1 ; % is unit quaternion?
 
 % mesh
 if ~isempty( mesh )
-    [ ~ , ~ , body , joint , ~ , mesh ] = check( par , [] , body , joint , [] , mesh ) ; % not mesh body/joint check
+    [ ~ , ~ , body , joint , ~ , mesh ] = check( par , [] , body , joint , [] , [] ) ; % not mesh body/joint check
 	[ body_mesh , joint_mesh ] = mesh_import( body , joint , mesh , par ) ; % mesh import
 	body = [ body body_mesh ] ; % first indvidual bodies
 	joint = [ joint_mesh joint ] ; % first mesh joints
@@ -130,9 +130,8 @@ for j_count = 1 : n_j % look into all joints
                         if isempty( joint(j_count).dof(nj_dof).equal2 )
                             n_sd = n_sd + 1 ;
                             nq = nq + 1;
-							dir = joint(j_count).dof(nj_dof).dir ;
-                            nq_mat = [ j_count nj_dof nq n_sd dir ] ;
-                            dof_m(:,:,nj_dof,n_mesh,j_count) = [ nq n_sd dir ] ; % dof number
+                            nq_mat = [ j_count nj_dof nq n_sd ] ;
+                            dof_m(:,:,nj_dof,n_mesh,j_count) = [ nq n_sd ] ; % dof number
                             % q = [ q , q_sym(nq) ];
                             q = [ q , sym( [ 'q' num2str( nq ) ] ) ];
                             q0 = [ q0 , joint(j_count).dof(nj_dof).init(n_mesh,dof_mult) ] ; % only all element ICs in an array
@@ -151,7 +150,7 @@ for j_count = 1 : n_j % look into all joints
                         else % geometrical constraint between dof.s, for rigid body dof.s only
                         	temp = joint(j_count).dof(nj_dof).equal2(n_mesh,:) ;
                             nq_mat(1:2) = temp([1,3]) ;
-                            nq_mat(3:5) = dof_m( 1 , : , temp(3) , temp(2) , temp(1) ) ;
+                            nq_mat(3:4) = dof_m( 1 , : , temp(3) , temp(2) , temp(1) ) ;
                         end
                         
                         % for each spring
@@ -166,17 +165,16 @@ for j_count = 1 : n_j % look into all joints
                         sprdmp(nq_mat(4)).k_mat(1,nq_mat(3)) = joint(nq_mat(1)).dof(nq_mat(2)).spring.coeff(n_mesh) ; % spring
                         sprdmp(nq_mat(4)).vd_mat(1,nq_mat(3)) = - joint(nq_mat(1)).dof(nq_mat(2)).damp.visc(n_mesh) ...
                             * u(nq_mat(3)).^( joint(nq_mat(1)).dof(nq_mat(2)).damp.pow(n_mesh) - 1 ) ; % viscous
-				        sprdmp(nq_mat(4)).dir = abs( sign( sign( sprdmp(nq_mat(4)).dl ) + nq_mat(5) ) ) ;
+                        sprdmp(nq_mat(4)).dir = 1 ;
                         
                         % if ismember( par.derive_collect , [ 3 4 ] )  % for all joint spring/dampers
                             fj_k(nq_mat(3),1) = fj_k(nq_mat(3),1) ... % spring on DOFs
-                                + sprdmp(nq_mat(4)).dir * sprdmp(nq_mat(4)).kx ;
+                                + sprdmp(nq_mat(4)).kx ;
                             fj_vd(nq_mat(3),1) = fj_vd(nq_mat(3),1) ... % damper on DOFs
-                                + sprdmp(nq_mat(4)).dir * sprdmp(nq_mat(4)).vd ;
+                                + sprdmp(nq_mat(4)).vd ;
                             fj_in(nq_mat(3),1) = fj_in(nq_mat(3),1) ... % inputs on DOFs
-                                + sprdmp(nq_mat(4)).dir * sprdmp(nq_mat(4)).in ;
-                            fj_sdi(nq_mat(3),1) = sprdmp(nq_mat(4)).dir * ...
-								( sprdmp(nq_mat(4)).kx + sprdmp(nq_mat(4)).vd + sprdmp(nq_mat(4)).in ) ; % all spring/damper/input force virtual work
+                                + sprdmp(nq_mat(4)).in ;
+                            fj_sdi(nq_mat(3),1) = sprdmp(nq_mat(4)).kx + sprdmp(nq_mat(4)).vd + sprdmp(nq_mat(4)).in ; % all spring/damper/input force virtual work
                             fj_k_mat(nq_mat(3),nq_mat(3)) = fj_k_mat(nq_mat(3),nq_mat(3)) ... % spring on DOFs
                                 + sprdmp(nq_mat(4)).k_mat(1,nq_mat(3)) ;
                             fj_vd_mat(nq_mat(3),nq_mat(3)) = fj_vd_mat(nq_mat(3),nq_mat(3)) ... % damper on DOFs
@@ -391,7 +389,7 @@ for b_count = 0 : n_b % number of bodies
                 
                 n_sd = n_sd + 1 ;
                 r_ks = [ r_ks ; joint(j_count).TQ(n_mesh).abs(2:4,2).' , joint(j_count).TQ2nd(n_mesh).abs(2:4,2).' ] ; % each body joint and tip
-                r_sd = joint(j_count).TQ2nd(n_mesh).abs(2:4,2) - joint(j_count).TQ(n_mesh).abs(2:4,2) ; % TQ2nd - TQ: order should match direction of q0, otherwise does not matter
+                r_sd = joint(j_count).TQ2nd(n_mesh).abs(2:4,2) - joint(j_count).TQ(n_mesh).abs(2:4,2) ; % TQ2nd - TQ: subtracting order should match direction of q0, otherwise does not matter
                                                                                                         % if q0 = 0 -> any order results in two actions: f2nd(r2nd-r) & f(r-r2nd)
                 % dr_sd = jacobian( r_sd , qf ) * uf.' ;
 
@@ -423,7 +421,6 @@ for b_count = 0 : n_b % number of bodies
                         - joint(j_count).damp.visc(n_mesh) ...
                         * diag( abs( jacobian( r_sd , q ) * u.' ).^( joint(j_count).damp.pow(n_mesh,1) - 1 ) ) ...
                         * jacobian( r_sd , q ) ; % instantanious viscous force matrix
-					sprdmp(n_sd).dir = abs( sign( sign( sprdmp(n_sd).dl ) + joint(j_count).dir(n_mesh,1) ) ) ;
                     
                 else % 6 elements for beam trans. & rot.
                                                                
@@ -431,18 +428,23 @@ for b_count = 0 : n_b % number of bodies
                     l_sd0_q0 = sqrt( r_sd0 * r_sd0.' ) ; % based on int. config.
                     temp = Q_rot( Q_conj( joint(j_count).TQ(n_mesh).abs(:,1) ) , [ 0 ; r_sd0.' ] ) ; % r_{loc} = Q^{-1} * r_{abs} * Q
                     r_sd_r = Q_rot( Q_conj( joint(j_count).TQ(n_mesh).abs(:,1) ) , [ 0 ; r_sd ] ) ; % r_{loc} = Q^{-1} * r_{abs} * Q
-                    if ~isempty( joint(j_count).xaxis )
+                    
+                    if ~isempty( joint(j_count).xaxis ) % rotate to beam frame
                         r_sd0_r = temp(2:4,1).' ; % 1x3 in local frame
                         yaxis =  cross( r_sd0_r , joint(j_count).xaxis(n_mesh,:) ) ; % 1x3 beam frame axis w.r.t. local frame
                         xaxis = cross( yaxis , r_sd0_r ) ;
-                        r_sd_rb = [ xaxis/sqrt( xaxis * xaxis.' ) ;
-                                    yaxis/sqrt( yaxis * yaxis.' ) ;
-                                    r_sd0_r/l_sd0_q0 ].' * r_sd_r(2:4,1) ; % 3x1 transformed to beam frame
+                        R_b = [ xaxis/sqrt( xaxis * xaxis.' ) ;
+                                yaxis/sqrt( yaxis * yaxis.' ) ;
+                                r_sd0_r/l_sd0_q0 ] ;
+                        r_sd_rb = R_b.' * r_sd_r(2:4,1) ; % 3x1 transformed to beam frame
+                        Q_rb = R2Q( R_b ) ; % beam frame relative to local frame
+                        Q_b = Q_mult( Q_conj( Q_rb ) , joint(j_count).TQ(n_mesh).abs(:,1) ) ;
                     else
                         r_sd_rb = r_sd_r(2:4,1) ; % 3x1 already in beam frame
+                        Q_b = joint(j_count).TQ(n_mesh).abs(:,1) ;
                     end
-            		Q_sd = 2 * Q_mult( Q_conj( joint(j_count).TQ(n_mesh).abs(:,1) ) , joint(j_count).TQ2nd(n_mesh).abs(:,1) - joint(j_count).TQ(n_mesh).abs(:,1) ) ;
-                    rQ_sd = [ r_sd_rb ; Q_sd(2:4,1) ] ; % 6 trans. & rot. spring/dampers
+                    Q_sd_r = 2 * Q_mult( Q_conj( Q_b ) , joint(j_count).TQ2nd(n_mesh).abs(:,1) - Q_b ) ;
+            		rQ_sd = [ r_sd_rb ; Q_sd_r(2:4,1) ] ; % 6 trans. & rot. spring/dampers
                     
                     rQ_sd0 = joint(j_count).spring.init(n_mesh,1:6) ;
                     for i_s = 1 : numel( rQ_sd0 )
@@ -461,8 +463,7 @@ for b_count = 0 : n_b % number of bodies
                     sprdmp(n_sd).kx = ... % all spring/damper force virtual work
                         ( - diag( joint(j_count).spring.coeff(n_mesh,:) ) * ...
                         ( rQ_sd - rQ_sd0.' ) ) ; % instantanious spring force vector
-                    % sprdmp(n_sd).dl = sqrt( r_sd.' * r_sd ) - rQ_sd0(3) ; % spring delta-l
-                    sprdmp(n_sd).dl = rQ_sd.' - rQ_sd0 ; % 1x6 beam delta-states
+                    sprdmp(n_sd).dl = sqrt( r_sd.' * r_sd ) - rQ_sd0(3) ; % spring delta-l
                     sprdmp(n_sd).vd = ... % viscous damping force virtual work
                         - diag( joint(j_count).damp.visc(n_mesh,:) ) ...
                         * diag( abs( jacobian( rQ_sd , q ) * u.' ).^( joint(j_count).damp.pow(n_mesh,1) - 1 ) ) ...
@@ -475,24 +476,51 @@ for b_count = 0 : n_b % number of bodies
                         - diag( joint(j_count).damp.visc(n_mesh,:) ) ...
                         * diag( abs( jacobian( rQ_sd , q ) * u.' ).^( joint(j_count).damp.pow(n_mesh,1) - 1 ) ) ...
                         * jacobian( rQ_sd , q ) ; % instantanious viscous force matrix
-					sprdmp(n_sd).dir = abs( sign( sign( sprdmp(n_sd).dl ) + joint(j_count).dir(n_mesh,:) ) ) ;
                     
                 end
                     
-                rom.sprdmp = [ rom.sprdmp 0 ] ;                
+                rom.sprdmp = [ rom.sprdmp 0 ] ;
+                switch joint(j_count).dir(n_mesh)
+                    case 1 % compression-only elements, e.g. soft contact
+                        sprdmp(n_sd).dir = ( sign( sprdmp(n_sd).dl ) + 1 ) / 2 ;
+                    case 0 % both dir.ss, e.g. regular spring/damper
+                        sprdmp(n_sd).dir = 1 ;
+                    case -1 % tension-only elements, e.g. wire
+                        sprdmp(n_sd).dir = ( - sign( sprdmp(n_sd).dl ) + 1 ) / 2 ;
+                end
+                
                 if ismember( par.derive_collect , [ 3 4 ] ) % for all spring/dampers
-                    w_k = w_k + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).kx ;
-                    w_vd = w_vd + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).vd ;
-                    w_in = w_in + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).in ;
-                    w_sdi = w_sdi + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * ( ...
+                    w_k = w_k + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).kx ;
+                    w_vd = w_vd + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).vd ;
+                    w_in = w_in + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).in ;
+                    w_sdi = w_sdi + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * ( ...
                         sprdmp(n_sd).kx + sprdmp(n_sd).vd + sprdmp(n_sd).in ) ; % all spring/damper/input force virtual work
                     w_k_mat = w_k_mat + sprdmp(n_sd).Tt * sprdmp(n_sd).k_mat ;
                     w_vd_mat = w_vd_mat + sprdmp(n_sd).Tt * sprdmp(n_sd).vd_mat ;
                 end
                 
-                
+
                 % constraints
-                if ~isempty( joint(j_count).fixed )
+				if ~isempty( joint(j_count).fixed )
+                    
+                    % constrain vector
+                    if joint(j_count).refbody(1) ~= 0 % ftau in refbody frame
+                        if isempty( body(joint(j_count).refbody(1)).rom ) % rigid link
+                            Q_ref = body(joint(j_count).refbody(1)).Q(joint(j_count).refbody(n_mesh+1)).abs ;
+                        else % rom
+                            Q_ref = body(joint(j_count).refbody(1)).Q(1).abs ;
+                            Q_ref = subs( Q_ref , s , joint(j_count).refbody(2) ) ;
+                        end
+                        temp = Q_rot( Q_conj( Q_ref ) , [ 0 ; r_sd ] ) ; % transforming to refbody frame
+                        r_sd_r = temp(2:4) ;
+                    else
+                        r_sd_r = r_sd ;
+                    end
+                    Q_sd = 2 * Q_mult( Q_conj( joint(j_count).TQ(n_mesh).abs(:,1) ) , joint(j_count).TQ2nd(n_mesh).abs(:,1) - joint(j_count).TQ(n_mesh).abs(:,1) ) ;
+                    rQ_sd = [ r_sd_r ; Q_sd(2:4,1) ] ; % 6 trans. & rot. spring/dampers
+                    temp = jacobian( rQ_sd , q ).' ;
+                    rcn = [ rcn ; r_sd_r.' ] ;
+                    
                     for i_c = 1 : numel( joint(j_count).fixed(n_mesh,:) )
                         if joint(j_count).fixed(n_mesh,i_c)
                             
@@ -503,9 +531,8 @@ for b_count = 0 : n_b % number of bodies
                             assume( lambda , 'real' ) ;
                             assume( dlambda , 'real' ) ;
                             
-                            % translational constraint only for now
-                            rcn(n_cn,:) = r_ks(end,4:6) - r_ks(end,1:3) ;
-                            cnst(n_cn).T = sprdmp(n_sd).Tt(:,i_c).' ; % use T.' in dynamics EOM and T in algebraic part
+                            cnst(n_cn).r = rQ_sd(i_c) ; % constraint relation
+                            cnst(n_cn).T = temp(:,i_c).' ; % use T.' in dynamics EOM and T in algebraic part
                             vcn = cnst(n_cn).T * u.' ;
                             cnst(n_cn).D = jacobian( vcn , q ) ;
                             cnst(n_cn).in = joint(j_count).control(n_mesh,i_c) ;
@@ -544,8 +571,7 @@ for b_count = 0 : n_b % number of bodies
                 sprdmp(n_sd).kx = ... % all spring/damper force virtual work
                     ( - diag( joint(j_count).spring.coeff(n_mesh,:) ) * ...
                     ( rQ_sd - rQ_sd0.' ) ) ; % instantanious spring force vector
-                % sprdmp(n_sd).dl = dr_sd(2:4).' ; % rod delta-l
-                sprdmp(n_sd).dl = rQ_sd.' - rQ_sd0 ; % rod delta-states
+                sprdmp(n_sd).dl = dr_sd(2:4).' ; % spring delta-l
                 sprdmp(n_sd).vd = ... % viscous damping force virtual work
                     - diag( joint(j_count).damp.visc(n_mesh,:) ) ...
                     * diag( abs( jacobian( rQ_sd , q ) * u.' ).^( joint(j_count).damp.pow(n_mesh,1) - 1 ) ) ...
@@ -558,13 +584,21 @@ for b_count = 0 : n_b % number of bodies
                     - diag( joint(j_count).damp.visc(n_mesh,:) ) ...
                     * diag( abs( jacobian( rQ_sd , q ) * u.' ).^( joint(j_count).damp.pow(n_mesh,1) - 1 ) ) ...
                     * jacobian( rQ_sd , q ) ; % instantanious viscous force matrix
-				sprdmp(n_sd).dir = abs( sign( sign( sprdmp(n_sd).dl ) + joint(j_count).dir(n_mesh,:) ) ) ;
-                                
+                
+                switch joint(j_count).dir(n_mesh)
+                    case 1 % compression-only elements, e.g. soft contact
+                        sprdmp(n_sd).dir = ( sign( sprdmp(n_sd).dl ) + 1 ) / 2 ;
+                    case 0 % both dir.ss, e.g. regular spring/damper
+                        sprdmp(n_sd).dir = 1 ;
+                    case -1 % tension-only elements, e.g. wire
+                        sprdmp(n_sd).dir = ( - sign( sprdmp(n_sd).dl ) + 1 ) / 2 ;
+                end
+                
                 if ismember( par.derive_collect , [ 3 4 ] ) % for all spring/dampers
-                    w_k = w_k + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).kx ;
-                    w_vd = w_vd + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).vd ;
-                    w_in = w_in + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * sprdmp(n_sd).in ;
-                    w_sdi = w_sdi + sprdmp(n_sd).Tt * diag( sprdmp(n_sd).dir ) * ( ...
+                    w_k = w_k + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).kx ;
+                    w_vd = w_vd + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).vd ;
+                    w_in = w_in + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * sprdmp(n_sd).in ;
+                    w_sdi = w_sdi + sprdmp(n_sd).dir * sprdmp(n_sd).Tt * ( ...
                         sprdmp(n_sd).kx + sprdmp(n_sd).vd + sprdmp(n_sd).in ) ; % all spring/damper/input force virtual work
                     w_k_mat = w_k_mat + sprdmp(n_sd).Tt * sprdmp(n_sd).k_mat ;
                     w_vd_mat = w_vd_mat + sprdmp(n_sd).Tt * sprdmp(n_sd).vd_mat ;
@@ -624,8 +658,14 @@ for i_exload = 1 : n_ex
         f_reff = [ 0 exload(i_exload).ftau(n_mesh,1:3) ].' ; % f in ref. frame
         tau_reff = [ 0 exload(i_exload).ftau(n_mesh,4:6) ].' ; % tau in ref. frame
         if exload(i_exload).refbody(1) ~= 0 % ftau in refbody frame
-        	f_reff = Q_rot( body(exload(i_exload).refbody(1)).Q(exload(i_exload).refbody(n_mesh+1)).abs , f_reff ) ; % f in ref. frame
-        	tau_reff = Q_rot( body(exload(i_exload).refbody(1)).Q(exload(i_exload).refbody(n_mesh+1)).abs , tau_reff ) ; % tau in ref. frame
+            if isempty( body(exload(i_exload).refbody(1)).rom ) % rigid link
+                Q_ref = body(exload(i_exload).refbody(1)).Q(exload(i_exload).refbody(n_mesh+1)).abs ;
+            else % rom
+                Q_ref = body(exload(i_exload).refbody(1)).Q(1).abs ;
+                Q_ref = subs( Q_ref , s , exload(i_exload).exbody(2) ) ;
+            end
+        	f_reff = Q_rot( Q_conj( Q_ref ) , f_reff ) ; % f in ref. frame
+        	tau_reff = Q_rot( Q_conj( Q_ref ) , tau_reff ) ; % tau in ref. frame
         end
         tau_exbf = Q_rot( Q_conj( exload(i_exload).Q(n_mesh).abs ) , tau_reff ) ; % tau in exbody. frame
         loads(i_exload).ftau = [ f_reff(2:4,1) ; tau_exbf(2:4,1) ] ;
@@ -658,36 +698,42 @@ save_func( q , u , lambda , dlambda , s , par , ...
 
 %% Complementary Functions:
 function [ Q , TQ ] = TQ_mat( r , qs , isq )
+global unit_quat
 % Q = [ q0 r1 r2 r3 ] ; % quaternion format
 % Q1 & Q2 are cloumn vectors
-% global unit_quat
 
 switch numel( r )                
         
     case 5 % single rotations: Euler angles
         i = double( r(4) );
         x = r(5);
-        Q = sym( zeros( 4 , 1 ) ) ;
-        if i == 1 ||  i == 2 || i == 3
-            Q(1) = cos( x / 2 ) ;
-            Q(i+1) = sin( x / 2 ) ;
-        else
-            Q = [ 1 0 0 0 ].' ;
-        end
-
-    case 6 % variable curvature with piecewise constant strain assumption in each elements
-        Q = [ 1 r(4:6)/2 ].' ;
         
-    case 7
-        if r(4) == 0 % unit quaternion
-            Q = [ sqrt( 1 - r(5:7) * r(5:7).' ) r(5:7) ].' ; % avoid singularity
-            % Q = [ 0 r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ; % no imaginary part but singular
-        else
-            % unit_quat = 0 ; % there is at least one non-unit quaternion in the model
-            Q = r(4:7).' / sqrt( r(4:7) * r(4:7).' ) ; % 4DOF quat.
-            % Q = [ cos( r(4) ) sin( r(4) )*r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ; % 4DOF axis-angle
+        switch i
+            case 1
+                Q = [ cos( x / 2 ) sin( x / 2 )*[ 1 0 0 ] ].';
+            case 2
+                Q = [ cos( x / 2 ) sin( x / 2 )*[ 0 1 0 ] ].';
+            case 3
+                Q = [ cos( x / 2 ) sin( x / 2 )*[ 0 0 1 ] ].';
+            otherwise
+                Q = [ 1 0 0 0 ].';
         end
-
+        
+    case 6 % variable curvature with piecewise constant strain assumption in each elements
+        Q = [ 1 r(4:6)/2 ].';
+        
+    case 7 % 4-element euler angle rot. vector
+        Q = [ cos( r(4) / 2 ) sin( r(4) / 2 )*r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ;
+        if isq == 1 % quat. rot.s contains states
+			if r(4) == 0 % unit quaternion
+		        Q = [ sqrt( 1 - r(5:7) * r(5:7).' ) r(5:7) ].' ; % avoid singularity
+		        % Q = [ 0 r(5:7)/sqrt( r(5:7) * r(5:7).' ) ].' ; % no imaginary part but singular
+			else
+				unit_quat = 0 ; % there is non-unit quaternion in the code
+		        Q = r(4:7).' ; % avoid singularity
+                Q = Q / sqrt( Q.' * Q ) ;
+            end
+        end
 end
 
 TQ = sym ( [ Q , [ 0 r(1:3) ].' ] ); % 4x4: Each QR contains a translation and then a rotation
@@ -712,13 +758,20 @@ r_rot = Q_mult( Q_mult( Q , rQ ) , Q_conj( Q ) ) ; % 4x1 vector
 function TQo = TQ_mult( TQ1 , TQ2 )
 TQo = [ Q_mult( TQ1(:,1) , TQ2(:,1) ) , ...
         TQ1(:,2)+Q_rot( TQ1(:,1) , TQ2(:,2) ) ] ;
-   
+
+    
 function Qo = Q_conj( Q )
-% global unit_quat
+global unit_quat
 Qo = [ Q(1,1) ; -Q(2:4,1) ] ;
 % if ~unit_quat
 % 	Qo = Qo / sqrt( Q.' * Q ) ;
 % end
 
 
+function Q = R2Q( R )
+Q = [ sqrt( 1 + R(1,1) + R(2,2) + R(3,3) )/2 ;
+      sign( R(3,2) - R(2,3) )*abs( sqrt( 1 + R(1,1) - R(2,2) - R(3,3) ) / 2 ) ;
+      sign( R(1,3) - R(3,1) )*abs( sqrt( 1 - R(1,1) + R(2,2) - R(3,3) ) / 2 ) ;
+      sign( R(2,1) - R(1,2) )*abs( sqrt( 1 - R(1,1) - R(2,2) + R(3,3) ) / 2 ) ] ;
+      
 
