@@ -9,7 +9,7 @@ Here, we introduce a new version, now called "TMTDyn", which is equipped with:
 - implementing Matlab C-mex functionality for improved performance,
 - modules for static and linear modal analysis of a hybrid system.
 
-In the sample section, we employed the TMT method to derive EOM of continuum bodies based on discretized and reduced order solutions:
+In the Samples section, we employed the TMT method to derive EOM of continuum bodies based on discretized and reduced order solutions:
 - a continuum appendage with braided pneumatic actuation chambers,
 - a fabric sleeve worn by a rigid-link arm.
 
