@@ -13,6 +13,6 @@ par.derive_collect = 0 ; % collect in 1: single struct., 2: seperte struct.s, 3:
 par.derive_mex = 1 ; % use Matlab codegen, automatically sets par.derive_collect = 1
 par.opv = true ; % optimize results
 
-The system derivations are sometimes time-consuming. The derivations for the four different modeling assumptions are provided in folders named "code (model n_rs)". You may copy their content in the "code" file, change the above parameters accordingly, set par.derive=0, and run the "Manip_v6_2.m" file in Matlab to see the results.
+The system derivations are sometimes time-consuming. The derivations for the four different modeling assumptions are provided in folders named "code (model n_rs)". You may copy their content in the "code" file, change the above parameters accordingly, set par.derive=0, and run the "Manip_v6_2.m" file in Matlab to see the results. Where the folder name has "fixpar" explanation, the structural paramters cannot be changed.
 
 Please see the package Wiki page at https://github.com/hadisdt/TMTDyn/wiki/Example-1--STIFF-FLOP-continuum-appendage for more information. See some examples here: https://github.com/hadisdt/TMTDyn/tree/master/Samples
