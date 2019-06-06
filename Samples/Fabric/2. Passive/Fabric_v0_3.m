@@ -19,7 +19,7 @@ pause( 1e-2 )
 
 %% initialization
 % study specific parameters
-par.exp_case = 2 ; % [ case star_sequence end_sequence ]
+par.exp_case = 2 ; % [ exp_case start_exp_sequence end_exp_sequence ]
 
 % derivation
 par.derive = 0 ; % set 1 to rederive in TMT
