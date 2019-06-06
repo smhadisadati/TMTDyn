@@ -1,1 +1,1 @@
-This is the latest version of the "TMTDyn" package. You may describe a system in "system.m" file and then run it in Matlab. See some examples here: https://github.com/hadisdt/TMTDyn/tree/master/Samples
+This is the latest version of the "TMTDyn" package. You may describe a system in "system.m" file and then run it in Matlab. Please see the package Wiki page at https://github.com/hadisdt/TMTDyn/wiki/ for more information. See some examples here: https://github.com/hadisdt/TMTDyn/tree/master/Samples
