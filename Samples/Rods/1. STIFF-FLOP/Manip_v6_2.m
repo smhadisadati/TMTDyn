@@ -22,7 +22,7 @@ pause( 1e-2 )
 study = 1 ; % 1: ROM, 2: Series Rigid Link (SRL), 3: Discretized Relative States (EBR), 4: Discretized Absolute States (EBA)
 n_rs = 2 ; % ROM: ROM polynomial order
            % SRL, EBR, EBA: manipulator segments
-exp_case = [ 1 1 inf ] ; % [ case star_sequence end_sequence ]
+exp_case = [ 1 1 inf ] ; % [ exp_case start_exp_sequence end_exp_sequence ]: 1- without external load, 2- with external load
 
 % derivation
 par.derive = 0 ; % set 1 to rederive in TMT
