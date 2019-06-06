@@ -1,0 +1,8 @@
+Four modeling assumptions are used to model the static and dynamic motion of a STIFF-FLOP continuum appendage. The system is described in "Manip_v6_2.m" file. You may change the following parameters to run the different implemented models and experimental cases.
+
+study = 1 ; % 1: ROM, 2: Series Rigid Link (SRL), 3: Discretized Relative States (EBR), 4: Discretized Absolute States (EBA)
+n_rs = 2 ; % ROM: ROM polynomial order
+           % SRL, EBR, EBA: manipulator segments
+exp_case = [ 1 1 inf ] ; % [ experiment_case star_sequence end_sequence ]: 1- without external load, 2- with external load
+
+Please see the package Wiki page at https://github.com/hadisdt/TMTDyn/wiki/Example-1--STIFF-FLOP-continuum-appendage for more information. See some examples here: https://github.com/hadisdt/TMTDyn/tree/master/Samples
