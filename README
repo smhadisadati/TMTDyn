@@ -11,9 +11,9 @@ Here, we introduce a new version, now called "TMTDyn", which is equipped with:
 
 In the Samples section, we employed the TMT method to derive EOM of continuum bodies based on discretized and reduced order solutions:
 - a continuum appendage with braided pneumatic actuation chambers,
-- a fabric sleeve worn by a rigid-link arm.
+- a fabric sleeve worn on a rigid-link arm.
 
 As a result, a unified software package is provided for deriving EOM, control design, and numerical simulation of hybrid rigid-continuum body systems.
 
-Please see the Wiki page at: https://github.com/hadisdt/TMTDyn/wiki for the package documentation.
+Please see the Wiki page at https://github.com/hadisdt/TMTDyn/wiki for the package documentation.
 
