@@ -28,7 +28,7 @@ par.derive_mex = 0 ; % use Matlab codegen, automatically sets par.derive_collect
 par.opv = true ; % optimize results
 
 % controls
-par.Anim = 1 ; % animation on (1) or off (0)
+par.anim = 1 ; % animation on (1) or off (0)
 par.movie = 0 ; % save movie[ ~ , rks , par ] = AnimEOM_mex( t , z , par );
 par.equil = 0 ; % 1: static analysis with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
 par.modal = 0 ; % 1: linear modal analysis with Matlab func.s, 2: with C-mex func.s

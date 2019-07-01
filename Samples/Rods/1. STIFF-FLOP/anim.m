@@ -46,7 +46,7 @@ for i_m = 1 : par.n_mass_anim
                             r_anim.mass(i_m).r(end,1,:) r_anim.mass(i_m).r(end,2,:) r_anim.mass(i_m).r(end,3,:) ] ;
 end
 
-if par.Anim ~= 1 % anim. on/off
+if par.anim ~= 1 % anim. on/off
     return ;
 end
 
