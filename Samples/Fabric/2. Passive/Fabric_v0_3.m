@@ -22,7 +22,7 @@ pause( 1e-2 )
 par.exp_case = 2 ; % [ exp_case start_exp_sequence end_exp_sequence ]
 
 % derivation
-par.derive = 1 ; % set 1 to rederive in TMT
+par.derive = 0 ; % set 1 to rederive in TMT
 par.derive_collect = 1 ; % collect in 1: single struct., 2: seperte struct.s, 3: seperate func.s, 4: C func.s
 par.derive_mex = 0 ; % use Matlab codegen, automatically sets par.derive_collect = 1
 par.opv = true ; % optimize results
