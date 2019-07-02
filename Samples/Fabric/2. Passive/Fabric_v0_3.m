@@ -32,7 +32,7 @@ par.anim = 1 ; % animation on (1) or off (0)
 par.movie = 0 ; % save movie[ ~ , rks , par ] = AnimEOM_mex( t , z , par );
 par.equil = 0 ; % 1: static analysis with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
 par.modal = 0 ; % 1: linear modal analysis with Matlab func.s, 2: with C-mex func.s
-par.simdyn = 3 ; % 1: dyn. sim. with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
+par.dyn = 3 ; % 1: dyn. sim. with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
 
 % other parameters
 par.t_rep = 5e-1 ; % sim report time
@@ -203,14 +203,14 @@ if par.modal
 end
 
 % sim & anim.:
-if par.simdyn ~= 0
+if par.dyn ~= 0
     clf( par.fig.anim ) ; par.linetype = '-' ;
     t_all = [] ; z_all = [] ; rjtip_all = [] ;
     for t0_step = par.t_init : dt_anim_rep(1) : par.t_final
         if t0_step == par.t_final ; continue ; end
         % step sim:
         par.t0 = t0_step ;
-        [ t , z , tfinal , par ] = sim_dyn( z0 , par ) ;
+        [ t , z , tfinal , par ] = dyn_sim( z0 , par ) ;
         
         % animation
         [ ~ , rjtip , ~ , par ] = anim( t , z , par ) ;

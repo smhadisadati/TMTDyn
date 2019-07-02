@@ -21,7 +21,7 @@ if isempty( par )
 	par.anim = 1 ; % animation on (1) or off (0)
 	par.movie = 0 ; % save movie
 	par.equil = 1 ; % 1 to do initial static analysis
-	par.simdyn = 1 ; % 1 to do dyn. sim.
+	par.dyn = 1 ; % 1 to do dyn. sim.
     par.t_rep = 5e-1 ; % sim report time
     par.n_int = 100 ; % number of integration steps
     par.n_animpoints = 50 ; % number of anim points
@@ -59,8 +59,8 @@ else
 	if ~isfield( par , 'equil' ) || isempty( par.equil )
 		par.equil = 1 ;
 	end
-	if ~isfield( par , 'simdyn' ) || isempty( par.simdyn )
-		par.simdyn = 1 ;
+	if ~isfield( par , 'dyn' ) || isempty( par.dyn )
+		par.dyn = 1 ;
 	end
 	if ~isfield( par , 't_rep' ) || isempty( par.t_rep )
 		par.t_rep = 5e-1 ;
