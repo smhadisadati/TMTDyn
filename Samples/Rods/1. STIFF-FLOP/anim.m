@@ -26,7 +26,9 @@ for i = 1 : ss
     for i_s = 1 : par.n_animpoints + 1
         dl = ( 1 - eps ) / par.n_animpoints * ( i_s - 1 ) + eps ;
         for i_sd = 1 : par.n_ks_anim
-            r_anim.sprdmp(i_sd).r(i_s,:,i) = ( temp2(i_sd,4:6) - temp2(i_sd,1:3) ) * dl + temp2(i_sd,1:3) ;
+            if i_s == 1 || i_s == par.n_animpoints + 1 % always line
+                r_anim.sprdmp(i_sd).r(floor(i_s/par.n_animpoints)+1,:,i) = ( temp2(i_sd,4:6) - temp2(i_sd,1:3) ) * dl + temp2(i_sd,1:3) ;
+            end
         end
         temp1 = rjtipF_mex( vars , z(i,:) , dl ) ;
         for i_m = 1 : par.n_mass_anim
@@ -90,8 +92,12 @@ for n_t = 1 : sk : ss % update the points
     end
     
     % spring/dampers init.
+%     for i = 1 : par.n_ks_anim % creat lines ending to each joint
+%         plot3( r_anim.sprdmp(i).r(:,1,n_t) , r_anim.sprdmp(i).r(:,2,n_t) , r_anim.sprdmp(i).r(:,3,n_t) , 'LineStyle' , ':' , 'LineWidth' , 2 ,'Color' , clr{mod(i,6)+1} );
+%         hold on
+%     end
     for i = 1 : par.n_ks_anim % creat lines ending to each joint
-        plot3( r_anim.sprdmp(i).r(:,1,n_t) , r_anim.sprdmp(i).r(:,2,n_t) , r_anim.sprdmp(i).r(:,3,n_t) , 'LineStyle' , ':' , 'LineWidth' , 2 ,'Color' , clr{mod(i,6)+1} );
+        plot3( rks(i,[1 4],n_t) , rks(i,[2 5],n_t) , rks(i,[3 6],n_t) , 'LineStyle' , ':' , 'LineWidth' , 2 ,'Color' , clr{mod(i,6)+1} );
         hold on
     end
     title( t(n_t) )

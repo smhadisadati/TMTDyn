@@ -43,11 +43,11 @@ else
 	if ~isfield( par , 'opv' ) || isempty( par.opv )
 		par.opv = true ;
 	end
+	if ~isfield( par , 'derive_collect' ) || isempty( par.derive_collect )
+		par.derive_collect = 1 ;
+	end
 	if ~isfield( par , 'derive_mex' ) || isempty( par.derive_mex )
 		par.derive_mex = 1 ;
-		par.derive = 1 ;
-	end
-	if par.derive_mex == 1 || ~isfield( par , 'derive_collect' ) || isempty( par.derive_collect )
 		par.derive_collect = 1 ;
 	end
 	if ~isfield( par , 'anim' ) || isempty( par.anim )

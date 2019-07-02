@@ -1,4 +1,4 @@
-function [ s , world , body , joint , exload , par , symbols ] = check( par , world , body , joint , exload , mesh )
+function [ s , world , body , joint , exload , mesh , par , symbols ] = check( par , world , body , joint , exload , mesh )
 %% check inputs to set default values and pass errors
 fprintf( 'check inputs... \n' )
 par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
@@ -13,15 +13,20 @@ symbols = [ dummy1 ] ;
 if isempty( par )
 	par.sym = dummy1 ;
 	par.var = 0 ;
-	par.derive = 1 ; % set 1 to rederive in TMT
+	par.derive = 0 ; % set 1 to rederive in TMT
+	par.user = 0 ;
 	par.opv = true ; % optimize results
 	par.derive_collect = 1 ; % derive in single file: 1- single struct., 2- seperte struct.s, 3- separate func.s, 4- C func.s
 	par.derive_mex = 1 ; % use Matlab codegen, use with par.derive_collect = 1 for now
-	par.Anim = 1 ; % animation on (1) or off (0)
+	par.anim = 1 ; % animation on (1) or off (0)
 	par.movie = 0 ; % save movie
 	par.equil = 1 ; % 1 to do initial static analysis
 	par.simdyn = 1 ; % 1 to do dyn. sim.
-	par.intn = 100 ; % num. int. steps
+    par.t_rep = 5e-1 ; % sim report time
+    par.n_int = 100 ; % number of integration steps
+    par.n_animpoints = 50 ; % number of anim points
+    par.n_datasample = 50 ; % number of saved data samples
+    par.dt_anim_rep = [ inf 1 ] ; % anim report time, if 'inf' then (tf-t0)/dt_animStep(2)
 else
 	if ~isfield( par , 'sym' ) || isempty( par.sym )
 		par.sym = dummy1 ;
@@ -29,8 +34,11 @@ else
 	if ~isfield( par , 'var' ) || isempty( par.var )
 		par.var = 0 ;
 	end
+	if ~isfield( par , 'user' ) || isempty( par.user )
+		par.user = 0 ;
+	end
 	if ~isfield( par , 'derive' ) || isempty( par.derive )
-		par.derive = 1 ;
+		par.derive = 0 ;
 	end
 	if ~isfield( par , 'opv' ) || isempty( par.opv )
 		par.opv = true ;
@@ -40,10 +48,10 @@ else
 	end
 	if ~isfield( par , 'derive_mex' ) || isempty( par.derive_mex )
 		par.derive_mex = 1 ;
-		par.derive = 1 ;
+		par.derive_collect = 1 ;
 	end
-	if ~isfield( par , 'Anim' ) || isempty( par.Anim )
-		par.Anim = 1 ;
+	if ~isfield( par , 'anim' ) || isempty( par.anim )
+		par.anim = 1 ;
 	end
 	if ~isfield( par , 'movie' ) || isempty( par.movie )
 		par.movie = 0 ;
@@ -54,9 +62,21 @@ else
 	if ~isfield( par , 'simdyn' ) || isempty( par.simdyn )
 		par.simdyn = 1 ;
 	end
-	if ~isfield( par , 'intn' ) || isempty( par.intn )
-		par.intn = 50 ;
+	if ~isfield( par , 't_rep' ) || isempty( par.t_rep )
+		par.t_rep = 5e-1 ;
 	end
+	if ~isfield( par , 'n_int' ) || isempty( par.n_int )
+		par.n_int = 100 ;
+	end
+	if ~isfield( par , 'n_animpoints' ) || isempty( par.n_animpoints )
+		par.n_animpoints = 50 ;
+	end
+	if ~isfield( par , 'n_datasample' ) || isempty( par.n_datasample )
+		par.n_datasample = 50 ;
+	end
+	if ~isfield( par , 'dt_anim_rep' ) || isempty( par.dt_anim_rep ) || numel( par.dt_anim_rep ) ~= 1
+		par.dt_anim_rep = [ inf 1 ] ;
+    end
 end
 
 
@@ -148,7 +168,8 @@ for i_j = 1 : numel( joint )
     
     if ~isfield( joint(i_j) ,'tr' ) || isempty( joint(i_j).tr )
         joint(i_j).tr.trans = [ 0 0 0 ] ;
-        joint(i_j).tr.rot = [ 0 0 ] ;
+        joint(i_j).tr.rot = [ 0 0 0 0 ] ;
+        joint(i_j).tr.rot_type = 'none' ;
     end
     
     for i = 1 : numel( joint(i_j).tr )
@@ -156,7 +177,11 @@ for i_j = 1 : numel( joint )
             joint(i_j).tr(i).trans = [ 0 0 0 ] ;
         end
         if ~isfield( joint(i_j).tr(i) ,'rot' ) || isempty( joint(i_j).tr(i).rot )
-            joint(i_j).tr(i).rot = [ 0 0 ] ;
+            joint(i_j).tr(i).rot = [ 0 0 0 0 ] ;
+        	joint(i_j).tr(i).rot_type = 'none' ;
+        end
+        if ~isfield( joint(i_j).tr(i) ,'rot_type' ) || isempty( joint(i_j).tr(i).rot_type )
+        joint(i_j).tr(i).rot_type = 'none' ;
         end
         rotrans = [ joint(i_j).tr(i).trans joint(i_j).tr(i).rot ] ;
         for i2 = 1 : numel( rotrans )
@@ -255,7 +280,7 @@ for i_j = 1 : numel( joint )
                     S = [] ;
                     for i_s = 1 : joint(i_j).rom.order
                         i_sbc = i_s ;
-                        if i2 < 4  % x,y,z Boundary Condition
+                        if i2 < 4  % x,y,z Boundary Condition at s = 0
                             i_sbc = i_s + 1 ;
                         end
                         S = [ S s^i_sbc ] ;
@@ -290,7 +315,8 @@ for i_j = 1 : numel( joint )
     
     if isempty( joint(i_j).tr2nd ) &&  joint(i_j).mainkin == 0 % joint not in main kin. chain
         joint(i_j).tr2nd.trans = [ 0 0 0 ] ;
-        joint(i_j).tr2nd.rot = [ 0 0 ] ;
+        joint(i_j).tr2nd.rot = [ 0 0 0 0 ] ;
+        joint(i_j).tr2nd.rot_type = 'none' ;
     end
     
     if ~isempty( joint(i_j).tr2nd )
@@ -299,7 +325,11 @@ for i_j = 1 : numel( joint )
                 joint(i_j).tr2nd(i).trans = [ 0 0 0 ] ;
             end
             if ~isfield( joint(i_j).tr2nd(i) ,'rot' ) || isempty( joint(i_j).tr2nd(i).rot )
-                joint(i_j).tr2nd(i).rot = [ 0 0 ] ;
+                joint(i_j).tr2nd(i).rot = [ 0 0 0 0 ] ;
+                joint(i_j).tr2nd(i).rot_type = 'none' ;
+            end
+            if ~isfield( joint(i_j).tr2nd(i) ,'rot_type' ) || isempty( joint(i_j).tr2nd(i).rot_type )
+                joint(i_j).tr2nd(i).rot_type = 'none' ;
             end
         end
         if ~isfield( joint(i_j) , 'dir' ) || isempty( joint(i_j).dir )
@@ -407,13 +437,22 @@ for i_j = 1 : numel( joint )
                 if numel(joint(i_j).control(1,:)) < 6
                     joint(i_j).control = [ joint(i_j).control , zeros(n_mesh,6-numel(joint(i_j).control(1,:))) ] ;
                 end
-            end            
+            end          
+			if ~isfield( joint(i_j) ,'refbody' ) || isempty( joint(i_j).refbody )
+				joint(i_j).refbody = ones(n_mesh,1) * [ 0 1 ] ;
+			else if numel( joint(i_j).refbody(1,:) ) == 1
+					joint(i_j).refbody(:,2) = 1 ;
+				 end
+				 if numel( joint(i_j).refbody(:,1) ) == 1
+				 	joint(i_j).refbody = ones(n_mesh,1) * joint(i_j).refbody(1,:) ;
+				 end
+			end  
             if ~isfield( joint(i_j) , 'spring' ) || isempty( joint(i_j).spring )
                 joint(i_j).spring.coeff = zeros(n_mesh,6) ;
                 joint(i_j).spring.init = zeros(n_mesh,6) ;
                 joint(i_j).spring.compr = ones(n_mesh,6) ;
             end 
-            if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).fixed )
+            if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).damp )
                 joint(i_j).damp.visc = zeros(n_mesh,6) ;
                 joint(i_j).damp.pow = ones(n_mesh,6) ;
             end 
@@ -497,6 +536,9 @@ for i_j = 1 : numel( joint )
     end
     if ~isfield( joint(i_j) , 'control' )
         joint(i_j).control = [] ;
+    end 
+    if ~isfield( joint(i_j) , 'refbody' )
+        joint(i_j).refbody = [] ;
     end 
 end
 
@@ -595,25 +637,29 @@ for i_l = 1 : numel( exload )
     end
     if ~isfield( exload(i_l) ,'refbody' ) || isempty( exload(i_l).refbody )
         exload(i_l).refbody = ones(n_mesh,1) * [ 0 1 ] ;
-    else if numel( exload(i_l).refbody ) == 1
-		    exload(i_l).refbody(2) = 1 ;
-		    exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(2) ;
-		 else if numel( exload(i_l).refbody(:,1) ) == 1
-		    	 exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(2) ;
-	    	  end
-         end
+    else if numel( exload(i_l).refbody(1,:) ) == 1
+		    exload(i_l).refbody(:,2) = 1 ;
+		 end
+		 if numel( exload(i_l).refbody(:,1) ) == 1
+		 	exload(i_l).refbody = ones(n_mesh,1) * exload(i_l).refbody(1,:) ;
+	     end
     end
     
     if ~isfield( exload(i_l) ,'tr' ) || isempty( exload(i_l).tr )
         exload(i_l).tr.trans = [ 0 0 0 ] ;
         exload(i_l).tr.rot = [ 0 0 ] ;
+		exload(i_l).tr.rot_type = 'none' ;
     end   
     for i = 1 : numel( exload(i_l).tr )
         if ~isfield( exload(i_l).tr(i) ,'trans' ) || isempty( exload(i_l).tr(i).trans )
             exload(i_l).tr(i).trans = [ 0 0 0 ] ;
         end
         if ~isfield( exload(i_l).tr(i) ,'rot' ) || isempty( exload(i_l).tr(i).rot )
-            exload(i_l).tr(i).rot = [ 0 0 ] ;
+            exload(i_l).tr(i).rot = [ 0 0 0 0 ] ;
+			exload(i_l).tr(i).rot_type = 'none' ;
+        end        
+        if ~isfield( exload(i_l).tr(i) ,'rot_type' ) || isempty( exload(i_l).tr(i).rot_type )
+		exload(i_l).tr(i).rot_type = 'none' ;
         end        
     end 
     if ~isfield( exload(i_l) ,'ftau' ) || isempty( exload(i_l).ftau )
@@ -645,16 +691,21 @@ for i_d = 1 : numel( mesh )
     if ~isfield( mesh(i_d) ,'joint' ) || isempty( mesh(i_d).joint ) || numel( mesh(i_d).joint ) ~= 2
         error( 'mesh(i_d).joint' ) ;
     end
-    if ~isfield( mesh(i_d) ,'tr' ) || isempty( exload(i_l).tr )
+    if ~isfield( mesh(i_d) ,'tr' ) || isempty( mesh(i_d).tr )
         mesh(i_d).tr.trans = [ 0 0 0 ] ;
-        mesh(i_d).tr.rot = [ 0 0 ] ;
+        mesh(i_d).tr.rot = [ 0 0 0 0 ] ;
+        mesh(i_d).tr.rot_type = 'none' ;
     end   
     for i = 1 : numel( mesh(i_d).tr )
         if ~isfield( mesh(i_d).tr(i) ,'trans' ) || isempty( mesh(i_d).tr(i).trans )
             mesh(i_d).tr(i).trans = [ 0 0 0 ] ;
         end
         if ~isfield( mesh(i_d).tr(i) ,'rot' ) || isempty( mesh(i_d).tr(i).rot )
-            mesh(i_d).tr(i).rot = [ 0 0 ] ;
+            mesh(i_d).tr(i).rot = [ 0 0 0 0 ] ;
+        	mesh(i_d).tr(i).rot_type = 'none' ;
+        end  
+        if ~isfield( mesh(i_d).tr(i) ,'rot_type' ) || isempty( mesh(i_d).tr(i).rot_type )
+        	mesh(i_d).tr(i).rot_type = 'none' ;
         end        
     end
     
