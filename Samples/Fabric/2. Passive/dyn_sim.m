@@ -2,7 +2,7 @@
 % ====================================================
 % change this for different scenarios
 
-function [ t , z , tfinal , par ] = sim_dyn( z0 , par )
+function [ t , z , tfinal , par ] = dyn_sim( z0 , par )
 t0 = par.t0 ; dt = par.dt ; stepT = par.stepT ;
 fprintf( 'dynamic sim... \n' )
 par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
