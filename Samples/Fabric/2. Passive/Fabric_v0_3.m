@@ -22,7 +22,7 @@ pause( 1e-2 )
 par.exp_case = 2 ; % [ exp_case start_exp_sequence end_exp_sequence ]
 
 % derivation
-par.derive = 0 ; % set 1 to rederive in TMT
+par.derive = 1 ; % set 1 to rederive in TMT
 par.derive_collect = 1 ; % collect in 1: single struct., 2: seperte struct.s, 3: seperate func.s, 4: C func.s
 par.derive_mex = 0 ; % use Matlab codegen, automatically sets par.derive_collect = 1
 par.opv = true ; % optimize results
@@ -45,7 +45,7 @@ dt_anim_rep = [ inf 1 ] ; % anim report time, if 'inf' then (tf-t0)/dt_animStep(
 if par.derive == 1
     syms E_sym mu_pow_sym mu_v_sym mu_u_sym phi_sym mu_link_sym
     par.sym = [ E_sym mu_pow_sym mu_v_sym mu_u_sym phi_sym mu_link_sym ] ;
-assume( par.var , 'real' ) ;
+assume( par.sym , 'real' ) ;
 else
     E_sym = 0 ; mu_pow_sym = 0 ; mu_v_sym = 0 ; mu_u_sym = 0 ; phi_sym = 0 ; mu_link_sym = 0 ;
 end
