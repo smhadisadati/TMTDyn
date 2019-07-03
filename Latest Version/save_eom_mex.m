@@ -133,7 +133,7 @@ else % dyn sim
     fprintf( EOM_m , string_all ) ;
     fclose( EOM_m ) ;
     % mex
-    if par_mex.simdyn == 2
+    if par_mex.dyn == 2
         vars_mex = { 0 , zeros( 1 , 2 * ( par_mex.nq + par_mex.nlambda ) )' , par_mex } ;
         cd code
         codegen EOM -args vars_mex

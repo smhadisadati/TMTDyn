@@ -91,7 +91,7 @@ end
 
 for i = 1 : par_mex.n_cn
     string_all = [ string_all newline ...
-        '[ tc , Dc , in ] = cnstF' num2str(i) '( par.var , z.'' , 0 ) ;' newline ...
+        '[ rc , tc , Dc , in ] = cnstF' num2str(i) '( par.var , z.'' , 0 ) ;' newline ...
         'Tc = [ Tc ; tc ] ;' newline ...
         'dc = [ dc ; - Dc * uq + in ] ;' newline ] ;
 end
@@ -133,7 +133,7 @@ else % dyn sim
     fprintf( EOM_m , string_all ) ;
     fclose( EOM_m ) ;
     % mex
-    if par_mex.simdyn == 2
+    if par_mex.dyn == 2
         vars_mex = { 0 , zeros( 1 , 2 * ( par_mex.nq + par_mex.nlambda ) )' , par_mex } ;
         cd code
         codegen EOM -args vars_mex
