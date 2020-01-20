@@ -16,3 +16,7 @@ par.opv = true ; % optimize results
 The system derivations are sometimes time-consuming. The derivations for the four different modeling assumptions are provided in folders named "code (model n_rs)". You may copy their content in the "code" file, change the above parameters accordingly, set par.derive=0, and run the "Manip_v6_2.m" file in Matlab to see the results. Where the folder name has "fixpar" explanation, the structural paramters cannot be changed. The "int_mid_step.m" file for each case is placed in the "code" folder.
 
 Please see the package Wiki page at https://github.com/hadisdt/TMTDyn/wiki/Example-1--STIFF-FLOP-continuum-appendage for more information. See some examples here: https://github.com/hadisdt/TMTDyn/tree/master/Samples
+
+Common issues:
+- The model relys on matlab mex files which are machine specific, meaning that you need to derive the whole model at least once (by setting "par.derive=1;") on your own machine (computer) for it to work properly.
+- If you need to change any parameter after deriving the EOM, you need to comment the section "%% derivation simplification" that replaces the symbolic variables with constant values. As a result, it takes longer to derive the EOM but you do not need to rederive the EOM every time you change a single parameter later.
