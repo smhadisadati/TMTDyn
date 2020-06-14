@@ -1,0 +1,12 @@
+MEX {
+	global:
+		mexFunction;
+		mexfilerequiredapiversion;
+		emlrtMexFcnProperties;
+		fj_vd_matF;
+		fj_vd_matF_initialize;
+		fj_vd_matF_terminate;
+		fj_vd_matF_atexit;
+	local:
+		*;
+};

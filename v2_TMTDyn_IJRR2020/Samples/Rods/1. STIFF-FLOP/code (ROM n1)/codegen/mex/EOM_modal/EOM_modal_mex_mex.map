@@ -1,0 +1,12 @@
+MEX {
+	global:
+		mexFunction;
+		mexfilerequiredapiversion;
+		emlrtMexFcnProperties;
+		EOM_modal;
+		EOM_modal_initialize;
+		EOM_modal_terminate;
+		EOM_modal_atexit;
+	local:
+		*;
+};
