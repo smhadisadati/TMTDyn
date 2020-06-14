@@ -1,2 +1,0 @@
-AutoTMTDyn is a Matlab based package, for automatic derivation of TMT Equation of Motion (EOM) for rigid body dynamic systems, and nonlinear controller design.
-See: S. M. H. Sadati, S. Naghibi, and M. Naraghi, ‘An Automatic Algorithm to Derive Linear Vector Form of Lagrangian Equation of Motion with Collision and Constraint’, Procedia Computer Science, vol. 76, pp. 217–222, 2015.
