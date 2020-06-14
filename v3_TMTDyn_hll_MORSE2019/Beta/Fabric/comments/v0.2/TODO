@@ -1,7 +1,0 @@
-add var
-add contraint, control
-add body.rom.length, body axial location, body mesh: keep mesh but seperate rom
-from_body, to_body
-add transfromation to body too
-
-different method for SRL, ROM, EBA, EBR

@@ -1,1 +1,0 @@
-I suggest you use the install script install_STB.m. Find all files with mxCreateScalarDouble and replace them with  mxCreateDoubleScalar. There should be five of them in .../sundials-2.4.0/sundialsTB/cvodes/cvm/src (cvmWrap.c,kim.c, idmWrap.c, idm.c and cvm.c ).
