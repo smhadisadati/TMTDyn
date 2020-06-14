@@ -1,0 +1,9 @@
+function par = post_proc( t , t_equil , z , z_equil , rjtip , rjtip_equil , ...
+	Phi_modal , M_modal , K_modal , V_modal , omega , xi , ...
+	par )
+fprintf( 'post-processing... \n' )
+par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
+toc( par.timer )
+
+% to be completed by the user...
+

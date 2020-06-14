@@ -1,0 +1,10 @@
+# ninja log v5
+1	358	587706511	build/win64/test_data.obj	75379b0499d84568
+24	372	587706511	build/win64/test_initialize.obj	7bc99b218e94c195
+34	373	587706511	build/win64/_coder_test_mex.obj	caa421eee5182312
+19	374	587706511	build/win64/test_terminate.obj	43fb09964f73af09
+39	375	587706511	build/win64/_coder_test_api.obj	7594ea1f95372fe2
+15	376	587706511	build/win64/_coder_test_info.obj	43b2436632b6e8a4
+29	377	587706511	build/win64/c_mexapi_version.obj	62dda3b90e9ffa15
+10	378	587706511	build/win64/test.obj	30b618854ffff540
+379	478	587706512	test_mex.mexw64	e6c64e05267f2556

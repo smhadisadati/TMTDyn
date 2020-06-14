@@ -1,0 +1,46 @@
+>> sundials 2.4.0 and Matlab interface installation:
+
+sudo apt-get install gcc-6 g++-6 g++-6-multilib gfortran-6
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-7 10
+sudo update-alternatives --install /usr/bin/gcc gcc /usr/bin/gcc-6 20
+
+- in sundials folder:
+sudo ./configure
+sudo apt-get install make
+sudo make
+sudo make install
+
+- Install sundialsTB:
+sudo matlab
+- run install_STB.m in Matlab
+- install the toolbox in Matlab toolbox folder: /usr/local/MATLAB/R2019a/toolbox
+
+- creat link to startup_STB.m in /usr/local/MATLAB/R2019a/toolbox/local
+sudo ln -s "/usr/local/MATLAB/R2019a/toolbox/sundialsTB/startup_STB.m"
+
+- Place a copy of generated startup_STB.m in your working directory and run "startup_STB" everytime you need to use it in Matlab
+
+-------------------------------------------------------------------------------------------------
+
+>> sundials-5.0.0-dev.1 installation:
+
+- creat "sundials-5.0.0-dev.1" in home
+- creat "instdir", "builddir", and "solverdir"
+- extraxt the installer in "solverdir"
+- open terminal in "builddir"
+sudo apt install cmake
+
+- for linux
+cmake -DCMAKE_INSTALL_PREFIX=/home/myname/sundials/instdir -DEXAMPLES_INSTALL_PATH=/home/myname/sundials/instdir/examples -DMPI_ENABLE=ON -DFCMIX_ENABLE=ON ../solverdir
+
+- for windws linux app
+cmake -DCMAKE_INSTALL_PREFIX=/mnt/c/sundials-5.0.0-dev.1/instdir -DEXAMPLES_INSTALL_PATH=/mnt/c/sundials-5.0.0-dev.1/instdir/examples -DMPI_ENABLE=ON -DFCMIX_ENABLE=ON ../solverdir
+
+make
+make install
+
+- remove "builddir"
+
+- to run examples, go to the desired "example" folder under "instdir"
+make
+./<example name>

@@ -1,0 +1,12 @@
+MEX {
+	global:
+		mexFunction;
+		mexfilerequiredapiversion;
+		emlrtMexFcnProperties;
+		massF16;
+		massF16_initialize;
+		massF16_terminate;
+		massF16_atexit;
+	local:
+		*;
+};
