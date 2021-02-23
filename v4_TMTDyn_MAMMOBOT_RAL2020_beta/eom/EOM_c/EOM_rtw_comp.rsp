@@ -1,0 +1,7 @@
+-I"C:\Users\customer\MEGAsync\Hadi\Postdoc\2_KCL\2_Research\1. Model\MOMOBOT TMTDyn\eom\codegen\lib\EOM"
+-I"C:\Users\customer\MEGAsync\Hadi\Postdoc\2_KCL\2_Research\1. Model\MOMOBOT TMTDyn\eom"
+-I"C:\Program Files\MATLAB\R2019a\extern\include"
+-I"C:\Program Files\MATLAB\R2019a\simulink\include"
+-I"C:\Program Files\MATLAB\R2019a\rtw\c\src"
+-I"C:\Program Files\MATLAB\R2019a\rtw\c\src\ext_mode\common"
+-I"C:\Program Files\MATLAB\R2019a\rtw\c\ert"
