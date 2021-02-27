@@ -1026,24 +1026,24 @@ for b_count = 0 : n_bodies % number of bodies
                         rom.sprdmp(end,end) = 1 ;
                 end
                 
-                % extract relaxed state from fitted spline
+                % beam relaxed state
                 % no i_copies for spring.init & spring.init_s at the moment
-                rQ_sd0 = joint(i_joint).spring.init(i_copies,1:6) ;
+                rQ_sd0 = sym( joint(i_joint).spring.init(i_copies,1:6) ) ;
 
-                % transform strain coeff.s to global frame for less derivation complexity: only the strains not curvatures, no advantages in transforming the curvatures!
-                if isnan( max( rQ_sd0(1:3) ) ) % all translational strains are extracted from a fitted spline
-                    rQ_sd(1:3) = dr_sd(2:4,1); % strain in global frame
-                    rQ_sd_spr(1:3) = dr_sd_spr(2:4,1); % relaxed state strain in global frame
-                    K_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).spring.coeff(i_copies,1:3) ].' ) ; % transform K to global frame
-                    joint(i_joint).spring.coeff(i_copies,1:3) = K_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
-                    mu_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).damp.visc(i_copies,1:3) ].' ) ; % transform mu to global frame
-                    joint(i_joint).damp.visc(i_copies,1:3) = mu_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
-                end
+                % % transform strain coeff.s to global frame for less derivation complexity: only the strains not curvatures, no advantages in transforming the curvatures!
+                % if isnan( max( rQ_sd0(1:3) ) ) % all translational strains are extracted from a fitted spline
+                %     rQ_sd(1:3) = dr_sd(2:4,1); % replace with strain in global frame
+                %     rQ_sd_spr(1:3) = dr_sd_spr(2:4,1); % replace with relaxed state strain in global frame
+                %     K_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).spring.coeff(i_copies,1:3) ].' ) ; % transform K to global frame
+                %     joint(i_joint).spring.coeff(i_copies,1:3) = K_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
+                %     mu_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).damp.visc(i_copies,1:3) ].' ) ; % transform mu to global frame
+                %     joint(i_joint).damp.visc(i_copies,1:3) = mu_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
+                % end
                 
+                % extract relaxed state from fitted spline
                 % copy over the strains/curvatures extracted from spline fitted for relaxed state
                 for i_s = 1 : numel( rQ_sd0 )
                     if isnan( rQ_sd0(i_s) )
-                        rQ_sd0 = sym( rQ_sd0 ) ;
                         rQ_sd0(i_s) = rQ_sd_spr(i_s) ;
                     end
                 end

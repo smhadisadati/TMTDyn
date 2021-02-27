@@ -78,7 +78,7 @@ axial_offset_s_init = 0 ; % s_init offset for enforcing continuity
 n_C_dof = 0 ; % number of doeff coeff.s
 
 % spring similar to the dof
-if isnan( source.init(i_copies,:) ) % only happens if source.init = NAN and has only 1 element
+if isnan( source.init(i_copies,1) ) % only happens if source.init = NAN and has only 1 element
     source.equal2{1}(i_copies,:) = [i_joint, i_copies, i_dofAxsAngl, nan, 0, 0, 1] ; % {i_coeff}[i_joint, i_copies, i_dofAxsAngl, i_coeff, l_rom, diff_order, coeff] x i_dof_mult
 end
 

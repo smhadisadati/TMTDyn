@@ -55,10 +55,10 @@ end
 
 % plot
 figure ;
-subplot(2,2,1) ; plot( p(:,1) , p(:,2:4) ) ; title( 'p' ) ;
-subplot(2,2,2) ; plot( tip_pos(1:end,1) , tip_pos(1:end,2:4) ) ; title( '\rho_{tip}' ) ;
-subplot(2,2,3) ; plot( f_ex(:,1) , f_ex(:,2:4) ) ; title( 'f_{tip}' ) ;
-subplot(2,2,4) ; plot( f_ex(:,1) , f_ex(:,5:7) ) ; title( '\tau_{tip}' ) ;
+subplot(2,2,1) ; plot( p(:,1) , p(:,2:4) , 'LineWidth' , 2 ) ; title( 'p' ) ;
+subplot(2,2,2) ; plot( tip_pos(1:end,1) , tip_pos(1:end,2:4) , 'LineWidth' , 2 ) ; title( '\rho_{tip}' ) ;
+subplot(2,2,3) ; plot( f_ex(:,1) , f_ex(:,2:4) , 'LineWidth' , 2 ) ; title( 'f_{tip}' ) ;
+subplot(2,2,4) ; plot( f_ex(:,1) , f_ex(:,5:7) , 'LineWidth' , 2 ) ; title( '\tau_{tip}' ) ;
 
 % test
 % figure ; plot( tip_RQ(:,1) , tip_RQ(:,2:end) ) ;

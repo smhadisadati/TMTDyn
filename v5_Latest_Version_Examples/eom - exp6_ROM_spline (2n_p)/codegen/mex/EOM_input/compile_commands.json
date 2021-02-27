@@ -1,0 +1,56 @@
+[
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   EOM_input_data.c /Fobuild\\win64\\EOM_input_data.obj",
+    "file": "EOM_input_data.c",
+    "output": "build/win64/EOM_input_data.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   rt_nonfinite.c /Fobuild\\win64\\rt_nonfinite.obj",
+    "file": "rt_nonfinite.c",
+    "output": "build/win64/rt_nonfinite.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   EOM_input_initialize.c /Fobuild\\win64\\EOM_input_initialize.obj",
+    "file": "EOM_input_initialize.c",
+    "output": "build/win64/EOM_input_initialize.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   EOM_input_terminate.c /Fobuild\\win64\\EOM_input_terminate.obj",
+    "file": "EOM_input_terminate.c",
+    "output": "build/win64/EOM_input_terminate.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   EOM_input.c /Fobuild\\win64\\EOM_input.obj",
+    "file": "EOM_input.c",
+    "output": "build/win64/EOM_input.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   interface\\_coder_EOM_input_api.c /Fobuild\\win64\\_coder_EOM_input_api.obj",
+    "file": "interface/_coder_EOM_input_api.c",
+    "output": "build/win64/_coder_EOM_input_api.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   interface\\_coder_EOM_input_mex.c /Fobuild\\win64\\_coder_EOM_input_mex.obj",
+    "file": "interface/_coder_EOM_input_mex.c",
+    "output": "build/win64/_coder_EOM_input_mex.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   interface\\_coder_EOM_input_info.c /Fobuild\\win64\\_coder_EOM_input_info.obj",
+    "file": "interface/_coder_EOM_input_info.c",
+    "output": "build/win64/_coder_EOM_input_info.obj"
+  },
+  {
+    "directory": "C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\\codegen\\mex\\EOM_input",
+    "command": "cl /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I \".\" /I \"C:\\Users\\customer\\MEGAsync\\Hadi\\TMTDyn\\Code\\TMTDyn_beta\\Tutorial\\eom\" /I \".\\interface\" /I \"C:\\Program Files\\MATLAB\\R2020b\\extern\\include\" /I \".\" -DMODEL=EOM_input_mex   \"C:\\Program Files\\MATLAB\\R2020b\\extern\\version\\c_mexapi_version.c\" /Fobuild\\win64\\c_mexapi_version.obj",
+    "file": "C:/Program Files/MATLAB/R2020b/extern/version/c_mexapi_version.c",
+    "output": "build/win64/c_mexapi_version.obj"
+  }
+]

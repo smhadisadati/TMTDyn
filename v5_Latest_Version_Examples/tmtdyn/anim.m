@@ -24,16 +24,16 @@ ss = length ( t ) ; % simulation steps
 % end
 
 is_rom = 0; % is there a ROM element?
-for i = 1 : ss
-    [ ~ , par_mex ] = dyn_mid_step( t(i) , z(i,:)' , par.par_mex ) ;
+for n_t = 1 : ss
+    [ ~ , par_mex ] = dyn_mid_step( t(n_t) , z(n_t,:)' , par.par_mex ) ;
     vars = par_mex.var ;
-    temp2 = rksF_mex( vars , z(i,:)' , 0 , 0 , 0 ) ;
+    temp2 = rksF_mex( vars , z(n_t,:)' , 0 , 0 , 0 ) ; % [ xyz_b xyz_t Q_b Q_t radi ]
     for i_sd = 1 : par.n_ks_anim
-        r_anim.sprdmp(i_sd).r(1:2,1:3,i) = [ temp2(i_sd,1:3) ; temp2(i_sd,4:6) ] ;
-        r_anim.sprdmp(i_sd).Q(1:2,:,i) = [ temp2(i_sd,7:10) ; temp2(i_sd,11:14) ] ;
+        r_anim.sprdmp(i_sd).r(1:2,1:3,n_t) = [ temp2(i_sd,1:3) ; temp2(i_sd,4:6) ] ;
+        r_anim.sprdmp(i_sd).Q(1:2,:,n_t) = [ temp2(i_sd,7:10) ; temp2(i_sd,11:14) ] ;
         r_anim.sprdmp(i_sd).radi = temp2(i_sd,15); % link radius for plotting
         if par.anim_frame
-            r_anim.sprdmp(i_sd).r(1:2,1:12,i) = [ r_anim.sprdmp(i_sd).r(1:2,1:3,i) , ...
+            r_anim.sprdmp(i_sd).r(1:2,1:12,n_t) = [ r_anim.sprdmp(i_sd).r(1:2,1:3,n_t) , ...
                                                   [ Q_rot( temp2(i_sd,7:10)' , [ 1 0 0 ] ) , ... 
                                                     Q_rot( temp2(i_sd,7:10)' , [ 0 1 0 ] ) , ...
                                                     Q_rot( temp2(i_sd,7:10)' , [ 0 0 1 ] ) ;
@@ -44,14 +44,14 @@ for i = 1 : ss
     end
     for i_s = 1 : par.n_animpoints + 1
         s = ( 1 - eps ) / par.n_animpoints * ( i_s - 1 ) + eps ; % normalized length
-        temp1 = rjtipF_mex( vars , z(i,:)' , s , 0 , 0 ) ;
+        temp1 = rjtipF_mex( vars , z(n_t,:)' , s , 0 , 0 ) ; % [ xyz_b xyz_t Q_b Q_t radi ]
         for i_m = 1 : par.n_mass_anim
             if ~isnan( temp1(i_m,4) ) % rigid
                 if i_s == 1 % only needed once for rigid links
-                    r_anim.mass(i_m).r(1:2,1:3,i) = [ temp1(i_m,1:3) ; temp1(i_m,4:6) ] ; % both ends
-                    r_anim.mass(i_m).Q(1:2,:,i) = [ temp1(i_m,7:10) ; temp1(i_m,11:14) ] ;
+                    r_anim.mass(i_m).r(1:2,1:3,n_t) = [ temp1(i_m,1:3) ; temp1(i_m,4:6) ] ; % both ends
+                    r_anim.mass(i_m).Q(1:2,:,n_t) = [ temp1(i_m,7:10) ; temp1(i_m,11:14) ] ;
                     if par.anim_frame
-                        r_anim.mass(i_m).r(1:2,1:12,i) = [ r_anim.mass(i_m).r(1:2,1:3,i) , ...
+                        r_anim.mass(i_m).r(1:2,1:12,n_t) = [ r_anim.mass(i_m).r(1:2,1:3,n_t) , ...
                                                            [ Q_rot( temp1(i_m,7:10)' , [ 1 0 0 ] ) , ... 
                                                              Q_rot( temp1(i_m,7:10)' , [ 0 1 0 ] ) , ... 
                                                              Q_rot( temp1(i_m,7:10)' , [ 0 0 1 ] ) ;
@@ -62,10 +62,10 @@ for i = 1 : ss
                 end
             else % ROM
                 is_rom = 1;
-                r_anim.mass(i_m).r(i_s,1:3,i) = temp1(i_m,1:3) ;
-                r_anim.mass(i_m).Q(i_s,:,i) = temp1(i_m,7:10) ;
+                r_anim.mass(i_m).r(i_s,1:3,n_t) = temp1(i_m,1:3) ;
+                r_anim.mass(i_m).Q(i_s,:,n_t) = temp1(i_m,7:10) ;
                 if par.anim_frame
-                    r_anim.mass(i_m).r(i_s,1:12,i) = [ r_anim.mass(i_m).r(i_s,1:3,i) , ...
+                    r_anim.mass(i_m).r(i_s,1:12,n_t) = [ r_anim.mass(i_m).r(i_s,1:3,n_t) , ...
                                                        Q_rot( temp1(i_m,7:10)' , [ 1 0 0 ] ) , ... 
                                                        Q_rot( temp1(i_m,7:10)' , [ 0 1 0 ] ) , ... 
                                                        Q_rot( temp1(i_m,7:10)' , [ 0 0 1 ] ) ] ;                    

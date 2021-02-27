@@ -1,0 +1,62 @@
+# CompilerName=msvc140
+# Mode=optim
+ninja_required_version = 1.3
+
+# Basic folders
+root = .
+builddir = $root\build\win64
+matlabdir = C:\Program Files\MATLAB\R2020b
+startdir = C:\Users\customer\MEGAsync\Hadi\TMTDyn\Code\TMTDyn_beta\Tutorial\eom
+
+# Toolchain information
+cc = cl
+cxx = cl
+linker = link
+linkerxx = link
+
+cflags =  /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I "$root" /I "$startdir" /I "$root\interface" /I "$matlabdir\extern\include" /I "." -DMODEL=EOM_mex  
+
+cxxflags =   /c /Zp8 /GR /W3 /EHs /nologo /MD /D_CRT_SECURE_NO_DEPRECATE /D_SCL_SECURE_NO_DEPRECATE /D_SECURE_SCL=0   /DMATLAB_MEX_FILE  /DMATLAB_MEX_FILE /O2 /Oy- /DNDEBUG /fp:strict /I "$root" /I "$startdir" /I "$root\interface" /I "$matlabdir\extern\include" /I "." -DMODEL=EOM_mex  
+
+ldflags =  /nologo /manifest   /DLL /LIBPATH:"$matlabdir\extern\lib\win64\microsoft" libmx.lib libmex.lib libmat.lib kernel32.lib user32.lib gdi32.lib winspool.lib comdlg32.lib advapi32.lib shell32.lib ole32.lib oleaut32.lib uuid.lib odbc32.lib odbccp32.lib  /out:"EOM_mex.mexw64" /LIBPATH:"$matlabdir\extern\lib\win64\microsoft" libmwblas.lib libemlrt.lib libcovrt.lib libut.lib libmwmathutil.lib  /export:mexFunction /export:mexfilerequiredapiversion /export:emlrtMexFcnProperties /export:EOM /export:EOM_initialize /export:EOM_terminate /export:EOM_atexit
+
+# Build Rules
+rule cc
+    command = $cc $cflags $in /Fo$out
+
+rule cxx
+    command = $cxx $cxxflags $in /Fo$out
+
+rule link
+    command = $linker @$out.rsp $ldflags
+    rspfile = $out.rsp
+    rspfile_content = $in
+
+rule linkxx
+    command = $linkerxx $in $ldflags
+
+# Build
+build $builddir\EOM_data.obj : cc $root\EOM_data.c
+build $builddir\rt_nonfinite.obj : cc $root\rt_nonfinite.c
+build $builddir\EOM_initialize.obj : cc $root\EOM_initialize.c
+build $builddir\EOM_terminate.obj : cc $root\EOM_terminate.c
+build $builddir\EOM.obj : cc $root\EOM.c
+build $builddir\massF1.obj : cc $root\massF1.c
+build $builddir\sprdmpF6.obj : cc $root\sprdmpF6.c
+build $builddir\massF2.obj : cc $root\massF2.c
+build $builddir\loadsF1.obj : cc $root\loadsF1.c
+build $builddir\eml_int_forloop_overflow_check.obj : cc $root\eml_int_forloop_overflow_check.c
+build $builddir\xzsvdc.obj : cc $root\xzsvdc.c
+build $builddir\xnrm2.obj : cc $root\xnrm2.c
+build $builddir\xdotc.obj : cc $root\xdotc.c
+build $builddir\_coder_EOM_api.obj : cc $root\interface\_coder_EOM_api.c
+build $builddir\_coder_EOM_mex.obj : cc $root\interface\_coder_EOM_mex.c
+build $builddir\xscal.obj : cc $root\xscal.c
+build $builddir\xaxpy.obj : cc $root\xaxpy.c
+build $builddir\xrot.obj : cc $root\xrot.c
+build $builddir\xswap.obj : cc $root\xswap.c
+build $builddir\_coder_EOM_info.obj : cc $root\interface\_coder_EOM_info.c
+build $builddir\c_mexapi_version.obj : cc $matlabdir\extern\version\c_mexapi_version.c
+
+# Link
+build $root\EOM_mex.mexw64 : link $builddir\EOM_data.obj $builddir\rt_nonfinite.obj $builddir\EOM_initialize.obj $builddir\EOM_terminate.obj $builddir\EOM.obj $builddir\massF1.obj $builddir\sprdmpF6.obj $builddir\massF2.obj $builddir\loadsF1.obj $builddir\eml_int_forloop_overflow_check.obj $builddir\xzsvdc.obj $builddir\xnrm2.obj $builddir\xdotc.obj $builddir\_coder_EOM_api.obj $builddir\_coder_EOM_mex.obj $builddir\xscal.obj $builddir\xaxpy.obj $builddir\xrot.obj $builddir\xswap.obj $builddir\_coder_EOM_info.obj $builddir\c_mexapi_version.obj 

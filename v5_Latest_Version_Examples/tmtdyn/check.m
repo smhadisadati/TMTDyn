@@ -317,7 +317,7 @@ for i_j = 1 : numel( joint )
                 if ~isfield( joint(i_j) , 'dof' ) || isempty( joint(i_j).dof ) || numel( joint(i_j).dof ) < nq
                     [joint(i_j).dof(nq).equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
                     joint(i_j).dof(nq).init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                    joint(i_j).dof(nq).init_s = zeros(n_copies,n_r+1) ; % to get equal number of elements as in init (above)
+                    joint(i_j).dof(nq).init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
                     joint(i_j).dof(nq).rom_offset = ones(n_copies,1) .* joint(i_j).rom.rom_offset ;
                     joint(i_j).dof(nq).dir = zeros(n_copies,n_r+1) ;
                     joint(i_j).dof(nq).damp.visc = zeros(n_copies,n_r+1) ;
@@ -333,7 +333,7 @@ for i_j = 1 : numel( joint )
                     
                     joint(i_j).dof(nq).spring.coeff = zeros(n_copies,n_r+1) ;
                     joint(i_j).dof(nq).spring.init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                    joint(i_j).dof(nq).spring.init_s = zeros(n_copies,n_r+1) ; % to get equal number of elements as in init (above)
+                    joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
                     joint(i_j).dof(nq).spring.compr = ones(n_copies,n_r+1) ;
                     [joint(i_j).dof(nq).spring.equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
                     joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).rom.spring_rom_offset ;
@@ -392,14 +392,14 @@ for i_j = 1 : numel( joint )
                         joint(i_j).dof(nq).init = ones(n_copies,1) .* joint(i_j).dof(nq).init ;
                     end
                     if ~isfield( joint(i_j).dof(nq) ,'init_s' ) || isempty( joint(i_j).dof(nq).init_s )
-                        joint(i_j).dof(nq).init_s = zeros(n_copies,n_r+1) ; % to get equal number of elements as in init (above)
+                        joint(i_j).dof(nq).init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
                     else
                         joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
                     end
                     if ~isfield( joint(i_j).dof(nq) ,'spring' ) || isempty( joint(i_j).dof(nq).spring )
                         joint(i_j).dof(nq).spring.coeff = zeros(n_copies,n_r+1) ;
                         joint(i_j).dof(nq).spring.init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                        joint(i_j).dof(nq).spring.init_s = zeros(n_copies,n_r+1) ; % to get equal number of elements as in init (above)
+                        joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
                         joint(i_j).dof(nq).spring.compr = ones(n_copies,n_r+1) ;
                         [joint(i_j).dof(nq).spring.equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
                         joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).rom.spring_rom_offset ;
@@ -417,7 +417,7 @@ for i_j = 1 : numel( joint )
                             joint(i_j).dof(nq).spring.init = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init ;
                         end
                         if ~isfield( joint(i_j).dof(nq).spring ,'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )
-                            joint(i_j).dof(nq).spring.init_s = zeros(n_copies,n_r+1) ; % to get equal number of elements as in init (above)
+                            joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
                         else
                             joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init_s ;
                         end
@@ -548,31 +548,33 @@ for i_j = 1 : numel( joint )
                 end
                 
                 if joint(i_j).rom.isROM
-                    if ~isfield( joint(i_j).dof(nq) , 'init_s' ) || isempty( joint(i_j).dof(nq).init_s(1) )
-                        if ~isempty( joint(i_j).rom.init_s ) && numel( joint(i_j).rom.init_s(1,:) ) == numel( joint(i_j).dof(nq).init(1,:) )
-                            joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).rom.init_s ;
+                    if ~isfield( joint(i_j).dof(nq) , 'init_s' ) || isempty( joint(i_j).dof(nq).init_s ) || max( double( abs( subs( joint(i_j).dof(nq).init_s(1,:), par.sym, par.var ) ) ) ) == 0
+                        if ~isempty( joint(i_j).rom.init_s )
+                            joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* joint(i_j).rom.init_s ;
                         else
-                            joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).init(i_d,:) ) ) ;
+                            for i_d = 1 : n_copies
+                                joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).init(i_d,:) ) ) ;
+                            end
                         end
-                    end
-                    if numel( joint(i_j).dof(nq).init_s ) ~= numel( joint(i_j).dof(nq).init )
+                    end                    
+                    if numel( joint(i_j).dof(nq).init_s(1,:) ) == numel( joint(i_j).dof(nq).init(1,:) )
+                        joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
+                    else
                         error( 'numel( joint(i_j).dof(nq).init_s ) ~= numel( joint(i_j).dof(nq).init ) error' ) ;
                     end
                     % spring initial shape
-                    if ~isfield( joint(i_j).dof(nq).spring , 'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )
-                        if ~isempty( joint(i_j).rom.init_s ) && numel( joint(i_j).rom.init_s(1,:) ) == numel( joint(i_j).dof(nq).spring.init(1,:) )
-                            joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).rom.init_s ;
+                    if ~isfield( joint(i_j).dof(nq).spring , 'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )|| max( double( abs( subs( joint(i_j).dof(nq).spring.init_s(1,:), par.sym, par.var ) ) ) ) == 0
+                        if ~isempty( joint(i_j).rom.init_s )
+                            joint(i_j).dof(nq).spring.init_s(i_d,:) = ones(n_copies,1) .* joint(i_j).rom.init_s ;
                         else
-                            if numel( joint(i_j).dof(nq).init_s(1,:) ) == numel( joint(i_j).dof(nq).spring.init(1,:) )
-                                joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
-                            else
-                                for i_d = 1 : n_copies
-                                    joint(i_j).dof(nq).spring.init_s(i_d,:) = linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).spring.init(i_d,:) ) ) ;
-                                end
+                            for i_d = 1 : n_copies
+                                joint(i_j).dof(nq).spring.init_s(i_d,:) = linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).spring.init(i_d,:) ) ) ;
                             end
                         end
                     end
-                    if ~isnan( joint(i_j).dof(nq).spring.init(n_copies,1) ) && numel( joint(i_j).dof(nq).spring.init_s(1,:) ) ~= numel( joint(i_j).dof(nq).spring.init(1,:) )
+                    if isnan( joint(i_j).dof(nq).spring.init(1,1) ) || numel( joint(i_j).dof(nq).spring.init_s(1,:) ) == numel( joint(i_j).dof(nq).spring.init(1,:) )
+                        joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init_s ;
+                    else
                         error( 'numel( joint(i_j).dof(nq).spring.init_s ) ~= numel( joint(i_j).dof(nq).spring.init ) error' ) ;
                     end
                 end
