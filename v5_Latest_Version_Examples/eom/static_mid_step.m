@@ -15,13 +15,13 @@ p = temp([ 1 1 2 2 3 3 ]) ;
 %% cross-section deformation
 % In this case it causes numerical instability, so commented
 lambda = 1 ;
-% s0 = 1e-6 ; l = 0 ;
-% ds = par_mex.var(5) / 1e1 ;
-% for s = s0 : ds : par_mex.var(5) - s0
-%     [ ~ , ~ , ~ , ~ , ~ , ~ , dl ] = sprdmpF19( par_mex.var , z , s , 0 , 0 ) ;
-%     l = l + dl(3) * ds ;
-% end
-% lambda = l / par_mex.var(5) ;
+% l = 0 ;
+% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF31( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF32( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF33( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF34( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+% [ ~ , ~ , ~ , ~ , dl ] = sprdmpF35( par.var , z.' , 0 ) ; l = l + dl ; % 6 * n_s + 1 : n_sd = 6 * n_s + n_s
+% lambda = 1 + l / par.var(5) ; 
 
 
 %% update simulation parameters
