@@ -126,7 +126,7 @@ for i_joint = 1 : n_jonts % look into all joints
         joint(i_joint).TQ{i_copies}.loc = sym( [ 1 0 0 0 ; 0 0 0 0 ].' ); % [Quaternion_rotation; 0 joint_translation ]'
         joint(i_joint).spring.Q{i_copies}.loc = sym( [ 1 0 0 0 ].' ); % compliance relaxed state Quaternion 
         joint(i_joint).spring.TQ{i_copies}.loc = sym( [ 1 0 0 0 ; 0 0 0 0 ].' ); % compliance relaxed state [1 joint_translation ; Quaternion_rotation ] 
-        joint(i_joint).rom.delta_s{i_copies} = sym_zero; % axial (tangent) sliding of a rom beam
+        joint(i_joint).rom.delta_s(i_copies,1) = sym_zero; % axial (tangent) sliding of a rom beam
                      
         i_dofAxsAngl = 0 ; % dof counter in each joint copy
         [ ~ , n_joint_transfs ] = size( joint(i_joint).tr ) ; % number of transforamtions in a joint
@@ -336,7 +336,7 @@ for i_joint = 1 : n_jonts % look into all joints
                     joint(i_joint).rom.length(i_copies,1) = joint(i_joint).rom.length(i_copies,1) - joint(i_joint).rom.delta_s(i_copies,1) ; % base_growing shuold be integrated for -q_s:original_length
                 end
 
-            else % otherwise: tip growing with no mass transfer (i.e. sliding)
+            else % otherwise: tip growing with no mass transfer or sliding
                 
                 % update tip bound, no change for the lower bound
                 joint(i_joint).rom.length(i_copies,2) = joint(i_joint).rom.length(i_copies,2) + joint(i_joint).rom.delta_s(i_copies,1) ; % tip moves with delta_s

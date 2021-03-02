@@ -93,8 +93,8 @@ if isnan( source.equal2{1}(i_copies,4) ) % copy whole dof axis/angle from other 
     
     source.fit_type(i_copies,1:numel(joint(temp(1)).dof(temp(3)).fit_type(temp(2),:))) = joint(temp(1)).dof(temp(3)).fit_type(temp(2),:) ; % copy segmentation info, i.e type and s_knots
     source.qCs{i_copies} = sym_empty ; % no new dof coeff.s
-    source.qs{i_copies} = joint(temp(1)).dof(temp(3)).qs{temp(2),:} ; % copy over all q_states
-    source.init_qs{i_copies} = joint(temp(1)).dof(temp(3)).init_qs{temp(2),:} ; % copy over all qs initial values
+    source.qs{i_copies} = joint(temp(1)).dof(temp(3)).qs{temp(2)} ; % copy over all q_states
+    source.init_qs{i_copies} = joint(temp(1)).dof(temp(3)).init_qs{temp(2)} ; % copy over all qs initial values
     source.index_qCs{i_copies} = joint(temp(1)).dof(temp(3)).index_qCs{temp(2)} ; % copy over all qs initial values
     source.series{i_copies} = joint(temp(1)).dof(temp(3)).series{temp(2)} ; % copy over the final spline series
     source.init_series{i_copies} = joint(temp(1)).dof(temp(3)).init_series{temp(2)} ; % copy over the final spline init_series

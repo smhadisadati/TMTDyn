@@ -392,7 +392,7 @@ for i_j = 1 : numel( joint )
                         joint(i_j).dof(nq).init = ones(n_copies,1) .* joint(i_j).dof(nq).init ;
                     end
                     if ~isfield( joint(i_j).dof(nq) ,'init_s' ) || isempty( joint(i_j).dof(nq).init_s )
-                        joint(i_j).dof(nq).init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
+                        joint(i_j).dof(nq).init_s = sym( zeros(n_copies, numel( joint(i_j).dof(nq).init(1,:) ) ) ) ; % to get equal number of elements as in init (above)
                     else
                         joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
                     end
@@ -417,7 +417,7 @@ for i_j = 1 : numel( joint )
                             joint(i_j).dof(nq).spring.init = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init ;
                         end
                         if ~isfield( joint(i_j).dof(nq).spring ,'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )
-                            joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
+                            joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies, numel( joint(i_j).dof(nq).spring.init(1,:) ) ) ) ; % to get equal number of elements as in init (above)
                         else
                             joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init_s ;
                         end
@@ -553,7 +553,7 @@ for i_j = 1 : numel( joint )
                             joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* joint(i_j).rom.init_s ;
                         else
                             for i_d = 1 : n_copies
-                                joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).init(i_d,:) ) ) ;
+                                joint(i_j).dof(nq).init_s(i_d,:) = linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).init(i_d,:) ) ) ;
                             end
                         end
                     end                    
