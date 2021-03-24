@@ -19,6 +19,12 @@ switch exp_case(1) % exp. cases
         % kappa = 1/27e-3; % from experiment picture
         kappa = 1;
         
+        % t: time
+        % kappa: catheter bending curvature (here set to 0/1 acting as a switch but the value is set later as kappa = 23dL+3.2 where dL is the change in the tendon length (see Fig. 5.b in our paper)
+        % l_c: the catheter extended curve length
+        % l_s: the growing sheath extended curve length
+        % l_ex: the external contact curve length location
+        % x_t & z_t: the robot tip x & z position in global frame (this is a planar motion)
         data = ... % [t, kappa, l_c, l_s, l_ex, x_t, z_t]
             [1.54, 0, 4, 4, 0, 0, 4;
             1.81, 0, 1, 4, 0, 0, 4;
@@ -66,7 +72,7 @@ switch exp_case(1) % exp. cases
         % kappa = 1/27e-3; % from experiment picture
         kappa = 1;
         
-        data = ... % [t, kappa, l_c, l_s, l_ex, x_t, z_t]
+        data = ... % [t, kappa, l_c, l_s, l_ex, x_t, z_t]: see the explanation provided for experiment scenario 1
             [2, 0, 0, 4, 0, 0, 4;
             2.5, 0, 4, 12, 0, 0, 12;
             3, 0, 0, 12, 0, 0, 12
