@@ -1,0 +1,46 @@
+/*
+ * Academic License - for use in teaching, academic research, and meeting
+ * course requirements at degree granting institutions only.  Not for
+ * government, commercial, or other organizational use.
+ *
+ * sprdmpF17_terminate.c
+ *
+ * Code generation for function 'sprdmpF17_terminate'
+ *
+ */
+
+/* Include files */
+#include "rt_nonfinite.h"
+#include "sprdmpF17.h"
+#include "sprdmpF17_terminate.h"
+#include "_coder_sprdmpF17_mex.h"
+#include "sprdmpF17_data.h"
+
+/* Function Definitions */
+void sprdmpF17_atexit(void)
+{
+  emlrtStack st = { NULL,              /* site */
+    NULL,                              /* tls */
+    NULL                               /* prev */
+  };
+
+  mexFunctionCreateRootTLS();
+  st.tls = emlrtRootTLSGlobal;
+  emlrtEnterRtStackR2012b(&st);
+  emlrtLeaveRtStackR2012b(&st);
+  emlrtDestroyRootTLS(&emlrtRootTLSGlobal);
+}
+
+void sprdmpF17_terminate(void)
+{
+  emlrtStack st = { NULL,              /* site */
+    NULL,                              /* tls */
+    NULL                               /* prev */
+  };
+
+  st.tls = emlrtRootTLSGlobal;
+  emlrtLeaveRtStackR2012b(&st);
+  emlrtDestroyRootTLS(&emlrtRootTLSGlobal);
+}
+
+/* End of code generation (sprdmpF17_terminate.c) */

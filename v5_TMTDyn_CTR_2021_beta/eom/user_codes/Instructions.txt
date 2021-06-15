@@ -1,0 +1,22 @@
+###################################################################################################
+### For standalone C run in terminal:
+## compile:
+# linux: WORKING!!!
+cd eom/user_codes
+g++ Demo.c ../codegen/lib/EOM/*.c -O3 -mtune=native -DNDEBUG -o Demo -I"/mnt/c/Program Files/MATLAB/R2020b/extern/include" -I/mnt/c/sundials-5.0.0-dev.1/instdir/include -I../codegen/lib/EOM/ -L/mnt/c/sundials-5.0.0-dev.1/instdir/lib -lsundials_cvode -lsundials_nvecserial -lsundials_nvecmanyvector -lm /usr/lib/x86_64-linux-gnu/librt.so -Wl,-rpath,/mnt/c/sundials-5.0.0-dev.1/instdir/lib
+
+# windows: NOT wORKING!!!
+cd eom\user_codes
+g++ Demo.c ..\codegen\lib\EOM\*.c -O3 -mtune=native -DNDEBUG -o Demo -I "C:\Program Files\MATLAB\R2020b\extern\include" -I"C:\sundials-5.6.1\instdir\include" -I"..\codegen\lib\EOM" -L"C:\sundials-5.6.1\instdir" -lsundials_cvode -lsundials_nvecserial -lsundials_nvecmanyvector
+
+# run:
+./Demo
+
+###################################################################################################
+### for Matlab mex:
+## compile: from top folder as working directory
+# windows: WORKING!!!
+mex -IC:\sundials-5.6.1\instdir\include -I.\eom\codegen\lib\EOM\ -LC:\sundials-5.6.1\instdir -lsundials_cvode .\eom\user_codes\Demo_mex.c .\eom\codegen\lib\EOM\*.c -output .\eom\user_codes\Demo_mex
+
+# run in Matlab:
+Demo_mex

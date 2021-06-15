@@ -1,0 +1,32 @@
+Hi Hadi,
+
+
+I have a dataset of fabric motion that might be of use to you. Its not properly formatted, but I'll describe it here and let you decide if its suitable.
+
+
+This data was generated in the following procedure:
+
+
+- A pendulum had a sleeve of fabric placed over it, mimicing a human arm with a shirt. The pendulum is unpowered and allowed to swing freely under gravity. Please see the attached image for a rough idea. The Fabric was attached to the pendulum at points marked X, by clamps.
+
+
+
+- The experiment was to investigate the movment of the fabric. However, we only have 4 trackers that can be used at any one time, so to measure across the whole fabric, movements were repeated while placing the sensors in new positions. In total, the sensors were placed in a 3x5 grid on the fabric (positions shown in the image).
+
+
+- The Aurora trackers were placed on the garment, 2 on the centre of each link, and two on the fabric (during any one repeat). The pendulum was raised horizontal, and allowed to swing freely. These two sensors on the fabric were then moved to a new position.
+
+
+
+Each CSV file contains 3D positions of each of the four sensors, the rows are time indexed. The first 3 columns are the xyz coordinates of the sensor attached rigidly to the first link, the next 3 columns are the xyz coordinates from the second link, the next 6 are from the sensors attached to two positions on the fabric.
+
+
+For example, in "stiff0angle_fabric1and2_test1.csv", the sensors are located at positions 1 and 2.
+
+
+Let me know if you think it data is suitable, or if you have any questions about it.
+
+
+regards
+
+brendan

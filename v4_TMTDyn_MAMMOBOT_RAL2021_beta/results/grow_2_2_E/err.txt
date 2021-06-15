@@ -1,0 +1,10 @@
+simple test:
+exp time = 25.000000 [s]
+sim time = 103.000000 [s]
+sim_to_exp time = 4.120000 [s]
+e_r_t2 =
+   2.1425e-03
+e_rP_t2 =
+   4.4386e-02
+
+navigation:

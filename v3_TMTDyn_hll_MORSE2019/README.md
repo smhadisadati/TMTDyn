@@ -1,0 +1,25 @@
+To begin, download the directory Zip-file...
+
+"TMTDyn_hll" is a MatLab-Internal DSL (Domain Specific Language) for Modelling Hybrid Rigid–Continuum Robots based on [TMTDyn package](https://github.com/hadisdt/TMTDyn). Our aim is to automate the derivation of TMT Equation of Motion (EOM) for hybrid rigid-continuum body dynamic systems with constraints and contacts, their linear modal analysis, and nonlinear controller design.
+
+We have recently developed a Matlab software package, called [TMTDyn](https://github.com/hadisdt/TMTDyn) to derive TMT EOM of hybrid rigid-continuum body mechanisms ([Sadati et al. preprint](https://www.researchgate.net/publication/334084910_TMTDyn_A_Matlab_Package_for_Modeling_and_Control_of_Hybrid_Rigid-Continuum_Robots_Based_on_Discretized_Lumped_System_and_Reduced_Order_Models)), which was based on an earlier version, called [AutoTMTDyn](https://github.com/hadisdt/AutoTMTDyn) for dealing with rigid-body mechanisms ([Sadati et al. 2015](https://www.researchgate.net/publication/290003554_An_Automatic_Algorithm_to_Derive_Linear_Vector_Form_of_Lagrangian_Equation_of_Motion_with_Collision_and_Constraint)). 
+
+Here, we introduce a new version, now called "TMTDyn_hll", which is equipped with a MatLab-Internal DSL providing the following benefits:
+1) Accessibility: the DSL offers an intuitive structure for describing a robotic system that is automatically broken down into the parts required by the TMTDyn package.
+2) Early validation: the DSL can offer validation checks at the time of description rather than the time of evaluation, allowing error messages to be more focused and simplifying debugging.
+3) Maintainability: changes to the structure to be modelled can be made easily and in a structured fashion; where the plain TMTDyn package may require careful adjustment of multiple parts of the code, all related changes are closely linked in the DSL.
+
+
+In the Samples section, we employed this DSL to derive EOM of continuum bodies based on discretized and reduced order solutions:
+- a fabric sleeve worn on a rigid-link arm (similar to the one here: [code](https://github.com/hadisdt/TMTDyn/tree/master/Samples/Fabric/2.%20Passive), [Wiki page](https://github.com/hadisdt/TMTDyn/wiki/Example-2--Fabric-dynamics-worn-by-a-rigid-link-pendulum)).
+
+As a result, a unified software package is provided for deriving EOM, control design, and numerical simulation of hybrid rigid-continuum body systems.
+
+
+Please cite our relevant papers if you decided to use this package or methods presented in it:
+- [S. M. H. Sadati et al., ‘TMTDyn: A Matlab package for modeling and control of hybrid rigid–continuum robots based on discretized lumped systems and reduced-order models’, The International Journal of Robotics Research, p. 0278364919881685, Jan. 2020, doi: 10.1177/0278364919881685.](https://www.researchgate.net/publication/335915427_TMTDyn_A_Matlab_Package_for_Modeling_and_Control_of_Hybrid_Rigid-Continuum_Robots_Based_on_Discretized_Lumped_System_and_Reduced-Order_Models?_sg=65yJ5EQJJgnjvr9ohuMjzS780X0XWanljwr8QWaN9auM8IJ2D-rcASJhffq-b1E0CrX7FtJ2bprcycJrhmQf5khwTs9hKQDCFU0oYW70.pYVS3qSCozpfAwCtsdbw2i-H_LzanR5IVV85KHV2xRN0TfJZIYS5s9mUhVDKTBzuDZk6j3ryf2rZeLnMW_0raw)
+- [S.M.H. Sadat, A. Shiva, S. E. Naghibi, et al., “Reduced Order vs. Discretized Lumped System Models with Absolute and Relative States for Continuum Manipulators,” presented at the Robotics: Science and Systems (RSS), Freiburg, Germany, 2019.](https://www.researchgate.net/publication/332980482_Reduced_Order_vs_Discretized_Lumped_System_Models_with_Absolute_and_Relative_States_for_Continuum_Manipulators)
+- [S. M. H. Sadati, S. Zschaler, and C. Bergeles, ‘A Matlab-Internal DSL for Modelling Hybrid Rigid–Continuum Robots with TMTDyn’, in 6th Workshop on Model-Driven Robot Software Engineering (MORSE), Munich, Germany, 2019, p. 9.
+](https://www.researchgate.net/publication/334898974_A_Matlab-Internal_DSL_for_Modelling_Hybrid_Rigid-Continuum_Robots_with_TMTDyn?_sg=65yJ5EQJJgnjvr9ohuMjzS780X0XWanljwr8QWaN9auM8IJ2D-rcASJhffq-b1E0CrX7FtJ2bprcycJrhmQf5khwTs9hKQDCFU0oYW70.pYVS3qSCozpfAwCtsdbw2i-H_LzanR5IVV85KHV2xRN0TfJZIYS5s9mUhVDKTBzuDZk6j3ryf2rZeLnMW_0raw)
+- [S.M.H. Sadati, S. Naghibi, and M. Naraghi, “An Automatic Algorithm to Derive Linear Vector Form of Lagrangian Equation of Motion with Collision and Constraint,” Procedia Computer Science, vol. 76, pp. 217–222, 2015.](https://www.researchgate.net/publication/290003554_An_Automatic_Algorithm_to_Derive_Linear_Vector_Form_of_Lagrangian_Equation_of_Motion_with_Collision_and_Constraint)
+- [S.M.H. Sadati, S. E. Naghibi, A. Shiva, et al., “AutoTMTDyn: A Matlab Software Package to Drive TMT Lagrange Dynamics of Series Rigid- and Continuum-link Mechanisms,” IROS 2018 Workshop on Soft Robotic Modeling and Control: Bringing Together Articulated Soft Robots and Soft-Bodied Robots, 2018.](https://www.researchgate.net/publication/328172210_AutoTMTDyn_A_Matlab_Software_Package_to_Drive_TMT_Lagrange_Dynamics_of_Series_Rigid-_and_Continuum-link_Mechanisms)
