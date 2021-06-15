@@ -1,1 +1,0 @@
-The dynamic motion of a fabric sleeve worn on a rigid-link pendulum is modeled using the "TMTDyn_hll" DSL. The system is described in "system_fabric_hll.m" file.
