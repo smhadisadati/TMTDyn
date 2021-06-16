@@ -3,7 +3,7 @@ TMTDyn is a Matlab based package to automate the derivation of TMT Equation of M
 To start:
 - Choose one of the version folders above (according to the relevant publication date).
 - Download the directory Zip-file to begin.
-- Matlab Software with Symbolic, Parallel Computing, and Curve Fitting Toolboxes are required.
+- Matlab Software with Symbolic, Coder, Parallel Computing, and Curve Fitting Toolboxes are required.
 - Installing SUNDIALS solvers is optional to use the implemented C wrapper for fast numerical simulation via an external solver.
 - Edit and Run the robot implementation file in Matlab.
 
