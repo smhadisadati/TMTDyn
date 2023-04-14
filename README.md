@@ -1,5 +1,3 @@
-To begin, download the directory Zip-file...
-
 "TMTDyn_hll" is a MatLab-Internal DSL (Domain Specific Language) for Modelling Hybrid Rigid–Continuum Robots based on [TMTDyn package](https://github.com/hadisdt/TMTDyn). Our aim is to automate the derivation of TMT Equation of Motion (EOM) for hybrid rigid-continuum body dynamic systems with constraints and contacts, their linear modal analysis, and nonlinear controller design.
 
 We have recently developed a Matlab software package, called [TMTDyn](https://github.com/hadisdt/TMTDyn) to derive TMT EOM of hybrid rigid-continuum body mechanisms ([Sadati et al. preprint](https://www.researchgate.net/publication/334084910_TMTDyn_A_Matlab_Package_for_Modeling_and_Control_of_Hybrid_Rigid-Continuum_Robots_Based_on_Discretized_Lumped_System_and_Reduced_Order_Models)), which was based on an earlier version, called [AutoTMTDyn](https://github.com/hadisdt/AutoTMTDyn) for dealing with rigid-body mechanisms ([Sadati et al. 2015](https://www.researchgate.net/publication/290003554_An_Automatic_Algorithm_to_Derive_Linear_Vector_Form_of_Lagrangian_Equation_of_Motion_with_Collision_and_Constraint)). 
