@@ -1,0 +1,42 @@
+Based on SUNDIALS doc>cvode>cv_guide.pdf
+
+Windows:
+Download the package from https://computing.llnl.gov/projects/sundials/sundials-software
+1. Unzip the downloaded tar file(s) into a directory. This will be the solverdir
+2. Create a separate builddir
+3. Open MSBuild Command Prompt for VS2015 as administrator and cd to builddir
+4. Run cmake-gui ../solverdir
+(a) Hit Configure
+    1st time configure
+        Select generator as VS 14 2015
+        Select platform ax x86_64
+        Select default native compiler checkbox
+        Hit finish
+    If needed use Delete Cache from File menu
+(b) Check/Uncheck solvers to be built
+(c) Change CMAKE_INSTALL_PREFIX to instdir
+(d) Set other options as desired
+    Uncheck EXAMPLES_ENABLE_C, EXAMPLES_ENABLE_CXX, EXAMPLES_INSTALL
+(e) Hit Generate
+5. Back in the VS Command Window:
+(a) Run msbuild ALL BUILD.vcxproj
+(b) Run msbuild INSTALL.vcxproj
+6. Copy solverdir>include forder in instdir
+    Copy/Override builddir>include folder in instdir
+7. in file sundials_export.h add
+#      define SUNDIALS_EXPORT __declspec(dllexport)
+    after
+#      define SUNDIALS_EXPORT __declspec(dllimport)
+    to get
+        /* We are using this library */
+#      define SUNDIALS_EXPORT __declspec(dllimport)
+#      define SUNDIALS_EXPORT __declspec(dllexport)
+
+Use the following options for compiling:
+g++ -O3 -mtune=native -DNDEBUG -o Demo -I "C:\Program Files\MATLAB\R2019a\extern\include" -IC:\sundials-5.6.1\instdir\include -LC:\sundials-5.6.1\instdir -lsundials_cvode *.c
+mex windows:
+mex -IC:\sundials-5.6.1\instdir\include -LC:\sundials-5.6.1\instdir -lsundials_cvode *.c
+
+Linux:
+Use the following options for compiling:
+g++ *.c -O3 -mtune=native -DNDEBUG -o Demo -I"/mnt/c/Program Files/MATLAB/R2019a/extern/include" -I/mnt/c/sundials-5.0.0-dev.1/instdir/include -L/mnt/c/sundials-5.0.0-dev.1/instdir/lib -lsundials_cvode -lsundials_nvecserial -lsundials_nvecmanyvector -lm /usr/lib/x86_64-linux-gnu/librt.so -Wl,-rpath,/mnt/c/sundials-5.0.0-dev.1/instdir/lib

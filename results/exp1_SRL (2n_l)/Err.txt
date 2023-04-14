@@ -1,0 +1,295 @@
+exp. data... 
+start... 
+Elapsed time is 0.000309 seconds.
+check inputs... 
+Elapsed time is 0.084168 seconds.
+
+t_equil_i =
+
+     7
+
+equlibrium point... 
+Elapsed time is 0.639283 seconds.
+animation... 
+Elapsed time is 0.651225 seconds.
+
+t_equil_i =
+
+     0
+
+equlibrium point... 
+Elapsed time is 0.866561 seconds.
+animation... 
+Elapsed time is 0.867441 seconds.
+dynamic sim... 
+Elapsed time is 0.988346 seconds.
+generate EOM_mex... 
+Elapsed time is 0.995895 seconds.
+mex file generated. continue... 
+Elapsed time is 128.725184 seconds.
+
+t_start_end =
+
+   7.0000e+00   5.4650e+01
+
+
+t =
+
+   7.0000e+00
+
+
+t =
+
+   8.0000e+00
+
+
+t =
+
+   9.0100e+00
+
+
+t =
+
+   1.0015e+01
+
+
+t =
+
+   1.1016e+01
+
+
+t =
+
+   1.2022e+01
+
+
+t =
+
+   1.3032e+01
+
+
+t =
+
+   1.4037e+01
+
+
+t =
+
+   1.5043e+01
+
+
+t =
+
+   1.6047e+01
+
+
+t =
+
+   1.7048e+01
+
+
+t =
+
+   1.8049e+01
+
+
+t =
+
+   1.9050e+01
+
+
+t =
+
+   2.0053e+01
+
+
+t =
+
+   2.1054e+01
+
+
+t =
+
+   2.2055e+01
+
+
+t =
+
+   2.3059e+01
+
+
+t =
+
+   2.4059e+01
+
+
+t =
+
+   2.5059e+01
+
+
+t =
+
+   2.6061e+01
+
+
+t =
+
+   2.7064e+01
+
+
+t =
+
+   2.8065e+01
+
+
+t =
+
+   2.9071e+01
+
+
+t =
+
+   3.0075e+01
+
+
+t =
+
+   3.1076e+01
+
+
+t =
+
+   3.2083e+01
+
+
+t =
+
+   3.3093e+01
+
+
+t =
+
+   3.4098e+01
+
+
+t =
+
+   3.5099e+01
+
+
+t =
+
+   3.6100e+01
+
+
+t =
+
+   3.7100e+01
+
+
+t =
+
+   3.8102e+01
+
+
+t =
+
+   3.9103e+01
+
+
+t =
+
+   4.0106e+01
+
+
+t =
+
+   4.1107e+01
+
+
+t =
+
+   4.2112e+01
+
+
+t =
+
+   4.3114e+01
+
+
+t =
+
+   4.4118e+01
+
+
+t =
+
+   4.5120e+01
+
+
+t =
+
+   4.6127e+01
+
+
+t =
+
+   4.7131e+01
+
+
+t =
+
+   4.8146e+01
+
+
+t =
+
+   4.9147e+01
+
+
+t =
+
+   5.0153e+01
+
+
+t =
+
+   5.1163e+01
+
+
+t =
+
+   5.2165e+01
+
+
+t =
+
+   5.3171e+01
+
+
+t =
+
+   5.4178e+01
+
+animation... 
+Elapsed time is 189.562935 seconds.
+sim. end... 
+post-processing... 
+Elapsed time is 190.674518 seconds.
+
+Err_abs =
+
+   2.5723e-03
+
+
+Err_std =
+
+   3.0698e-03
+
+
+Err_norm =
+
+   4.3971e+00
+
+>> 

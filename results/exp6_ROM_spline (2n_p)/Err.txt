@@ -1,0 +1,943 @@
+exp. data... 
+start... 
+Elapsed time is 0.000261 seconds.
+check inputs... 
+Elapsed time is 0.072276 seconds.
+TMT derive... 
+Elapsed time is 0.196240 seconds.
+check inputs... 
+Elapsed time is 0.196677 seconds.
+Deriving joint transformations for joint... 
+
+i_joint =
+
+     1
+
+
+i_joint =
+
+     2
+
+Interpolation overall check! Press any key to continue... 
+Deriving inertial terms for body... 
+
+b_count =
+
+     1
+
+
+b_count =
+
+     2
+
+Deriving spring/damper/input dynamics for joints (according to which body they are connected to)... 
+
+b_count =
+
+     0
+
+
+b_count =
+
+     1
+
+
+i_joint =
+
+     1
+
+
+b_count =
+
+     2
+
+Deriving external load dynamics... 
+
+i_exload =
+
+     1
+
+save derivations... 
+Elapsed time is 49.777146 seconds.
+Parallel pool using the 'local' profile is shutting down.
+
+n_m =
+
+     2
+
+
+n_sd =
+
+    18
+
+
+n_cn =
+
+     0
+
+
+n_ex =
+
+     1
+
+
+nq =
+
+    17
+
+Starting parallel pool (parpool) using the 'local' profile ...
+Connected to the parallel pool (number of workers: 4).
+save mex files... 
+Elapsed time is 7927.008341 seconds.
+Parallel pool using the 'local' profile is shutting down.
+
+t_equil_i =
+
+     7
+
+equlibrium point... 
+Elapsed time is 7940.648962 seconds.
+generate EOM_mex... 
+Elapsed time is 7940.657201 seconds.
+mex file generated. continue... 
+Elapsed time is 16916.149017 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   2.5769e-02  -1.3871e-01   3.5474e-02  -2.5214e-01  -1.6426e-02   8.8420e-02  -2.2613e-02
+
+  Columns 8 through 14
+
+   1.6073e-01   2.9463e+00  -9.2789e+01   3.1538e+00  -9.7796e+01   1.5570e-09  -2.3417e-07
+
+  Columns 15 through 17
+
+   6.3209e-06  -7.6347e-08   1.7649e-06
+
+
+fval =
+
+  -4.0636e-14
+  -6.1113e-15
+   2.7085e-14
+  -5.1895e-15
+   2.5903e-14
+   3.8956e-15
+  -1.7266e-14
+   3.3079e-15
+   3.7659e-14
+  -1.3029e-12
+   5.5878e-14
+  -1.7850e-12
+  -4.6045e-21
+   2.8199e-19
+  -3.8761e-18
+  -1.4801e-19
+   1.8470e-18
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16917.131017 seconds.
+
+t_equil_i =
+
+   8.7000e+00
+
+equlibrium point... 
+Elapsed time is 16918.127902 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   6.0242e-02  -2.7302e-01   8.1113e-02  -6.0843e-01  -3.0921e+00   1.4013e+01  -4.1634e+00
+
+  Columns 8 through 14
+
+   3.1229e+01   6.2767e+00  -1.7350e+02   3.5176e+00  -1.2512e+02   1.7047e-09  -2.4317e-07
+
+  Columns 15 through 17
+
+   6.4724e-06  -5.5335e-08   9.7073e-07
+
+
+fval =
+
+  -6.9118e-19
+  -3.1559e-18
+   5.4718e-19
+  -4.0877e-18
+   3.5128e-17
+   1.6212e-16
+  -2.8081e-17
+   2.0995e-16
+  -9.5410e-17
+  -2.8797e-16
+  -3.5237e-18
+  -4.2194e-16
+  -1.8149e-21
+   1.7788e-19
+  -4.3824e-18
+  -5.0081e-20
+   2.5158e-18
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16918.306701 seconds.
+
+t_equil_i =
+
+   1.5150e+01
+
+equlibrium point... 
+Elapsed time is 16918.519208 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   2.7219e+00  -1.2322e+01   3.6643e+00  -2.7508e+01   1.5205e+00  -6.8831e+00   2.0469e+00
+
+  Columns 8 through 14
+
+  -1.5366e+01   6.3024e+00  -1.7417e+02   3.5171e+00  -1.2538e+02   3.1424e-09  -8.9688e-08
+
+  Columns 15 through 17
+
+  -3.0909e-07   6.5644e-07  -2.3628e-05
+
+
+fval =
+
+  -3.1117e-17
+  -1.4327e-16
+   2.5262e-17
+  -1.8552e-16
+  -1.7293e-17
+  -8.0012e-17
+   1.4040e-17
+  -1.0362e-16
+  -8.9772e-17
+  -2.8811e-16
+  -3.4152e-18
+  -4.2277e-16
+  -1.5302e-21
+   5.2027e-19
+  -1.1615e-17
+  -4.3922e-19
+   1.7663e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16918.681095 seconds.
+
+t_equil_i =
+
+   2.1700e+01
+
+equlibrium point... 
+Elapsed time is 16918.894004 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+  -2.0264e+00   9.5040e+00  -2.7433e+00   2.0120e+01   1.1546e+00  -5.4151e+00   1.5630e+00
+
+  Columns 8 through 14
+
+  -1.1464e+01   5.5177e+00  -1.5413e+02   3.5113e+00  -1.1772e+02   1.4233e-09  -3.4279e-07
+
+  Columns 15 through 17
+
+   1.0176e-05  -3.4177e-07   1.0720e-05
+
+
+fval =
+
+   1.4474e-17
+   9.4204e-17
+  -1.6534e-17
+   1.2250e-16
+  -8.0773e-18
+  -5.3670e-17
+   9.3512e-18
+  -6.9795e-17
+  -2.7539e-17
+  -2.7695e-16
+   7.6436e-18
+  -3.9386e-16
+  -2.1910e-21
+   7.3964e-20
+  -2.2808e-18
+   9.2806e-20
+  -2.9739e-18
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16919.047615 seconds.
+
+t_equil_i =
+
+   2.6200e+01
+
+equlibrium point... 
+Elapsed time is 16919.204209 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   3.4145e-02  -1.3456e-01   4.4554e-02  -3.8262e-01  -6.4546e+00   2.5436e+01  -8.4222e+00
+
+  Columns 8 through 14
+
+   7.2329e+01   9.7774e+00  -2.6930e+02   3.0021e+00  -1.6252e+02  -2.6897e-09   1.9904e-07
+
+  Columns 15 through 17
+
+  -3.9479e-06  -3.0603e-07   1.1731e-05
+
+
+fval =
+
+  -1.1858e-20
+  -1.9111e-19
+   1.1011e-20
+  -2.4416e-19
+   1.3010e-18
+   3.3597e-17
+  -1.7347e-18
+   4.3558e-17
+  -7.3726e-18
+  -7.3861e-18
+  -1.0842e-18
+  -2.4808e-17
+   3.8734e-21
+  -3.7803e-19
+   8.7546e-18
+   2.5743e-19
+  -1.0771e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16919.444150 seconds.
+
+t_equil_i =
+
+   3.1100e+01
+
+equlibrium point... 
+Elapsed time is 16920.092135 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   5.5571e+00  -2.1890e+01   7.2541e+00  -6.2135e+01   3.1773e+00  -1.2516e+01   4.1476e+00
+
+  Columns 8 through 14
+
+  -3.5526e+01   9.7495e+00  -2.6833e+02   3.0238e+00  -1.6207e+02  -3.0464e-09   5.3436e-07
+
+  Columns 15 through 17
+
+  -1.4983e-05   3.0947e-07  -8.7155e-06
+
+
+fval =
+
+   4.3368e-19
+  -2.8555e-17
+   2.3852e-18
+  -3.7046e-17
+            0
+  -1.6331e-17
+   1.6263e-18
+  -2.1193e-17
+  -2.6021e-18
+  -7.5217e-18
+   1.7347e-18
+  -2.4737e-17
+   2.6214e-20
+  -2.6414e-19
+   6.8515e-18
+  -6.4460e-21
+  -8.8140e-19
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16920.280196 seconds.
+
+t_equil_i =
+
+   3.5100e+01
+
+equlibrium point... 
+Elapsed time is 16920.429538 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+  -5.1841e+00   2.0667e+01  -6.7962e+00   5.7124e+01   2.9902e+00  -1.1921e+01   3.9200e+00
+
+  Columns 8 through 14
+
+  -3.2949e+01   9.3620e+00  -2.5695e+02   3.1476e+00  -1.5757e+02  -1.5568e-08   1.4599e-06
+
+  Columns 15 through 17
+
+  -3.3290e-05  -1.1152e-06   4.5812e-05
+
+
+fval =
+
+  -6.5052e-19
+   2.4395e-17
+  -1.3010e-18
+   3.1598e-17
+   2.1684e-19
+  -1.3993e-17
+   9.7578e-19
+  -1.8147e-17
+   8.6736e-19
+  -9.4190e-18
+   5.4210e-19
+  -2.4545e-17
+   1.3737e-20
+  -2.0274e-18
+   4.7604e-17
+   1.1935e-18
+  -5.0988e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16920.623844 seconds.
+
+t_equil_i =
+
+   3.9200e+01
+
+equlibrium point... 
+Elapsed time is 16920.764146 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   2.8516e-02  -1.0181e-01   3.5681e-02  -3.5319e-01  -9.5374e+00   3.4051e+01  -1.1934e+01
+
+  Columns 8 through 14
+
+   1.1813e+02   1.2849e+01  -3.6346e+02   1.6653e+00  -1.9546e+02  -6.5328e-09   8.3514e-07
+
+  Columns 15 through 17
+
+  -2.1653e-05  -1.6600e-09   3.9107e-06
+
+
+fval =
+
+   5.0822e-21
+  -1.8518e-19
+   1.3553e-20
+  -2.4371e-19
+  -8.6736e-19
+   5.0415e-17
+  -3.9031e-18
+   6.9294e-17
+  -1.7347e-18
+   1.7564e-17
+   6.5052e-19
+  -1.0715e-17
+   6.9828e-21
+  -7.2627e-19
+   1.7807e-17
+   2.8164e-19
+  -1.3440e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16920.972653 seconds.
+
+t_equil_i =
+
+   4.4600e+01
+
+equlibrium point... 
+Elapsed time is 16921.559124 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+   8.5960e+00  -3.0475e+01   1.0692e+01  -1.0774e+02   4.9440e+00  -1.7528e+01   6.1495e+00
+
+  Columns 8 through 14
+
+  -6.1966e+01   1.3182e+01  -3.7461e+02   1.4377e+00  -1.9895e+02   9.1134e-09  -9.4459e-07
+
+  Columns 15 through 17
+
+   2.2774e-05   4.7501e-07  -2.1395e-05
+
+
+fval =
+
+            0
+  -4.9304e-17
+   2.8189e-18
+  -6.8535e-17
+  -4.3368e-19
+  -2.8311e-17
+   1.9516e-18
+  -3.9350e-17
+            0
+   2.2443e-17
+  -1.7889e-18
+  -1.0040e-17
+   3.5777e-20
+   1.1294e-18
+  -2.7050e-17
+  -6.0801e-19
+   2.6983e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16921.769192 seconds.
+
+t_equil_i =
+
+   5.0900e+01
+
+equlibrium point... 
+Elapsed time is 16921.917820 seconds.
+
+Equation solved.
+
+fsolve completed because the vector of function values is near zero
+as measured by the value of the function tolerance, and
+the problem appears regular as measured by the gradient.
+
+<stopping criteria details>
+
+z0_eq =
+
+  Columns 1 through 7
+
+  -8.4774e+00   2.9964e+01  -1.0562e+01   1.0573e+02   4.8912e+00  -1.7288e+01   6.0938e+00
+
+  Columns 8 through 14
+
+  -6.1001e+01   1.3122e+01  -3.7207e+02   1.5286e+00  -1.9805e+02  -3.1843e-08   3.3813e-06
+
+  Columns 15 through 17
+
+  -8.2273e-05  -1.4850e-06   6.8806e-05
+
+
+fval =
+
+   2.6021e-18
+   4.7339e-17
+  -2.8189e-18
+   6.5364e-17
+  -1.3010e-18
+  -2.7078e-17
+   1.7347e-18
+  -3.7459e-17
+  -1.0408e-17
+   2.0383e-17
+  -1.6263e-18
+  -1.0210e-17
+   7.3725e-20
+  -3.9014e-18
+   9.3698e-17
+   2.0446e-18
+  -9.1217e-17
+
+
+exitflag =
+
+     1
+
+animation... 
+Elapsed time is 16922.128590 seconds.
+dynamic sim... 
+Elapsed time is 16922.358550 seconds.
+generate EOM_mex... 
+Elapsed time is 16922.359950 seconds.
+mex file generated. continue... 
+Elapsed time is 24433.126196 seconds.
+
+t_start_end =
+
+     7    54
+
+
+t =
+
+   7.0000e+00
+
+
+t =
+
+   8.0000e+00
+
+
+t =
+
+   9.0000e+00
+
+
+t =
+
+   1.0000e+01
+
+
+t =
+
+   1.1000e+01
+
+
+t =
+
+   1.2000e+01
+
+
+t =
+
+   1.3000e+01
+
+
+t =
+
+   1.4001e+01
+
+
+t =
+
+   1.5002e+01
+
+
+t =
+
+   1.6003e+01
+
+
+t =
+
+   1.7003e+01
+
+
+t =
+
+   1.8003e+01
+
+
+t =
+
+   1.9008e+01
+
+
+t =
+
+   2.0009e+01
+
+
+t =
+
+   2.1017e+01
+
+
+t =
+
+   2.2028e+01
+
+
+t =
+
+   2.3039e+01
+
+
+t =
+
+   2.4041e+01
+
+
+t =
+
+   2.5044e+01
+
+
+t =
+
+   2.6048e+01
+
+
+t =
+
+   2.7050e+01
+
+
+t =
+
+   2.8050e+01
+
+
+t =
+
+   2.9050e+01
+
+
+t =
+
+   3.0050e+01
+
+
+t =
+
+   3.1050e+01
+
+
+t =
+
+   3.2050e+01
+
+
+t =
+
+   3.3050e+01
+
+
+t =
+
+   3.4050e+01
+
+
+t =
+
+   3.5050e+01
+
+
+t =
+
+   3.6050e+01
+
+
+t =
+
+   3.7050e+01
+
+
+t =
+
+   3.8051e+01
+
+
+t =
+
+   3.9051e+01
+
+
+t =
+
+   4.0052e+01
+
+
+t =
+
+   4.1054e+01
+
+
+t =
+
+   4.2059e+01
+
+
+t =
+
+   4.3066e+01
+
+
+t =
+
+   4.4074e+01
+
+
+t =
+
+   4.5075e+01
+
+
+t =
+
+   4.6080e+01
+
+
+t =
+
+   4.7081e+01
+
+
+t =
+
+   4.8091e+01
+
+
+t =
+
+   4.9095e+01
+
+
+t =
+
+   5.0095e+01
+
+
+t =
+
+   5.1096e+01
+
+
+t =
+
+   5.2099e+01
+
+
+t =
+
+   5.3100e+01
+
+animation... 
+Elapsed time is 24616.214906 seconds.
+sim. end... 
+post-processing... 
+Elapsed time is 24760.240658 seconds.
+
+Err_abs =
+
+   3.7727e-03
+
+
+Err_std =
+
+   4.3581e-03
+
+
+Err_norm =
+
+   6.4490e+00
+
+>> 
