@@ -1,5 +1,3 @@
-To begin, download the directory Zip-file...
-
 This package derives and runs the dynamic model for a two-tube Concentric Tube Robot (CTR) as a part of the preprint publication: [Reduced-Order Real-Time Dynamics of Concentric Tube Robots: A Polynomial Shape (PS) Parametrization](https://www.researchgate.net/publication/346036331_Reduced-Order_Real-Time_Dynamics_of_Concentric_Tube_Robots_A_Polynomial_Shape_PS_Parametrization)
 
 New TMTDyn features:
