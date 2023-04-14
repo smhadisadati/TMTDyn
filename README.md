@@ -1,5 +1,3 @@
-To begin, download the directory Zip-file...
-
 AutoTMTDyn is a Matlab based package, for automatic derivation of TMT Equation of Motion (EOM) for rigid body dynamic systems, and nonlinear controller design.
 
 Please cite our relevant papers if you decided to use this package or methods presented in it:
