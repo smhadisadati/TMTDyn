@@ -1,5 +1,3 @@
-To begin, download the directory Zip-file...
-
 This code package derives and runs the dynamic model for MAMMOBOT: A Miniature Steerable Soft Growing Robot for Early Breast Cancer Detection.
 MAMMOBOT is a novel miniature #eversion #growing cannula steered with a notched tendon-driven #catheter 
 
