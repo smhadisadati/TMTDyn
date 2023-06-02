@@ -555,14 +555,14 @@ for b_count = 1 : n_bodies % number of bodies
                 im = 6 * n_m ; % 6 elements for mass and inertia matrix
                 mass(n_m).M(1:3,1:3) = smplfy( sym( body(b_count).m(i_copies) * eye( 3 ) ) ) ;
                 if par.derive == 2 % EOM simplification
-                    mass(n_m).M(4:6,4:6) = zeros(3,3) ; % slower absolute rotations compared to translations
+                    mass(n_m).M(4:6,4:6) = 0 ; % slower absolute rotations compared to translations
                 else
                     mass(n_m).M(4:6,4:6) = smplfy( sym( body(b_count).I(:,:,i_copies) ) ) ;
                 end
                 
                 % rotational terms in local (curvilinear) frame where I is defined
                 if par.derive == 2 % EOM simplification
-                    mass(n_m).T(4:6,:) = zeros( 3 , numel( q ) ) ; % slower absolute rotations compared to translations
+                    mass(n_m).T(4:6,:) = 0 ; % slower absolute rotations compared to translations
                     mass(n_m).Dd(4:6,:) = zeros( 3 , numel( q ) ) ; % slow systems
                 else
                     temp = myJacobian( body(b_count).Q{i_copies}.abs , q ) ;
@@ -583,7 +583,7 @@ for b_count = 1 : n_bodies % number of bodies
                 
                 mass(n_m).T(1:3,:) = smplfy( temp8 ) ;
                 if par.derive == 2 % EOM simplification
-                    mass(n_m).Dd(1:3,:) = zeros( 3 , numel( q ) ) ; % slow systems
+                    mass(n_m).Dd(1:3,:) = 0 ; % slow systems
                 else
                     mass(n_m).Dd(1:3,:) = smplfy( myJacobian ( body(b_count).v_com(i_copies,:).' , q ) ) ;
                 end

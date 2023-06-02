@@ -294,7 +294,7 @@ for i_joint = 1 : numel( joint )
     if ~isfield( joint(i_joint).gains , 'k0' ) || isempty( joint(i_joint).gains.k0 )
         joint(i_joint).gains.k0 = ones(n_copy,1) .* ones(1,6) .* joint_temp.gains.k0 ;
     else
-        if numel( joint(i_joint).gains.k01,:) ) < 6
+        if numel( joint(i_joint).gains.k0(1,:) ) < 6
             joint(i_joint).gains.k0 = ones(1,6) .* joint(i_joint).gains.k0(1,:) ;
         end
         joint(i_joint).gains.k0 = ones(n_copy,1) .* joint(i_joint).gains.k0 ;
