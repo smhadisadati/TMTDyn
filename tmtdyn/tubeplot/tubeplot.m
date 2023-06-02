@@ -66,8 +66,8 @@ for k=1:npoints
     nvec=nvec./norm(nvec);
     %update xyz:
     xyz(:,:,k+1)=repmat(curve(:,k),[1,n+1])+...
-        cfact.*repmat(r*nvec,[1,n+1])...
-        +sfact.*repmat(r*convec,[1,n+1]);
+        cfact.*repmat(r(k)*nvec,[1,n+1])...
+        +sfact.*repmat(r(k)*convec,[1,n+1]);
 end
 
 %finally, cap the ends:

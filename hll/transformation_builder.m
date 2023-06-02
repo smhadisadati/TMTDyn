@@ -82,7 +82,25 @@ classdef transformation_builder < handle
             self.i_S = self.i_S + 1;
         end
         
-        function output = trans_curvilinear_axial(self)
+        function output = growing(self, type) % curvilinear axial transformation, type in {'none', 'from_tip', 'from_base', 'sliding'}
+            % update rom growing type:            
+            if nargin == 1
+                type = 'none';
+            end
+            switch type
+                case 'from_base'
+                    type = -1;
+                case 'sliding'
+                    type = -2;
+                otherwise % 'none' & 'from_tip'
+                    type = 0;
+            end
+            type = ones(self.source.n_copy,1) .* type;
+            for i = 1 : numel(type) % for mesh
+                self.source.pipe.rom.length(i,3) = type(i); % type elements (i.e. 3rd element) in joint.rom.length structure
+            end
+            
+            % define ttransfromation (i.e. tr) element
             self.type_val = 'growing' ;
             self.translation_vec = [0 0 inf];
             self.mix(2) = 0;

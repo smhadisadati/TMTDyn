@@ -10,6 +10,12 @@ classdef analysis_builder < handle
         report_time_val;
         integration_steps;
         sampling_rate;
+        Rayleigh_M_coeff_val ;
+        Rayleigh_M_type_val ;
+        Rayleigh_K_coeff_val ;
+        control_type_val ;
+        ATol ;
+        RTol ;
     end
     
     properties (GetAccess = public, SetAccess = public)
@@ -33,10 +39,10 @@ classdef analysis_builder < handle
 					select = 3;
 				case 'generate_mex_from_edited_m_file'
 					select = 4;
-                case 'generate_mex_from_c_files'
+                case 'update_parameters_only'
                     select = 6;
-				otherwise
-					select = 2;
+				% otherwise
+					% select = 2;
 			end
 			if nargin == 2
 				time_points = 0;
@@ -48,7 +54,7 @@ classdef analysis_builder < handle
             self.i_S = self.i_S + 1;
         end
         
-        function self = dynamic_sim(self, select_file, select_solver, start_time, end_time)
+        function self = dynamic_sim(self, select_file, select_solver, start_time, end_time, ATol, RTol)
 			switch select_file
 				case 'edited_m_file'
 					select_file = 5;
@@ -60,10 +66,10 @@ classdef analysis_builder < handle
 					select_file = 3;
 				case 'generate_mex_from_edited_m_file'
 					select_file = 4;
-                case 'generate_mex_from_c_files'
+                case 'update_parameters_only'
                     select_file = 6;
-				otherwise
-					select_file = 2;
+				% otherwise
+					% select_file = 2;
 			end
 			% select_file: 1: dyn. sim. with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
             self.dynamic_sim_val = select_file;
@@ -81,13 +87,23 @@ classdef analysis_builder < handle
 					select_solver = 5;
 				case 'external'
 					select_solver = 6;
-				otherwise
-					select_solver = 1;
+				case 'load_result'
+					select_solver = 7;
+				% otherwise
+					% select_solver = 1;
 			end
             self.solver_val = select_solver;
             self.source.pipe.solver = select_solver;
 			self.source.pipe.t_init = start_time;
             self.source.pipe.t_final = end_time;
+            if nargin >= 6
+                self.ATol = ATol;
+                self.source.pipe.ATol = ATol;
+            end
+            if nargin >= 7
+                self.RTol = RTol;
+                self.source.pipe.RTol = RTol;
+            end
             self.i_S = self.i_S + 1;
         end
         
@@ -101,8 +117,8 @@ classdef analysis_builder < handle
 					select = 2;
 				case 'old_mex_file'
 					select = 3;
-				otherwise
-					select = 2;
+				% otherwise
+					% select = 2;
 			end
 			% select: 1: linear modal analysis with Matlab func.s, 2: with C-mex func.s, 3: to used latest genarated C-Mex file
             self.modal_analysis = select ;
@@ -111,10 +127,43 @@ classdef analysis_builder < handle
             self.i_S = self.i_S + 1;
         end
         
+        function self = controller_type(self, type) % type in {'jacobian_inverse_controller', 'input_output_feedback_linearization', 'weight_compensation_&_attractor_field_controller'}
+			switch type
+				case 'input_output_feedback_linearization'
+					type = 1;
+				case 'weight_compensation_&_attractor_field_controller'
+					type = 2;
+                otherwise
+                    type = 0 ; % default value for jacobian-inverse controller
+			end
+            self.control_type_val = type ;
+            self.source.pipe.control_type= type;
+            self.i_S = self.i_S + 1;
+        end
+        
         function self = report_time_intervals(self,report_time)
 			% sim report time
             self.report_time_val = report_time ;
             self.source.pipe.t_rep = report_time;
+            self.i_S = self.i_S + 1;
+        end
+        
+        function self = Rayleigh_damping_coefficients(self, mass_coeff, stiffness_coeff, type) % type in {'constant', 'adaptive_svd'}
+			if nargin < 4
+                type = 'constant' ;
+            end
+            switch type
+                case 'adaptive_svd'
+                    type = 1 ;
+                otherwise % 'constant'
+                    type = 0 ;
+            end
+            self.Rayleigh_M_coeff_val = mass_coeff ;
+            self.Rayleigh_M_type_val = type ;
+            self.Rayleigh_K_coeff_val = stiffness_coeff ;
+            self.source.pipe.Rayleigh_M_coeff = mass_coeff ;
+            self.source.pipe.Rayleigh_M_type = type ;
+            self.source.pipe.Rayleigh_K_coeff = stiffness_coeff ;
             self.i_S = self.i_S + 1;
         end
         

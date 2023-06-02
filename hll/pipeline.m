@@ -17,7 +17,7 @@ warning('off','all')
 if par.derive
     [ qf , uf , lambdaf , par ] = tmt_eom_derive ( par , world , body , joint , exload , mesh );
 else
-    reset( symengine ) ; % clear symbolic engine
+    reset( symengine ) ; % clear symbolic engine for faster simulations
 end
 
 %% numerical simulation & animation
@@ -26,13 +26,14 @@ if par.dyn ~= 0 && par.t_equil(1) ~= par.t_init % include t_0  to static analysi
     par.t_equil = [ par.t_init , par.t_equil ] ;
 end
 par.t0 = par.t_init ;
-if isinf( par.dt_anim_rep(1) )
+if isinf( par.dt_anim_rep(1) ) % number of reports are provided instead of the sim. duration before each report!
     par.dt_anim_rep(1) = ( par.t_final - par.t_init ) / par.dt_anim_rep(2) ;
 end
-par.dt = par.dt_anim_rep(1) ;
+par.dt = par.dt_anim_rep(1) ; % sim. duration before each report
 % par.stepT = par.dt / ( ( 1 + floor( par.dt ) ) * par.n_datasample ) ; % sampling time to save data for
 par.stepT = 1 / par.n_datasample ;
 z0 = [] ;
+eps = [ 0*1e-6 0*1e-9 ] ; % for singularity prevention
 
 % par_mex
 par_mex.var = par.var ;
@@ -59,7 +60,6 @@ if par.movie == 1
         end
     end
     par.vid.Quality = 100 ;
-    open( par.vid ) ;
 end
 
 % static solve for equlibrium:
@@ -69,7 +69,7 @@ for t_equil_i = par.t_equil
     i = i + 1 ;
     t_equil_i = t_equil_i % report t_equil in terminal
     par.t_equil_i = t_equil_i ; % solve for this time step (use to extract data from exp.)
-    [ z0 , par ] = equil( par ) ; % find static equlibrium
+    [ z0 , par ] = equil( par , eps ) ; % find static equlibrium
     [ ~ , rjtip_0 , ~ , Qjtip_0 , ~ , par ] = anim( t_equil_i , z0 , par ) ; % plot equil.
     z_equil_all(i,:) = z0 ;
     rjtip_equil_all(:,:,i) = rjtip_0 ; Qjtip_equil_all(:,:,i) = Qjtip_0 ; t_equil_all(i) = t_equil_i ; par.linetype = 'o' ;
@@ -91,17 +91,28 @@ if par.modal
 end
 
 % sim & anim.:
+par.sim_ongoing = false ; % default case for no dyn sim.
 z0 = z_equil_all(1,:) ;
 if par.dyn ~= 0
+    par.sim_ongoing = true ;
     clf( par.fig.anim ) ; par.linetype = '-' ;
+    
     t_all = [] ; z_all = [] ; rjtip_all = [] ; Qjtip_all = [] ;
+    % for external solver: time steps are not accurate, last report run imports all the data
     for t0_step = par.t_init : par.dt_anim_rep(1) : par.t_final - par.dt_anim_rep(1)
         % step sim:
         par.t0 = t0_step ;
-        [ t , z , tfinal , par ] = dyn_sim( z0 , par ) ;
+        [ t , z , tfinal , par ] = dyn_sim( z0 , par , eps ) ;
         
         % animation
         [ ~ , rjtip , ~ , Qjtip , ~ , par ] = anim( t , z , par ) ;
+
+        % intermediate post-process
+        if par.t0 + par.dt ~= par.t_final  % if more than one report step is requested
+            post_proc( t , t_equil_all , z , z_equil_all , rjtip , rjtip_equil_all , Qjtip , Qjtip_equil_all , ...
+                Phi_modal , M_modal , K_modal , V_modal , omega , xi , ...
+                par ) ;
+        end
         
         % concatanate results
         t_all = [ t_all ; t(1:end-1) ] ;
@@ -115,6 +126,7 @@ if par.dyn ~= 0
     rjtip_all = cat( 3 , rjtip_all , rjtip(:,:,end) ) ;
     Qjtip_all = cat( 3 , Qjtip_all , Qjtip(:,:,end) ) ;
 end
+par.sim_ongoing = false ;
 
 if par.movie == 1 ; close( par.vid ) ; end
 

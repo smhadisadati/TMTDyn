@@ -1,7 +1,13 @@
 function out = smplfy( in )
-global par_simplify
+global par_simplify par_sym par_var
 
-if isa( in, 'sym' )    
+% simplify only symbolic parameters
+if isa( in, 'sym' ) 
+        
+    % simplify piesewise function conditions by removing unnecessary (not possible) ones based on par.var
+    in = simplify_piecewise( in , par_sym , par_var ) ;
+    
+    % simplify according to set instructions
     switch par_simplify(1)
         case 1 % 'symbolic'
             out = simplify( sym( in ) , 'Criterion' , 'preferReal' , 'Seconds' , par_simplify(2) ) ;

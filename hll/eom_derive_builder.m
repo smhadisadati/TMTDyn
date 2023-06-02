@@ -13,6 +13,7 @@ classdef eom_derive_builder < handle
 		cores_val;
         plotIC;
         pw2lg ; % piecewise to logistic function convertsion
+        numdiff ;
     end
     
     properties (GetAccess = public, SetAccess = public)
@@ -83,8 +84,8 @@ classdef eom_derive_builder < handle
 		
         function self = use_single_cpu_core(self)
 			% simplify results
-            self.cores_val = 1;
-            self.source.pipe.cores = 1;
+            self.cores_val = 0;
+            self.source.pipe.cores = 0;
             self.i_S = self.i_S + 1;
         end
 		
@@ -139,6 +140,12 @@ classdef eom_derive_builder < handle
 			% optimize results
             self.plotIC = select_id;
             self.source.pipe.plotIC = select_id;
+            self.i_S = self.i_S + 1;
+        end
+        
+        function self = numerical_time_differentiation(self, dq)
+            self.numdiff = dq;
+            self.source.pipe.numdiff = dq; % numerical differentiation
             self.i_S = self.i_S + 1;
         end
                 

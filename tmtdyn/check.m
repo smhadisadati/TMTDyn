@@ -111,6 +111,30 @@ else
     if ~isfield( par , 'anim_line' ) || isempty( par.anim_line )
         par.anim_line = par_temp.anim_line ;
     end
+    if ~isfield( par , 'clean' ) || isempty( par.clean )
+        par.clean = par_temp.clean ;
+    end
+    if ~isfield( par , 'Rayleigh_M_coeff' ) || isempty( par.Rayleigh_M_coeff )
+        par.Rayleigh_M_coeff = par_temp.Rayleigh_M_coeff ;
+    end
+    if ~isfield( par , 'Rayleigh_M_type' ) || isempty( par.Rayleigh_M_type )
+        par.Rayleigh_M_type = par_temp.Rayleigh_M_type ;
+    end
+    if ~isfield( par , 'Rayleigh_K_coeff' ) || isempty( par.Rayleigh_K_coeff )
+        par.Rayleigh_K_coeff = par_temp.Rayleigh_K_coeff ;
+    end
+    if ~isfield( par , 'control_type' ) || isempty( par.control_type )
+        par.control_type = par_temp.control_type ;
+    end
+    if ~isfield( par , 'numdiff' ) || isempty( par.numdiff )
+        par.numdiff = par_temp.numdiff ;
+    end
+    if ~isfield( par , 'ATol' ) || isempty( par.ATol )
+        par.ATol = par_temp.ATol ;
+    end
+    if ~isfield( par , 'RTol' ) || isempty( par.RTol )
+        par.RTol = par_temp.RTol ;
+    end
 end
 
 
@@ -122,460 +146,553 @@ end
 
 %% joints
 j_b = zeros( 1 , numel( body ) ) ; % joints in main kin. chain for all each body
-for i_j = 1 : numel( joint )
+for i_joint = 1 : numel( joint )
     nq = 0 ; % number of dof.s
     
-    if ~isfield( joint(i_j) , 'first' ) || isempty( joint(i_j).first )
-        joint(i_j).first = [ 0 1 ; 0 0 ] ; % [body_no, mesh_no; 0, location_lengh]
+    if ~isfield( joint(i_joint) , 'first' ) || isempty( joint(i_joint).first )
+        joint(i_joint).first = [ 0 1 ; 0 0 ] ; % [body_no, mesh_no; 0, location_lengh]
     end
     
-    if ~isfield( joint(i_j) , 'second' ) || isempty( joint(i_j).second )
-        joint(i_j).second = [ 0 1 ; 0 0 ] ; % [body_no, mesh_no; 0, location_lengh]
+    if ~isfield( joint(i_joint) , 'second' ) || isempty( joint(i_joint).second )
+        joint(i_joint).second = [ 0 1 ; 0 0 ] ; % [body_no, mesh_no; 0, location_lengh]
     end
         
-    if ~isfield( joint(i_j) , 'mainkin' ) || isempty( joint(i_j).mainkin )
-        joint(i_j).mainkin = 0 ;
+    if ~isfield( joint(i_joint) , 'mainkin' ) || isempty( joint(i_joint).mainkin )
+        joint(i_joint).mainkin = 0 ;
         for i_b = 1 : numel( body )
-            if joint(i_j).second(1,1) == i_b && j_b( i_b ) == 0 % first connected to i_b is in main kin. chain
-                j_b( i_b ) = i_j ;
-                joint(i_j).mainkin = 1 ;
+            if joint(i_joint).second(1,1) == i_b && j_b( i_b ) == 0 % first connected to i_b is in main kin. chain
+                j_b( i_b ) = i_joint ;
+                joint(i_joint).mainkin = 1 ;
             end
         end
     end
     
-    [ n_copies , ind ] = max( [ numel( joint(i_j).second(1,:) ) , numel( joint(i_j).first(1,:) ) ] ) ;
-    if ind == 2 && joint(i_j).mainkin == 1 && numel( joint(i_j).first(1,:) ) > 2 % only acceptable for sprdmp
-        i_j
-        error( 'main kin. chain joint(i_j).second size error' ) ;
+    [ n_copy , ind ] = max( [ numel( joint(i_joint).second(1,:) ) , numel( joint(i_joint).first(1,:) ) ] ) ;
+    if ind == 2 && joint(i_joint).mainkin == 1 && numel( joint(i_joint).first(1,:) ) > 2 % only acceptable for sprdmp
+        i_joint
+        error( 'main kin. chain joint(i_joint).second size error' ) ;
     end
-    if n_copies > 1
-        n_copies = n_copies - 1 ;
+    if n_copy > 1
+        n_copy = n_copy - 1 ;
     else
-        joint(i_j).first(1,2) = 1 ;
-        joint(i_j).second(1,2) = 1 ;
+        joint(i_joint).first(1,2) = 1 ;
+        joint(i_joint).second(1,2) = 1 ;
     end
-    if numel( joint(i_j).first(1,:) ) ~= numel( joint(i_j).second(1,:) )
+    if numel( joint(i_joint).first(1,:) ) ~= numel( joint(i_joint).second(1,:) )
         if ind == 2
-            if numel( joint(i_j).second(1,:) ) == 1
-                joint(i_j).second(1,2:n_copies+1) = 1 ;
+            if numel( joint(i_joint).second(1,:) ) == 1
+                joint(i_joint).second(1,2:n_copy+1) = 1 ;
             else
-                if numel( joint(i_j).second(1,:) ) == 2
-                    joint(i_j).second(1,2:n_copies+1) = joint(i_j).second(1,2) ;
+                if numel( joint(i_joint).second(1,:) ) == 2
+                    joint(i_joint).second(1,2:n_copy+1) = joint(i_joint).second(1,2) ;
                 else
-                    error( 'numel( joint(i_j).first ) ~= numel( joint(i_j).second )' ) ;
+                    error( 'numel( joint(i_joint).first ) ~= numel( joint(i_joint).second )' ) ;
                 end
             end
         else
-            if numel( joint(i_j).first(1,:) ) == 1
-                joint(i_j).first(1,2:n_copies+1) = 1 ;
+            if numel( joint(i_joint).first(1,:) ) == 1
+                joint(i_joint).first(1,2:n_copy+1) = 1 ;
             else
-                if numel( joint(i_j).first(1,:) ) == 2
-                    joint(i_j).first(1,2:n_copies+1) = joint(i_j).first(1,2) ;
+                if numel( joint(i_joint).first(1,:) ) == 2
+                    joint(i_joint).first(1,2:n_copy+1) = joint(i_joint).first(1,2) ;
                 else
-                    error( 'numel( joint(i_j).first ) ~= numel( joint(i_j).second )' ) ;
+                    error( 'numel( joint(i_joint).first ) ~= numel( joint(i_joint).second )' ) ;
                 end
             end
         end
     end
     
-    if numel( joint(i_j).first(:,1) ) == 1 % fill the length row
-        joint(i_j).first(2,1) = 0 ;
+    if numel( joint(i_joint).first(:,1) ) == 1 % fill the curve_length row
+        joint(i_joint).first(2,1) = 0 ;
     end
-    if numel( joint(i_j).second(:,1) ) == 1
-        joint(i_j).second(2,1) = 0 ;
-    end
-    
-    if ~isfield( joint(i_j) , 'rom' ) || isempty( joint(i_j).rom )
-        joint(i_j).rom = par_temp.rom ;
-    end
-    if max( max( joint(i_j).rom.order ) ) > 0
-        joint(i_j).rom.isROM = 1; % it is a continuum ROM joint
-        if ~isfield( joint(i_j).rom , 'order' ) || isempty( joint(i_j).rom.order )
-            error( 'joint(i_j).rom.order error' ) ;
-        else
-            joint(i_j).rom.order =  ones(n_copies,1) .* joint(i_j).rom.order;
-        end
-        if ~isfield( joint(i_j).rom , 'default_order' ) || isempty( joint(i_j).rom.default_order )
-            joint(i_j).rom.default_order = zeros(n_copies,1)  ;
-        else
-            joint(i_j).rom.default_order =  ones(n_copies,1) .* joint(i_j).rom.default_order;
-        end
-        if ~isfield( joint(i_j).rom , 'length' ) || isempty( joint(i_j).rom.length )
-            error( 'joint(i_j).rom.length error' ) ;
-        else
-            joint(i_j).rom.length =  ones(n_copies,1) .* joint(i_j).rom.length;
-        end
-        if ~isfield( joint(i_j).rom , 'rel_base' ) || isempty( joint(i_j).rom.rel_base )
-            joint(i_j).rom.rel_base = par_temp.rom.rel_base ;
-        else
-            joint(i_j).rom.rel_base =  ones(n_copies,1) .* joint(i_j).rom.rel_base;
-        end
-        if ~isfield( joint(i_j).rom , 'free_base' ) || isempty( joint(i_j).rom.free_base )
-            joint(i_j).rom.free_base = par_temp.rom.free_base ;
-        else
-            joint(i_j).rom.free_base =  ones(n_copies,1) .* joint(i_j).rom.free_base;
-        end
-        if ~isfield( joint(i_j).rom , 'init_s' )
-            joint(i_j).rom.init_s = par_temp.rom.init_s ;
-        end
-        if ~isfield( joint(i_j).rom , 'fit_type' )
-            joint(i_j).rom.fit_type = par_temp.rom.fit_type ;
-        end
-        if ~isfield( joint(i_j).rom , 'spring_fit_type' )
-            joint(i_j).rom.spring_fit_type = par_temp.rom.spring_fit_type ;
-        end
-        if ~isfield( joint(i_j).rom , 'growth' )
-            joint(i_j).rom.growth = par_temp.rom.growth ;
-        end
-        if ~isfield( joint(i_j).rom , 'simpKnot' )
-            joint(i_j).rom.simpKnot = par_temp.rom.simpKnot ;
-        end
-        if ~isfield( joint(i_j).rom , 'spc_order' )
-            joint(i_j).rom.spc_order = par_temp.rom.spc_order ;
-        end
-        if ~isfield( joint(i_j).rom , 'var_init' )
-            joint(i_j).rom.var_init = par_temp.rom.var_init ;
-        end
-        if ~isfield( joint(i_j).rom , 'stiffmodel' )
-            joint(i_j).rom.stiffmodel = par_temp.rom.stiffmodel ;
-        end
-        if ~isfield( joint(i_j).rom , 'rom_offset' )
-            joint(i_j).rom.rom_offset = par_temp.rom.rom_offset ;
-        end
-        if ~isfield( joint(i_j).rom , 'spring_rom_offset' )
-            joint(i_j).rom.spring_rom_offset = par_temp.rom.spring_rom_offset ;
-        end
-        if ~isfield( joint(i_j).rom , 'singleBody' )
-            joint(i_j).rom.singleBody = par_temp.rom.singleBody ;
-        end
-    else
-        joint(i_j).rom.isROM = 0; % it is not a continuum ROM joint
-        joint(i_j).rom.order =  ones(n_copies,1) .* joint(i_j).rom.order;
+    if numel( joint(i_joint).second(:,1) ) == 1
+        joint(i_joint).second(2,1) = 0 ;
     end
     
-    if ~isfield( joint(i_j) ,'tr' ) || isempty( joint(i_j).tr )
-        joint(i_j).tr.trans = [ 0 0 0 ] ;
-        joint(i_j).tr.rot = [ 1 0 0 0 ] ;
-        joint(i_j).tr.init_quat = [ 1 0 0 0 ] ;
-        joint(i_j).tr.type = 'none' ;
+    if ~isfield( joint(i_joint) , 'rom' ) || isempty( joint(i_joint).rom )
+        joint(i_joint).rom = par_temp.rom ;
+    end
+    if max( max( joint(i_joint).rom.order ) ) > 0
+        joint(i_joint).rom.isROM = 1; % it is a continuum ROM joint
+        if ~isfield( joint(i_joint).rom , 'order' ) || isempty( joint(i_joint).rom.order )
+            error( 'joint(i_joint).rom.order error' ) ;
+        else
+            joint(i_joint).rom.order =  ones(n_copy,1) .* joint(i_joint).rom.order;
+        end
+        if ~isfield( joint(i_joint).rom , 'default_order' ) || isempty( joint(i_joint).rom.default_order )
+            joint(i_joint).rom.default_order = zeros(n_copy,1)  ;
+        else
+            joint(i_joint).rom.default_order =  ones(n_copy,1) .* joint(i_joint).rom.default_order;
+        end
+        if ~isfield( joint(i_joint).rom , 'length' ) || isempty( joint(i_joint).rom.length )
+            error( 'joint(i_joint).rom.length error' ) ;
+        else
+            joint(i_joint).rom.length =  ones(n_copy,1) .* joint(i_joint).rom.length;
+        end
+        if ~isfield( joint(i_joint).rom , 'rel_base' ) || isempty( joint(i_joint).rom.rel_base )
+            joint(i_joint).rom.rel_base = par_temp.rom.rel_base ;
+        else
+            joint(i_joint).rom.rel_base =  ones(n_copy,1) .* joint(i_joint).rom.rel_base;
+        end
+        if ~isfield( joint(i_joint).rom , 'free_base' ) || isempty( joint(i_joint).rom.free_base )
+            joint(i_joint).rom.free_base = par_temp.rom.free_base ;
+        else
+            joint(i_joint).rom.free_base =  ones(n_copy,1) .* joint(i_joint).rom.free_base;
+        end
+        if ~isfield( joint(i_joint).rom , 'init_s' )
+            joint(i_joint).rom.init_s = par_temp.rom.init_s ;
+        end
+        if ~isfield( joint(i_joint).rom , 'fit_type' )
+            joint(i_joint).rom.fit_type = par_temp.rom.fit_type ;
+        end
+        if ~isfield( joint(i_joint).rom , 'spring_fit_type' )
+            joint(i_joint).rom.spring_fit_type = par_temp.rom.spring_fit_type ;
+        end
+        if ~isfield( joint(i_joint).rom , 'growth' )
+            joint(i_joint).rom.growth = par_temp.rom.growth ;
+        end
+        if ~isfield( joint(i_joint).rom , 'simpKnot' )
+            joint(i_joint).rom.simpKnot = par_temp.rom.simpKnot ;
+        end
+        if ~isfield( joint(i_joint).rom , 'spc_order' )
+            joint(i_joint).rom.spc_order = par_temp.rom.spc_order ;
+        end
+        if ~isfield( joint(i_joint).rom , 'var_init' )
+            joint(i_joint).rom.var_init = par_temp.rom.var_init ;
+        end
+        if ~isfield( joint(i_joint).rom , 'stiffmodel' )
+            joint(i_joint).rom.stiffmodel = par_temp.rom.stiffmodel ;
+        end
+        if ~isfield( joint(i_joint).rom , 'rom_offset' )
+            joint(i_joint).rom.rom_offset = par_temp.rom.rom_offset ;
+        end
+        if ~isfield( joint(i_joint).rom , 'spring_rom_offset' )
+            joint(i_joint).rom.spring_rom_offset = par_temp.rom.spring_rom_offset ;
+        end
+        if ~isfield( joint(i_joint).rom , 'singleBody' )
+            joint(i_joint).rom.singleBody = par_temp.rom.singleBody ;
+        end
+    else
+        joint(i_joint).rom.isROM = 0; % it is not a continuum ROM joint
+        joint(i_joint).rom.order =  ones(n_copy,1) .* joint(i_joint).rom.order;
     end
     
-    if ~isfield( joint(i_j) , 'dof' ) || isempty( joint(i_j).dof )
-        joint(i_j).dof = joint_temp.dof ;
+    if ~isfield( joint(i_joint) ,'tr' ) || isempty( joint(i_joint).tr )
+        joint(i_joint).tr.trans = [ 0 0 0 ] ;
+        joint(i_joint).tr.rot = [ 1 0 0 0 ] ;
+        joint(i_joint).tr.init_quat = [ 1 0 0 0 ] ;
+        joint(i_joint).tr.type = 'none' ;
     end
     
-    if ~isfield( joint(i_j) , 'pid' ) || isempty( joint(i_j).pid )
-        joint(i_j).pid = joint_temp.pid ;
+    if ~isfield( joint(i_joint) , 'dof' ) || isempty( joint(i_joint).dof )
+        joint(i_joint).dof = joint_temp.dof ;
     end
-    if ~isfield( joint(i_j).pid , 'p' ) || isempty( joint(i_j).pid.p )
-        joint(i_j).pid.p = ones(n_copies,1) .* ones(1,6) .* joint_temp.pid.p ;
+    
+    if ~isfield( joint(i_joint) , 'gains' ) || isempty( joint(i_joint).gains )
+        joint(i_joint).gains = joint_temp.gains ;
+    end
+    if ~isfield( joint(i_joint).gains , 'k0' ) || isempty( joint(i_joint).gains.k0 )
+        joint(i_joint).gains.k0 = ones(n_copy,1) .* ones(1,6) .* joint_temp.gains.k0 ;
     else
-        if numel( joint(i_j).pid.p(1,:) ) < 6
-            joint(i_j).pid.p = ones(1,6) .* joint(i_j).pid.p(1,:) ;
+        if numel( joint(i_joint).gains.k0(1,:) ) < 6
+            joint(i_joint).gains.k0 = ones(1,6) .* joint(i_joint).gains.k0(1,:) ;
         end
-        joint(i_j).pid.p = ones(n_copies,1) .* joint(i_j).pid.p ;
+        joint(i_joint).gains.k0 = ones(n_copy,1) .* joint(i_joint).gains.k0 ;
     end
-    if ~isfield( joint(i_j).pid , 'i' ) || isempty( joint(i_j).pid.i )
-        joint(i_j).pid.i = ones(n_copies,1) .* ones(1,6) .* joint_temp.pid.i ;
+    if ~isfield( joint(i_joint).gains , 'k1' ) || isempty( joint(i_joint).gains.k1 )
+        joint(i_joint).gains.k1 = ones(n_copy,1) .* ones(1,6) .* joint_temp.gains.k1 ;
     else
-        if numel( joint(i_j).pid.i(1,:) ) < 6
-            joint(i_j).pid.i = ones(1,6) .* joint(i_j).pid.i(1,:) ;
+        if numel( joint(i_joint).gains.k1(1,:) ) < 6
+            joint(i_joint).gains.k1 = ones(1,6) .* joint(i_joint).gains.k1(1,:) ;
         end
-        joint(i_j).pid.i = ones(n_copies,1) .* joint(i_j).pid.i ;
+        joint(i_joint).gains.k1 = ones(n_copy,1) .* joint(i_joint).gains.k1 ;
     end
-    if ~isfield( joint(i_j).pid , 'd' ) || isempty( joint(i_j).pid.d )
-        joint(i_j).pid.d = ones(n_copies,1) .* ones(1,6) .* joint_temp.pid.d ;
+    if ~isfield( joint(i_joint).gains , 'k_slide' ) || isempty( joint(i_joint).gains.k_slide )
+        joint(i_joint).gains.k_slide = ones(n_copy,1) .* ones(1,6) .* joint_temp.gains.k_slide ;
     else
-        if numel( joint(i_j).pid.d(1,:) ) < 6
-            joint(i_j).pid.d = ones(1,6) .* joint(i_j).pid.d(1,:) ;
+        if numel( joint(i_joint).gains.k_slide(1,:) ) < 6
+            joint(i_joint).gains.k_slide = ones(1,6) .* joint(i_joint).gains.k_slide(1,:) ;
         end
-        joint(i_j).pid.d = ones(n_copies,1) .* joint(i_j).pid.d ;
+        joint(i_joint).gains.k_slide = ones(n_copy,1) .* joint(i_joint).gains.k_slide ;
     end
-    for i = 1 : numel( joint(i_j).tr )
-        if ~isfield( joint(i_j).tr(i) ,'trans' ) || isempty( joint(i_j).tr(i).trans )
-            joint(i_j).tr(i).trans = [ 0 0 0 ] ;
+    if ~isfield( joint(i_joint).gains , 'l_slide' ) || isempty( joint(i_joint).gains.l_slide )
+        joint(i_joint).gains.l_slide = ones(n_copy,1) .* ones(1,6) .* joint_temp.gains.l_slide ;
+    else
+        if numel( joint(i_joint).gains.l_slide(1,:) ) < 6
+            joint(i_joint).gains.l_slide = ones(1,6) .* joint(i_joint).gains.l_slide(1,:) ;
         end
-        if ~isfield( joint(i_j).tr(i) ,'rot' ) || isempty( joint(i_j).tr(i).rot )
-            joint(i_j).tr(i).rot = [ 1 0 0 0 ] ;
-            joint(i_j).tr(i).init_quat = [ 1 0 0 0 ] ;
-            joint(i_j).tr(i).type = 'none' ;
+        joint(i_joint).gains.l_slide = ones(n_copy,1) .* joint(i_joint).gains.l_slide ;
+    end
+    for i = 1 : numel( joint(i_joint).tr )
+        if ~isfield( joint(i_joint).tr(i) ,'trans' ) || isempty( joint(i_joint).tr(i).trans )
+            joint(i_joint).tr(i).trans = [ 0 0 0 ] ;
         end
-        if ~isfield( joint(i_j).tr(i) ,'init_quat' ) || isempty( joint(i_j).tr(i).init_quat )
-            joint(i_j).tr(i).init_quat = [ 1 0 0 0 ] ;
+        if ~isfield( joint(i_joint).tr(i) ,'rot' ) || isempty( joint(i_joint).tr(i).rot )
+            joint(i_joint).tr(i).rot = [ 1 0 0 0 ] ;
+            joint(i_joint).tr(i).init_quat = [ 1 0 0 0 ] ;
+            joint(i_joint).tr(i).type = 'none' ;
         end
-        if ~isfield( joint(i_j).tr(i) ,'type' ) || isempty( joint(i_j).tr(i).type )
-            joint(i_j).tr(i).type = 'none' ;
+        if ~isfield( joint(i_joint).tr(i) ,'init_quat' ) || isempty( joint(i_joint).tr(i).init_quat )
+            joint(i_joint).tr(i).init_quat = [ 1 0 0 0 ] ;
         end
-        rotrans = [ joint(i_j).tr(i).trans joint(i_j).tr(i).rot ] ;
+        if ~isfield( joint(i_joint).tr(i) ,'type' ) || isempty( joint(i_joint).tr(i).type )
+            joint(i_joint).tr(i).type = 'none' ;
+        end
+        rotrans = [ joint(i_joint).tr(i).trans joint(i_joint).tr(i).rot ] ;
         for i2 = 1 : numel( rotrans )
             if isinf( rotrans(i2) )
                 nq = nq + 1 ;
-                if nq > numel( joint(i_j).rom.order(1,:) ) || isnan( joint(i_j).rom.order(1,nq) )
-                    joint(i_j).rom.order(:,nq) = ones(n_copies,1) .* joint(i_j).rom.default_order ;
+                if nq > numel( joint(i_joint).rom.order(1,:) ) || isnan( joint(i_joint).rom.order(1,nq) )
+                    joint(i_joint).rom.order(:,nq) = ones(n_copy,1) .* joint(i_joint).rom.default_order ;
                 end
-                n_r = joint(i_j).rom.order(n_copies,nq) ;
-                if ~isfield( joint(i_j) , 'dof' ) || isempty( joint(i_j).dof ) || numel( joint(i_j).dof ) < nq
-                    [joint(i_j).dof(nq).equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
-                    joint(i_j).dof(nq).init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                    joint(i_j).dof(nq).init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
-                    joint(i_j).dof(nq).rom_offset = ones(n_copies,1) .* joint(i_j).rom.rom_offset ;
-                    joint(i_j).dof(nq).dir = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).damp.visc = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).damp.pow = ones(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).input = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).control = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).pid.p = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).pid.i = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).pid.d = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).fixed = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).fit_type = ones(n_copies,1) .* joint(i_j).rom.fit_type ;
-                    joint(i_j).dof(nq).spc_order = ones(n_copies,1) .* joint(i_j).rom.spc_order ;
+                n_coeff = joint(i_joint).rom.order(n_copy,nq) ;
+                if ~isfield( joint(i_joint) , 'dof' ) || isempty( joint(i_joint).dof ) || numel( joint(i_joint).dof ) < nq
+                    joint(i_joint).dof(nq).init = zeros(n_copy,n_coeff+1) ; % n_coeff+1 to cover all q_coeff.s for parallel springs
+                    joint(i_joint).dof(nq).init_s = sym( zeros(n_copy,n_coeff+1) ) ; % to get equal number of elements as in init (above)
+                    if ~isempty( joint(i_joint).rom.rom_offset )
+                        joint(i_joint).dof(nq).rom_offset = ones(n_copy,1) .* joint(i_joint).rom.rom_offset ;
+                    else
+                        joint(i_joint).dof(nq).rom_offset = zeros(n_copy,1) ;
+                    end
+                    joint(i_joint).dof(nq).dir = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).damp.visc = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).damp.pow = ones(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).input = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).control_acc = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).control_vel = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).control_pos = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).control_err0 = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).gains.k0 = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).gains.k1 = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).gains.k_slide = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).gains.l_slide = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).fixed = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).fit_type = ones(n_copy,1) .* joint(i_joint).rom.fit_type ;
+                    joint(i_joint).dof(nq).spc_order = ones(n_copy,1) .* joint(i_joint).rom.spc_order ;
+                    for i_segm = 1 : numel( joint(i_joint).dof(nq).fit_type(1,:) ) % number of segments is one less than number of knots and similar to the number of elements in fit_type
+                        for i_coeff = 1 : n_coeff
+                            [joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}] = sym( zeros(n_copy,7) ) ;
+                        end
+                    end
                     
-                    joint(i_j).dof(nq).spring.coeff = zeros(n_copies,n_r+1) ;
-                    joint(i_j).dof(nq).spring.init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                    joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
-                    joint(i_j).dof(nq).spring.compr = ones(n_copies,n_r+1) ;
-                    [joint(i_j).dof(nq).spring.equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
-                    joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).rom.spring_rom_offset ;
-                    joint(i_j).dof(nq).spring.fit_type = ones(n_copies,1) .* joint(i_j).rom.spring_fit_type  ;
-                    joint(i_j).dof(nq).spring.spc_order = ones(n_copies,1) .* joint(i_j).rom.spc_order ;
+                    joint(i_joint).dof(nq).spring.coeff = zeros(n_copy,n_coeff+1) ;
+                    joint(i_joint).dof(nq).spring.init = zeros(n_copy,n_coeff+1) ; % n_coeff+1 to cover all q_coeff.s for parallel springs
+                    joint(i_joint).dof(nq).spring.init_s = sym( zeros(n_copy,n_coeff+1) ) ; % to get equal number of elements as in init (above)
+                    joint(i_joint).dof(nq).spring.compr = ones(n_copy,n_coeff+1) ;
+                    if ~isempty( joint(i_joint).rom.spring_rom_offset )
+                        joint(i_joint).dof(nq).spring.rom_offset = ones(n_copy,1) .* joint(i_joint).rom.spring_rom_offset ;
+                    else
+                        joint(i_joint).dof(nq).spring.rom_offset = zeros(n_copy,1) ;
+                    end
+                    joint(i_joint).dof(nq).spring.fit_type = ones(n_copy,1) .* joint(i_joint).rom.spring_fit_type ;
+                    joint(i_joint).dof(nq).spring.spc_order = ones(n_copy,1) .* joint(i_joint).rom.spc_order ;
+                    for i_segm = 1 : numel( joint(i_joint).dof(nq).spring.fit_type(1,:) )
+                        for i_coeff = 1 : n_coeff
+                            joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ;
+                        end
+                    end
                 else
-                    if ~isfield( joint(i_j).dof(nq) ,'equal2' ) || isempty( joint(i_j).dof(nq).equal2 )
-                        [joint(i_j).dof(nq).equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ; % [j_count, n_copies, nj_dof, i_dof_mult, val_or_l_rom] x i_dof_mult -or- [n_j, n_d, n_h, i_r, l] x n_r
+                    if ~isfield( joint(i_joint).dof(nq) ,'rom_offset' ) || isempty( joint(i_joint).dof(nq).rom_offset )
+                        joint(i_joint).dof(nq).rom_offset = zeros(n_copy,1) ;
                     else
-                        for i_r = 1 : n_r + 1
-                            [ ~ , temp_3 ] = size( joint(i_j).dof(nq).equal2 ) ;
-                            for i_d = 1 : n_copies
-                                if temp_3 < i_r || joint(i_j).dof(nq).equal2{i_r}(i_d,1) == 0
-                                    if isnan( joint(i_j).dof(nq).equal2{1}(i_d,4) ) % all coeffs will be equal to the same coeff in the other joint/dof
-                                        joint(i_j).dof(nq).equal2{i_r}(i_d,:) = joint(i_j).dof(nq).equal2{1}(i_d,:) ;
-                                    else
-                                        joint(i_j).dof(nq).equal2{i_r}(i_d,:) = vpa( zeros(1,7) ) ;
-                                    end
-                                    % continue ;
+                        joint(i_joint).dof(nq).rom_offset = ones(n_copy,1) .* joint(i_joint).dof(nq).rom_offset ;
+                    end
+                    if ~isempty( joint(i_joint).rom.rom_offset ) % override rom_offset
+                        joint(i_joint).dof(nq).rom_offset = ones(n_copy,1) .* joint(i_joint).rom.rom_offset ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'fit_type' ) || isempty( joint(i_joint).dof(nq).fit_type )
+                        joint(i_joint).dof(nq).fit_type = ones(n_copy,1) .* joint(i_joint).rom.fit_type ;
+                    else
+                        joint(i_joint).dof(nq).fit_type = ones(n_copy,1) .* joint(i_joint).dof(nq).fit_type ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'spc_order' ) || isempty( joint(i_joint).dof(nq).spc_order )
+                        joint(i_joint).dof(nq).spc_order = ones(n_copy,1) .* joint(i_joint).rom.spc_order ;
+                    else
+                        joint(i_joint).dof(nq).spc_order = ones(n_copy,1) .* joint(i_joint).dof(nq).spc_order ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'init' ) || isempty( joint(i_joint).dof(nq).init )
+                        joint(i_joint).dof(nq).init = zeros(n_copy,n_coeff+1) ; % n_coeff+1 to cover all q_coeff.s for parallel springs
+                    else
+                        joint(i_joint).dof(nq).init = ones(n_copy,1) .* joint(i_joint).dof(nq).init ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'init_s' ) || isempty( joint(i_joint).dof(nq).init_s )
+                        joint(i_joint).dof(nq).init_s = sym( zeros(n_copy, numel( joint(i_joint).dof(nq).init(1,:) ) ) ) ; % to get equal number of elements as in init (above)
+                    else
+                        joint(i_joint).dof(nq).init_s = ones(n_copy,1) .* joint(i_joint).dof(nq).init_s ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'equal2' ) || isempty( joint(i_joint).dof(nq).equal2 )
+                        for i_segm = 1 : numel( joint(i_joint).dof(nq).fit_type(1,:) ) 
+                            for i_coeff = 1 : n_coeff
+                                joint(i_joint).dof(nq).equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ; % {i_coeff}[i_joint, i_copy, i_dofAxis, i_coeff, curve_length, n_diffOrder, coeff] x i_dof_mult
+                            end
+                        end
+                    else
+                        for i_segm = 1 : numel( joint(i_joint).dof(nq).fit_type(1,:) )
+                            if numel( joint(i_joint).dof(nq).equal2 ) < i_segm
+                                for i_coeff = 1 : n_coeff + 1
+                                    joint(i_joint).dof(nq).equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ;
                                 end
-                                %if i_d == 1 && numel(joint(i_j).dof(nq).equal2{i_r}(:,1) ) == 1
-                                    % joint(i_j).dof(nq).equal2{i_r} = ones(n_copies,1) * joint(i_j).dof(nq).equal2{i_r} ;
-                                if i_d == 1 && numel( joint(i_j).dof(nq).equal2{i_r}(:,1) ) < n_copies
-                                    joint(i_j).dof(nq).equal2{i_r}(n_copies,end) = 0 ;
-                                end
                             end
-                            if joint(i_j).dof(nq).equal2{i_r}(n_copies,1) == i_j && joint(i_j).dof(nq).equal2{i_r}(n_copies,2) == n_copies
-                                error( 'joint(i_j).dof(nq).equal2{i_r}(n_copies,1) = same joint is not allowed!' ) ;
-                            end
-                            if numel( joint(i_j).dof(nq).equal2{i_r}(1,:) ) == 2 % [n_j, n_h]
-                                joint(i_j).dof(nq).equal2{i_r} = [ joint(i_j).dof(nq).equal2{i_r}(:,1) ones(n_copies,1) joint(i_j).dof(nq).equal2{i_r}(:,2) nan*ones(n_copies,1) zeros(n_copies,3) ] ;
-                            end
-                            if numel( joint(i_j).dof(nq).equal2{i_r}(1,:) ) == 3 % [n_j, n_h, i_r]
-                                joint(i_j).dof(nq).equal2{i_r} = [ joint(i_j).dof(nq).equal2{i_r}(:,1) ones(n_copies,1) joint(i_j).dof(nq).equal2{i_r}(:,2:3) zeros(n_copies,3) ] ;
-                            end
-                        end
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'rom_offset' ) || isempty( joint(i_j).dof(nq).rom_offset )
-                        joint(i_j).dof(nq).rom_offset = ones(n_copies,1) .* joint(i_j).rom.rom_offset ;
-                    else
-                        joint(i_j).dof(nq).rom_offset = ones(n_copies,1) .* joint(i_j).dof(nq).rom_offset ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'fit_type' ) || isempty( joint(i_j).dof(nq).fit_type )
-                        joint(i_j).dof(nq).fit_type = ones(n_copies,1) .* joint(i_j).rom.fit_type ;
-                    else
-                        joint(i_j).dof(nq).fit_type = ones(n_copies,1) .* joint(i_j).dof(nq).fit_type ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'spc_order' ) || isempty( joint(i_j).dof(nq).spc_order )
-                        joint(i_j).dof(nq).spc_order = ones(n_copies,1) .* joint(i_j).rom.spc_order ;
-                    else
-                        joint(i_j).dof(nq).spc_order = ones(n_copies,1) .* joint(i_j).dof(nq).spc_order ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'init' ) || isempty( joint(i_j).dof(nq).init )
-                        joint(i_j).dof(nq).init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                    else
-                        joint(i_j).dof(nq).init = ones(n_copies,1) .* joint(i_j).dof(nq).init ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'init_s' ) || isempty( joint(i_j).dof(nq).init_s )
-                        joint(i_j).dof(nq).init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
-                    else
-                        joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'spring' ) || isempty( joint(i_j).dof(nq).spring )
-                        joint(i_j).dof(nq).spring.coeff = zeros(n_copies,n_r+1) ;
-                        joint(i_j).dof(nq).spring.init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                        joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
-                        joint(i_j).dof(nq).spring.compr = ones(n_copies,n_r+1) ;
-                        [joint(i_j).dof(nq).spring.equal2{1:n_r+1>0}] = deal( sym( zeros(n_copies,7) ) ) ;
-                        joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).rom.spring_rom_offset ;
-                        joint(i_j).dof(nq).spring.fit_type = ones(n_copies,1) .* joint(i_j).rom.spring_fit_type  ;
-                        joint(i_j).dof(nq).spring.spc_order = ones(n_copies,1) .* joint(i_j).rom.spc_order ;
-                    else
-                        if ~isfield( joint(i_j).dof(nq).spring ,'coeff' ) || isempty( joint(i_j).dof(nq).spring.coeff )
-                            joint(i_j).dof(nq).spring.coeff = zeros(n_copies,n_r+1) ;
-                        else
-                            joint(i_j).dof(nq).spring.coeff = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).spring.coeff ;
-                        end
-                        if ~isfield( joint(i_j).dof(nq).spring ,'init' ) || isempty( joint(i_j).dof(nq).spring.init )
-                            joint(i_j).dof(nq).spring.init = zeros(n_copies,n_r+1) ; % n_r+1 to cover all q_coeff.s for parallel springs
-                        else
-                            joint(i_j).dof(nq).spring.init = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init ;
-                        end
-                        if ~isfield( joint(i_j).dof(nq).spring ,'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )
-                            joint(i_j).dof(nq).spring.init_s = sym( zeros(n_copies,n_r+1) ) ; % to get equal number of elements as in init (above)
-                        else
-                            joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init_s ;
-                        end
-                        if ~isfield( joint(i_j).dof(nq).spring ,'compr' ) || isempty( joint(i_j).dof(nq).spring.compr )
-                            joint(i_j).dof(nq).spring.compr = ones(n_copies,n_r+1) ;
-                        else
-                            joint(i_j).dof(nq).spring.compr = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).spring.compr ;
-                        end                        
-                        if ~isfield( joint(i_j).dof(nq).spring ,'rom_offset' ) || isempty( joint(i_j).dof(nq).spring.rom_offset )
-                            joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).rom.spring_rom_offset ;
-                        else
-                            joint(i_j).dof(nq).spring.rom_offset = ones(n_copies,1) .* joint(i_j).dof(nq).spring.rom_offset ;
-                        end              
-                        if ~isfield( joint(i_j).dof(nq).spring ,'fit_type' ) || isempty( joint(i_j).dof(nq).spring.fit_type )
-                            joint(i_j).dof(nq).spring.fit_type = ones(n_copies,1) .* joint(i_j).rom.spring_fit_type ;
-                        else
-                            joint(i_j).dof(nq).spring.fit_type = ones(n_copies,1) .* joint(i_j).dof(nq).spring.fit_type ;
-                        end
-                        if ~isfield( joint(i_j).dof(nq).spring ,'spc_order' ) || isempty( joint(i_j).dof(nq).spring.spc_order )
-                            joint(i_j).dof(nq).spring.spc_order = ones(n_copies,1) .* joint(i_j).rom.spc_order ;
-                        else
-                            joint(i_j).dof(nq).spring.spc_order = ones(n_copies,1) .* joint(i_j).dof(nq).spring.spc_order ;
-                        end
-                        if ~isfield( joint(i_j).dof(nq).spring ,'equal2' )
-                            [ joint(i_j).dof(nq).spring.equal2{1:n_r+1>0} ] = deal( sym( zeros(n_copies,7) ) ) ;
-						else
-							for i_r = 1 : n_r + 1
-								[ ~ , temp_3 ] = size( joint(i_j).dof(nq).spring.equal2 ) ;
-                                for i_d = 1 : n_copies
-                                    if temp_3 < i_r || joint(i_j).dof(nq).spring.equal2{i_r}(i_d,1) == 0
-                                        if isnan( joint(i_j).dof(nq).spring.equal2{1}(i_d,4) )
-                                            joint(i_j).dof(nq).spring.equal2{i_r}(i_d,:) = joint(i_j).dof(nq).spring.equal2{1}(i_d,:) ;
+                            for i_coeff = 1 : n_coeff + 1
+                                for i_copy = 1 : n_copy
+                                    if numel( joint(i_joint).dof(nq).equal2{i_segm} ) < i_coeff || ... % no equal2 is defined for this dof
+                                            isempty( joint(i_joint).dof(nq).equal2{i_segm}{i_coeff} ) || ... % no equal2 is defined for this coeff
+                                            joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(i_copy,1) == 0 % equal2 has default values so check if need to be set as 1st coeff
+                                        if isnan( joint(i_joint).dof(nq).equal2{i_segm}{1}(i_copy,4) ) % all coeffs will be equal to the same coeff in the other joint/dof
+                                            joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(i_copy,:) = joint(i_joint).dof(nq).equal2{i_segm}{1}(i_copy,:) ;
                                         else
-                                            joint(i_j).dof(nq).spring.equal2{i_r}(i_d,:) = vpa( zeros(1,7) ) ;
+                                            joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(i_copy,:) = vpa( zeros(1,7) ) ;
                                         end
                                         % continue ;
                                     end
-                                    % if i_d == 1 && numel( joint(i_j).dof(nq).spring.equal2{i_r}(:,1) ) == 1
-                                        % joint(i_j).dof(nq).spring.equal2{i_r} = ones(n_copies,1) * joint(i_j).dof(nq).spring.equal2{i_r} ;
-                                    if i_d == 1 && numel( joint(i_j).dof(nq).spring.equal2{i_r}(:,1) ) < n_copies
-                                        joint(i_j).dof(nq).spring.equal2{i_r}(n_copies,end) = 0 ;
+                                    if i_copy == 1 && numel( joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(:,1) ) < n_copy
+                                        joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(n_copy,end) = 0 ;
                                     end
                                 end
-								% Here, same joint is not allowed: joint(i_j).dof(nq).spring.equal2{i_r}(n_copies,1) = i_j
-								if numel( joint(i_j).dof(nq).spring.equal2{i_r}(1,:) ) == 2 % [n_j, n_h]
-									joint(i_j).dof(nq).spring.equal2{i_r} = [ joint(i_j).dof(nq).spring.equal2{i_r}(:,1) ones(n_copies,1) joint(i_j).dof(nq).spring.equal2{i_r}(:,2) zeros(n_copies,4) ] ;                           
-								end
-								if numel( joint(i_j).dof(nq).spring.equal2{i_r}(1,:) ) == 3 % [n_j, n_h, i_r]
-									joint(i_j).dof(nq).spring.equal2{i_r} = [ joint(i_j).dof(nq).spring.equal2{i_r}(:,1) ones(n_copies,1) joint(i_j).dof(nq).spring.equal2{i_r}(:,2:3) zeros(n_copies,3) ] ;                   
-								end
-							end							
+                                if joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(n_copy,1) == i_joint && joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(n_copy,2) == n_copy
+                                    error( 'joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(n_copy,1) = same joint is not allowed!' ) ;
+                                end
+                                if numel( joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(1,:) ) == 2 % [n_j, n_h]
+                                    joint(i_joint).dof(nq).equal2{i_segm}{i_coeff} = [ joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(:,1) ones(n_copy,1) joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(:,2) nan*ones(n_copy,1) zeros(n_copy,3) ] ;
+                                end
+                                if numel( joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(1,:) ) == 3 % [n_j, n_h, i_coeff]
+                                    joint(i_joint).dof(nq).equal2{i_segm}{i_coeff} = [ joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(:,1) ones(n_copy,1) joint(i_joint).dof(nq).equal2{i_segm}{i_coeff}(:,2:3) zeros(n_copy,3) ] ;
+                                end
+                            end
                         end
                     end
-                    if ~isfield( joint(i_j).dof(nq) ,'dir' ) || isempty( joint(i_j).dof(nq).dir )
-                        joint(i_j).dof(nq).dir = zeros(n_copies,n_r+1) ;
-                    else
-                        joint(i_j).dof(nq).dir = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).dir ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) ,'damp' ) || isempty( joint(i_j).dof(nq).damp )
-                        joint(i_j).dof(nq).damp.visc = zeros(n_copies,n_r+1) ;
-                        joint(i_j).dof(nq).damp.pow = ones(n_copies,n_r+1) ;
-                    else
-                        if ~isfield( joint(i_j).dof(nq).damp ,'visc' ) || isempty( joint(i_j).dof(nq).damp.visc )
-                            joint(i_j).dof(nq).damp.visc = zeros(n_copies,n_r+1) ;
+                    if ~isfield( joint(i_joint).dof(nq) ,'spring' ) || isempty( joint(i_joint).dof(nq).spring )
+                        joint(i_joint).dof(nq).spring.coeff = zeros(n_copy,n_coeff+1) ;
+                        joint(i_joint).dof(nq).spring.init = zeros(n_copy,n_coeff+1) ; % n_coeff+1 to cover all q_coeff.s for parallel springs
+                        joint(i_joint).dof(nq).spring.init_s = sym( zeros(n_copy,n_coeff+1) ) ; % to get equal number of elements as in init (above)
+                        joint(i_joint).dof(nq).spring.compr = ones(n_copy,n_coeff+1) ;
+                        if ~isempty( joint(i_joint).rom.spring_rom_offset )
+                            joint(i_joint).dof(nq).spring.rom_offset = ones(n_copy,1) .* joint(i_joint).rom.spring_rom_offset ;
                         else
-                            joint(i_j).dof(nq).damp.visc = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).damp.visc ;
+                            joint(i_joint).dof(nq).spring.rom_offset = zeros(n_copy,1) ;
                         end
-                        if ~isfield( joint(i_j).dof(nq).damp ,'pow' ) || isempty( joint(i_j).dof(nq).damp.pow )
-                            joint(i_j).dof(nq).damp.pow = ones(n_copies,n_r+1) ;
+                        joint(i_joint).dof(nq).spring.fit_type = ones(n_copy,1) .* joint(i_joint).rom.spring_fit_type  ;
+                        joint(i_joint).dof(nq).spring.spc_order = ones(n_copy,1) .* joint(i_joint).rom.spc_order ;
+                        for i_segm = 1 : numel( joint(i_joint).dof(nq).spring.fit_type(1,:) )
+                            for i_coeff = 1 : n_coeff
+                                joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ;
+                            end
+                        end
+                    else
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'coeff' ) || isempty( joint(i_joint).dof(nq).spring.coeff )
+                            joint(i_joint).dof(nq).spring.coeff = zeros(n_copy,n_coeff+1) ;
                         else
-                            joint(i_j).dof(nq).damp.pow = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).damp.pow ;
+                            joint(i_joint).dof(nq).spring.coeff = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).spring.coeff ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'init' ) || isempty( joint(i_joint).dof(nq).spring.init )
+                            joint(i_joint).dof(nq).spring.init = zeros(n_copy,n_coeff+1) ; % n_coeff+1 to cover all q_coeff.s for parallel springs
+                        else
+                            joint(i_joint).dof(nq).spring.init = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.init ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'init_s' ) || isempty( joint(i_joint).dof(nq).spring.init_s )
+                            joint(i_joint).dof(nq).spring.init_s = sym( zeros(n_copy, numel( joint(i_joint).dof(nq).spring.init(1,:) ) ) ) ; % to get equal number of elements as in init (above)
+                        else
+                            joint(i_joint).dof(nq).spring.init_s = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.init_s ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'compr' ) || isempty( joint(i_joint).dof(nq).spring.compr )
+                            joint(i_joint).dof(nq).spring.compr = ones(n_copy,n_coeff+1) ;
+                        else
+                            joint(i_joint).dof(nq).spring.compr = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).spring.compr ;
+                        end                        
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'rom_offset' ) || isempty( joint(i_joint).dof(nq).spring.rom_offset )
+                            joint(i_joint).dof(nq).spring.rom_offset = zeros(n_copy,1) ;
+                        else
+                            joint(i_joint).dof(nq).spring.rom_offset = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.rom_offset ;
+                        end
+                        if ~isempty( joint(i_joint).rom.spring_rom_offset ) % override rom_offset
+                            joint(i_joint).dof(nq).spring.rom_offset = ones(n_copy,1) .* joint(i_joint).rom.spring_rom_offset ;
+                        else                            
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'fit_type' ) || isempty( joint(i_joint).dof(nq).spring.fit_type )
+                            joint(i_joint).dof(nq).spring.fit_type = ones(n_copy,1) .* joint(i_joint).rom.spring_fit_type ;
+                        else
+                            joint(i_joint).dof(nq).spring.fit_type = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.fit_type ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'spc_order' ) || isempty( joint(i_joint).dof(nq).spring.spc_order )
+                            joint(i_joint).dof(nq).spring.spc_order = ones(n_copy,1) .* joint(i_joint).rom.spc_order ;
+                        else
+                            joint(i_joint).dof(nq).spring.spc_order = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.spc_order ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).spring ,'equal2' )
+                            for i_segm = 1 : numel( joint(i_joint).dof(nq).spring.fit_type(1,:) )
+                                for i_coeff = 1 : n_coeff
+                                    joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ;
+                                end
+                            end
+						else
+                            for i_segm = 1 : numel( joint(i_joint).dof(nq).spring.fit_type(1,:) )
+                                if numel( joint(i_joint).dof(nq).spring.equal2 ) < i_segm
+                                    for i_coeff = 1 : n_coeff + 1
+                                        joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = sym( zeros(n_copy,7) ) ;
+                                    end
+                                end
+                                for i_coeff = 1 : n_coeff + 1
+                                    for i_copy = 1 : n_copy
+                                        if numel( joint(i_joint).dof(nq).spring.equal2{i_segm} ) < i_coeff || joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(i_copy,1) == 0
+                                            if isnan( joint(i_joint).dof(nq).spring.equal2{i_segm}{1}(i_copy,4) )
+                                                joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(i_copy,:) = joint(i_joint).dof(nq).spring.equal2{i_segm}{1}(i_copy,:) ;
+                                            else
+                                                joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(i_copy,:) = vpa( zeros(1,7) ) ;
+                                            end
+                                            % continue ;
+                                        end
+                                        if i_copy == 1 && numel( joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(:,1) ) < n_copy
+                                            joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(n_copy,end) = 0 ;
+                                        end
+                                    end
+                                    % Here, same joint is not allowed: joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(n_copy,1) = i_joint
+                                    if numel( joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(1,:) ) == 2 % [n_j, n_h]
+                                        joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = [ joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(:,1) ones(n_copy,1) joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(:,2) zeros(n_copy,4) ] ;                           
+                                    end
+                                    if numel( joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(1,:) ) == 3 % [n_j, n_h, i_coeff]
+                                        joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff} = [ joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(:,1) ones(n_copy,1) joint(i_joint).dof(nq).spring.equal2{i_segm}{i_coeff}(:,2:3) zeros(n_copy,3) ] ;                   
+                                    end
+                                end
+                            end							
                         end
                     end
-                    if ~isfield( joint(i_j).dof(nq) ,'input' ) || isempty( joint(i_j).dof(nq).input )
-                        joint(i_j).dof(nq).input = zeros(n_copies,n_r+1) ;
+                    if ~isfield( joint(i_joint).dof(nq) ,'dir' ) || isempty( joint(i_joint).dof(nq).dir )
+                        joint(i_joint).dof(nq).dir = zeros(n_copy,n_coeff+1) ;
                     else
-						if numel( joint(i_j).dof(nq).input(1,:) ) < n_r + 1
-							joint(i_j).dof(nq).input(:,n_r+1) = 0 ;
+                        joint(i_joint).dof(nq).dir = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).dir ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'damp' ) || isempty( joint(i_joint).dof(nq).damp )
+                        joint(i_joint).dof(nq).damp.visc = zeros(n_copy,n_coeff+1) ;
+                        joint(i_joint).dof(nq).damp.pow = ones(n_copy,n_coeff+1) ;
+                    else
+                        if ~isfield( joint(i_joint).dof(nq).damp ,'visc' ) || isempty( joint(i_joint).dof(nq).damp.visc )
+                            joint(i_joint).dof(nq).damp.visc = zeros(n_copy,n_coeff+1) ;
+                        else
+                            joint(i_joint).dof(nq).damp.visc = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).damp.visc ;
+                        end
+                        if ~isfield( joint(i_joint).dof(nq).damp ,'pow' ) || isempty( joint(i_joint).dof(nq).damp.pow )
+                            joint(i_joint).dof(nq).damp.pow = ones(n_copy,n_coeff+1) ;
+                        else
+                            joint(i_joint).dof(nq).damp.pow = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).damp.pow ;
+                        end
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'input' ) || isempty( joint(i_joint).dof(nq).input )
+                        joint(i_joint).dof(nq).input = zeros(n_copy,n_coeff+1) ;
+                    else
+						if numel( joint(i_joint).dof(nq).input(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).input(:,n_coeff+1) = 0 ;
 						end
-                        joint(i_j).dof(nq).input = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).input ;
+                        joint(i_joint).dof(nq).input = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).input ;
                     end
-                    if ~isfield( joint(i_j).dof(nq) , 'fixed' ) || isempty( joint(i_j).dof(nq).fixed )
-                        joint(i_j).dof(nq).fixed = zeros(n_copies,n_r+1) ;
+                    if ~isfield( joint(i_joint).dof(nq) , 'fixed' ) || isempty( joint(i_joint).dof(nq).fixed )
+                        joint(i_joint).dof(nq).fixed = zeros(n_copy,n_coeff+1) ;
                     else
-						if numel( joint(i_j).dof(nq).fixed(1,:) ) < n_r + 1
-							joint(i_j).dof(nq).fixed(:,n_r+1) = 0 ;
+						if numel( joint(i_joint).dof(nq).fixed(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).fixed(:,n_coeff+1) = 0 ;
 						end
-                        joint(i_j).dof(nq).fixed = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).fixed ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq) , 'control' ) || isempty( joint(i_j).dof(nq).control )
-                        joint(i_j).dof(nq).control = zeros(n_copies,n_r+1) ;
+                        joint(i_joint).dof(nq).fixed = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).fixed ;
+                    end                    
+                    if ~isfield( joint(i_joint).dof(nq) , 'control_acc' ) || isempty( joint(i_joint).dof(nq).control_acc )
+                        joint(i_joint).dof(nq).control_acc = zeros(n_copy,n_coeff+1) ;
                     else
-						if numel( joint(i_j).dof(nq).control(1,:) ) < n_r + 1
-							joint(i_j).dof(nq).control(:,n_r+1) = 0 ;
+						if numel( joint(i_joint).dof(nq).control_acc(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).control_acc(:,n_coeff+1) = 0 ;
 						end
-                        joint(i_j).dof(nq).control = ones(1,n_r+1) .* ones(n_copies,1) .* joint(i_j).dof(nq).control ;
+                        joint(i_joint).dof(nq).control_acc = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).control_acc ;
                     end
-                    if ~isfield( joint(i_j).dof(nq) , 'pid' ) || isempty( joint(i_j).dof(nq).pid )
-                        joint(i_j).dof(nq).pid = joint_temp.dof.pid ;
-                    end
-                    if ~isfield( joint(i_j).dof(nq).pid , 'p' ) || isempty( joint(i_j).dof(nq).pid.p )
-                        joint(i_j).dof(nq).pid.p = ones(n_copies,1) .* ones(1,n_r+1) .* joint_temp.dof.pid.p ;
+                    if ~isfield( joint(i_joint).dof(nq) , 'control_vel' ) || isempty( joint(i_joint).dof(nq).control_vel )
+                        joint(i_joint).dof(nq).control_vel = zeros(n_copy,n_coeff+1) ;
                     else
-                        if numel( joint(i_j).dof(nq).pid.p(1,:) ) < n_r+1
-                            joint(i_j).dof(nq).pid.p = ones(1,n_r+1) .* joint(i_j).dof(nq).pid.p ;
-                        end
-                        joint(i_j).dof(nq).pid.p = ones(n_copies,1) .* joint(i_j).dof(nq).pid.p ;
+						if numel( joint(i_joint).dof(nq).control_vel(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).control_vel(:,n_coeff+1) = 0 ;
+						end
+                        joint(i_joint).dof(nq).control_vel = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).control_vel ;
                     end
-                    if ~isfield( joint(i_j).dof(nq).pid , 'i' ) || isempty( joint(i_j).dof(nq).pid.i )
-                        joint(i_j).dof(nq).pid.i = ones(n_copies,1) .* ones(1,n_r+1) .* joint_temp.dof.pid.i ;
+                    if ~isfield( joint(i_joint).dof(nq) , 'control_pos' ) || isempty( joint(i_joint).dof(nq).control_pos )
+                        joint(i_joint).dof(nq).control_pos = zeros(n_copy,n_coeff+1) ;
                     else
-                        if numel( joint(i_j).dof(nq).pid.i(1,:) ) < n_r+1
-                            joint(i_j).dof(nq).pid.i = ones(1,n_r+1) .* joint(i_j).dof(nq).pid.i ;
-                        end
-                        joint(i_j).dof(nq).pid.i = ones(n_copies,1) .* joint(i_j).dof(nq).pid.i ;
+						if numel( joint(i_joint).dof(nq).control_pos(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).control_pos(:,n_coeff+1) = 0 ;
+						end
+                        joint(i_joint).dof(nq).control_pos = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).control_pos ;
                     end
-                    if ~isfield( joint(i_j).dof(nq).pid , 'd' ) || isempty( joint(i_j).dof(nq).pid.d )
-                        joint(i_j).dof(nq).pid.d = ones(n_copies,1) .* ones(1,n_r+1) .* joint_temp.dof.pid.d ;
+                    if ~isfield( joint(i_joint).dof(nq) , 'control_err0' ) || isempty( joint(i_joint).dof(nq).control_err0 )
+                        joint(i_joint).dof(nq).control_err0 = zeros(n_copy,n_coeff+1) ;
                     else
-                        if numel( joint(i_j).dof(nq).pid.d(1,:) ) < n_r+1
-                            joint(i_j).dof(nq).pid.d = ones(1,n_r+1) .* joint(i_j).dof(nq).pid.d ;
-                        end
-                        joint(i_j).dof(nq).pid.d = ones(n_copies,1) .* joint(i_j).dof(nq).pid.d ;
+						if numel( joint(i_joint).dof(nq).control_err0(1,:) ) < n_coeff + 1
+							joint(i_joint).dof(nq).control_err0(:,n_coeff+1) = 0 ;
+						end
+                        joint(i_joint).dof(nq).control_err0 = ones(1,n_coeff+1) .* ones(n_copy,1) .* joint(i_joint).dof(nq).control_err0 ;
                     end
-                    if ~isfield( joint(i_j).dof(nq) ,'s' ) || isempty( joint(i_j).dof(nq).s )
-                        joint(i_j).dof(nq).s = [] ;
+                    if ~isfield( joint(i_joint).dof(nq) , 'gains' ) || isempty( joint(i_joint).dof(nq).gains )
+                        joint(i_joint).dof(nq).gains = joint_temp.dof.gains ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq).gains , 'p' ) || isempty( joint(i_joint).dof(nq).gains.k0 )
+                        joint(i_joint).dof(nq).gains.k0 = ones(n_copy,1) .* ones(1,n_coeff+1) .* joint_temp.dof.gains.k0 ;
+                    else
+                        if numel( joint(i_joint).dof(nq).gains.k0(1,:) ) < n_coeff+1
+                            joint(i_joint).dof(nq).gains.k0 = ones(1,n_coeff+1) .* joint(i_joint).dof(nq).gains.k0 ;
+                        end
+                        joint(i_joint).dof(nq).gains.k0 = ones(n_copy,1) .* joint(i_joint).dof(nq).gains.k0 ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq).gains , 'i' ) || isempty( joint(i_joint).dof(nq).gains.k1 )
+                        joint(i_joint).dof(nq).gains.k1 = ones(n_copy,1) .* ones(1,n_coeff+1) .* joint_temp.dof.gains.k1 ;
+                    else
+                        if numel( joint(i_joint).dof(nq).gains.k1(1,:) ) < n_coeff+1
+                            joint(i_joint).dof(nq).gains.k1 = ones(1,n_coeff+1) .* joint(i_joint).dof(nq).gains.k1 ;
+                        end
+                        joint(i_joint).dof(nq).gains.k1 = ones(n_copy,1) .* joint(i_joint).dof(nq).gains.k1 ;
+                    end                   
+                    if ~isfield( joint(i_joint).dof(nq).gains , 'k_slide' ) || isempty( joint(i_joint).dof(nq).gains.k_slide )
+                        joint(i_joint).dof(nq).gains.k_slide = ones(n_copy,1) .* ones(1,n_coeff+1) .* joint_temp.dof.gains.k_slide ;
+                    else
+                        if numel( joint(i_joint).dof(nq).gains.k_slide(1,:) ) < n_coeff+1
+                            joint(i_joint).dof(nq).gains.k_slide = ones(1,n_coeff+1) .* joint(i_joint).dof(nq).gains.k_slide ;
+                        end
+                        joint(i_joint).dof(nq).gains.k_slide = ones(n_copy,1) .* joint(i_joint).dof(nq).gains.k_slide ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq).gains , 'l_slide' ) || isempty( joint(i_joint).dof(nq).gains.l_slide )
+                        joint(i_joint).dof(nq).gains.l_slide = ones(n_copy,1) .* ones(1,n_coeff+1) .* joint_temp.dof.gains.l_slide ;
+                    else
+                        if numel( joint(i_joint).dof(nq).gains.l_slide(1,:) ) < n_coeff+1
+                            joint(i_joint).dof(nq).gains.l_slide = ones(1,n_coeff+1) .* joint(i_joint).dof(nq).gains.l_slide ;
+                        end
+                        joint(i_joint).dof(nq).gains.l_slide = ones(n_copy,1) .* joint(i_joint).dof(nq).gains.l_slide ;
+                    end
+                    if ~isfield( joint(i_joint).dof(nq) ,'s' ) || isempty( joint(i_joint).dof(nq).s )
+                        joint(i_joint).dof(nq).s = [] ;
                     end
                 end
                 
-                if joint(i_j).rom.isROM
-                    if ~isfield( joint(i_j).dof(nq) , 'init_s' ) || isempty( joint(i_j).dof(nq).init_s ) || max( double( abs( subs( joint(i_j).dof(nq).init_s(1,:), par.sym, par.var ) ) ) ) == 0
-                        if ~isempty( joint(i_j).rom.init_s )
-                            joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* joint(i_j).rom.init_s ;
+                if joint(i_joint).rom.isROM
+                    if ~isfield( joint(i_joint).dof(nq) , 'init_s' ) || isempty( joint(i_joint).dof(nq).init_s ) || max( double( abs( subs( joint(i_joint).dof(nq).init_s(1,:), par.sym, par.var ) ) ) ) == 0
+                        if ~isempty( joint(i_joint).rom.init_s )
+                            joint(i_joint).dof(nq).init_s(i_copy,:) = ones(n_copy,1) .* joint(i_joint).rom.init_s ;
                         else
-                            for i_d = 1 : n_copies
-                                joint(i_j).dof(nq).init_s(i_d,:) = ones(n_copies,1) .* linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).init(i_d,:) ) ) ;
+                            for i_copy = 1 : n_copy
+                                joint(i_joint).dof(nq).init_s(i_copy,:) = linspace( joint(i_joint).rom.length(i_copy,1) , joint(i_joint).rom.length(i_copy,2) , numel( joint(i_joint).dof(nq).init(i_copy,:) ) ) ;
                             end
                         end
                     end                    
-                    if numel( joint(i_j).dof(nq).init_s(1,:) ) == numel( joint(i_j).dof(nq).init(1,:) )
-                        joint(i_j).dof(nq).init_s = ones(n_copies,1) .* joint(i_j).dof(nq).init_s ;
+                    if numel( joint(i_joint).dof(nq).init_s(1,:) ) == numel( joint(i_joint).dof(nq).init(1,:) )
+                        joint(i_joint).dof(nq).init_s = ones(n_copy,1) .* joint(i_joint).dof(nq).init_s ;
                     else
-                        error( 'numel( joint(i_j).dof(nq).init_s ) ~= numel( joint(i_j).dof(nq).init ) error' ) ;
+                        error( 'numel( joint(i_joint).dof(nq).init_s ) ~= numel( joint(i_joint).dof(nq).init ) error' ) ;
                     end
                     % spring initial shape
-                    if ~isfield( joint(i_j).dof(nq).spring , 'init_s' ) || isempty( joint(i_j).dof(nq).spring.init_s )|| max( double( abs( subs( joint(i_j).dof(nq).spring.init_s(1,:), par.sym, par.var ) ) ) ) == 0
-                        if ~isempty( joint(i_j).rom.init_s )
-                            joint(i_j).dof(nq).spring.init_s(i_d,:) = ones(n_copies,1) .* joint(i_j).rom.init_s ;
+                    if ~isfield( joint(i_joint).dof(nq).spring , 'init_s' ) || isempty( joint(i_joint).dof(nq).spring.init_s )|| max( double( abs( subs( joint(i_joint).dof(nq).spring.init_s(1,:), par.sym, par.var ) ) ) ) == 0
+                        if ~isempty( joint(i_joint).rom.init_s )
+                            joint(i_joint).dof(nq).spring.init_s(i_copy,:) = ones(n_copy,1) .* joint(i_joint).rom.init_s ;
                         else
-                            for i_d = 1 : n_copies
-                                joint(i_j).dof(nq).spring.init_s(i_d,:) = linspace( joint(i_j).rom.length(i_d,1) , joint(i_j).rom.length(i_d,2) , numel( joint(i_j).dof(nq).spring.init(i_d,:) ) ) ;
+                            for i_copy = 1 : n_copy
+                                joint(i_joint).dof(nq).spring.init_s(i_copy,:) = linspace( joint(i_joint).rom.length(i_copy,1) , joint(i_joint).rom.length(i_copy,2) , numel( joint(i_joint).dof(nq).spring.init(i_copy,:) ) ) ;
                             end
                         end
                     end
-                    if isnan( joint(i_j).dof(nq).spring.init(1,1) ) || numel( joint(i_j).dof(nq).spring.init_s(1,:) ) == numel( joint(i_j).dof(nq).spring.init(1,:) )
-                        joint(i_j).dof(nq).spring.init_s = ones(n_copies,1) .* joint(i_j).dof(nq).spring.init_s ;
+                    if isnan( joint(i_joint).dof(nq).spring.init(1,1) ) || numel( joint(i_joint).dof(nq).spring.init_s(1,:) ) == numel( joint(i_joint).dof(nq).spring.init(1,:) )
+                        joint(i_joint).dof(nq).spring.init_s = ones(n_copy,1) .* joint(i_joint).dof(nq).spring.init_s ;
                     else
-                        error( 'numel( joint(i_j).dof(nq).spring.init_s ) ~= numel( joint(i_j).dof(nq).spring.init ) error' ) ;
+                        error( 'numel( joint(i_joint).dof(nq).spring.init_s ) ~= numel( joint(i_joint).dof(nq).spring.init ) error' ) ;
                     end
                 end
                                 
@@ -585,398 +702,456 @@ for i_j = 1 : numel( joint )
         
     end
     
-    if ~isfield( joint(i_j) ,'tr2nd' ) || isempty( joint(i_j).tr2nd )
-        joint(i_j).tr2nd = joint_temp.tr ;
+    if ~isfield( joint(i_joint) ,'tr2nd' ) || isempty( joint(i_joint).tr2nd )
+        joint(i_joint).tr2nd = joint_temp.tr ;
     else
-        if ~isfield( joint(i_j).tr2nd ,'trans' )
-            joint(i_j).tr2nd.trans = [] ;
+        if ~isfield( joint(i_joint).tr2nd ,'trans' )
+            joint(i_joint).tr2nd.trans = [] ;
         end
-        if ~isfield( joint(i_j).tr2nd ,'rot' )
-            joint(i_j).tr2nd.rot = [] ;
-            joint(i_j).tr2nd.type = 'none' ;
+        if ~isfield( joint(i_joint).tr2nd ,'rot' )
+            joint(i_joint).tr2nd.rot = [] ;
+            joint(i_joint).tr2nd.type = 'none' ;
         end
-        if ~isfield( joint(i_j).tr2nd ,'type' )
-            joint(i_j).tr2nd.type = 'none' ;
+        if ~isfield( joint(i_joint).tr2nd ,'type' )
+            joint(i_joint).tr2nd.type = 'none' ;
         end
     end
     
-    if joint(i_j).mainkin == 0 % joint not in main kin. chain
-        for i = 1 : numel( joint(i_j).tr2nd )
-            if ~isfield( joint(i_j).tr2nd(i) ,'trans' ) || isempty( joint(i_j).tr2nd(i).trans )
-                joint(i_j).tr2nd(i).trans = [ 0 0 0 ] ;
+    if joint(i_joint).mainkin == 0 % joint not in main kin. chain
+        for i = 1 : numel( joint(i_joint).tr2nd )
+            if ~isfield( joint(i_joint).tr2nd(i) ,'trans' ) || isempty( joint(i_joint).tr2nd(i).trans )
+                joint(i_joint).tr2nd(i).trans = [ 0 0 0 ] ;
             end
-            if ~isfield( joint(i_j).tr2nd(i) ,'rot' ) || isempty( joint(i_j).tr2nd(i).rot )
-                joint(i_j).tr2nd(i).rot = [ 1 0 0 0 ] ;
-                joint(i_j).tr2nd(i).type = 'none' ;
+            if ~isfield( joint(i_joint).tr2nd(i) ,'rot' ) || isempty( joint(i_joint).tr2nd(i).rot )
+                joint(i_joint).tr2nd(i).rot = [ 1 0 0 0 ] ;
+                joint(i_joint).tr2nd(i).type = 'none' ;
             end
-            if ~isfield( joint(i_j).tr2nd(i) ,'type' ) || isempty( joint(i_j).tr2nd(i).type )
-                joint(i_j).tr2nd(i).type = 'none' ;
+            if ~isfield( joint(i_joint).tr2nd(i) ,'type' ) || isempty( joint(i_joint).tr2nd(i).type )
+                joint(i_joint).tr2nd(i).type = 'none' ;
             end
         end
     end
-    if ~isfield( joint(i_j) , 'dir' ) || isempty( joint(i_j).dir )
-        joint(i_j).dir = zeros(n_copies,1) ;
+    if ~isfield( joint(i_joint) , 'dir' ) || isempty( joint(i_joint).dir )
+        joint(i_joint).dir = zeros(n_copy,1) ;
     else
-        if numel( joint(i_j).dir(:,1) ) == 1
-            joint(i_j).dir = ones(n_copies,1) * joint(i_j).dir(1,:) ;
-        end
+        joint(i_joint).dir = ones(n_copy,1) .* joint(i_joint).dir(1,:) ;
     end
-    if ~isfield( joint(i_j) , 'xaxis' ) || isempty( joint(i_j).xaxis )
-        joint(i_j).xaxis = [] ; % default in local frame defined by joint.tr
+    if ~isfield( joint(i_joint) , 'xaxis' ) || isempty( joint(i_joint).xaxis )
+        joint(i_joint).xaxis = [] ; % default in local frame defined by joint.tr
     else
-        if numel( joint(i_j).xaxis(:,1) ) == 1
-            joint(i_j).xaxis = ones(n_copies,1) * joint(i_j).xaxis(1,:) ;
-        end
+        joint(i_joint).xaxis = ones(n_copy,1) .* joint(i_joint).xaxis(1,:) ;
     end
-    if ~isfield( joint(i_j) , 'spring' ) % constraint
-        joint(i_j).spring = joint_temp.spring ;
+    if ~isfield( joint(i_joint) , 'curv_frame_director' ) || isempty( joint(i_joint).curv_frame_director )
+        joint(i_joint).curv_frame_director = [] ;
     else
-        if ~isfield( joint(i_j).spring , 'coeff' ) % constraint
-            joint(i_j).spring.coeff = [] ;
-        end
-        if ~isfield( joint(i_j).spring , 'init' ) % constraint
-            joint(i_j).spring.init = [] ;
-        end
-        if ~isfield( joint(i_j).spring , 'compr' ) % constraint
-            joint(i_j).spring.compr = [] ;
-        end
+        joint(i_joint).xaxis = ones(n_copy,1) .* joint(i_joint).curv_frame_director ;
     end
-    if ~isempty( joint(i_j).spring.coeff )
-        if ~isfield( joint(i_j).spring , 'coeff' ) || isempty( joint(i_j).spring.coeff )
-            joint(i_j).spring.coeff = zeros(n_copies,1) ;
-        else
-            if numel( joint(i_j).spring.coeff(:,1) ) == 1
-                joint(i_j).spring.coeff = ones(n_copies,1) * joint(i_j).spring.coeff(1,:) ;
-            end
-        end
-        if ~isfield( joint(i_j).spring , 'init' ) || isempty( joint(i_j).spring.init )
-            joint(i_j).spring.init = zeros(n_copies,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-        if numel( joint(i_j).spring.init(1,:) ) == 1
-            joint(i_j).spring.init = joint(i_j).spring.init(1,:) * ones(1,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-        if numel( joint(i_j).spring.init(:,1) ) == 1
-            joint(i_j).spring.init = ones(n_copies,1) * joint(i_j).spring.init(1,:) ;
-        end
-        if ~isfield( joint(i_j).spring , 'compr' ) || isempty( joint(i_j).spring.compr )
-            joint(i_j).spring.compr = ones(n_copies,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-        if numel( joint(i_j).spring.compr(1,:) ) == 1
-            joint(i_j).spring.compr = joint(i_j).spring.compr(1,:) * ones(1,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-        if numel( joint(i_j).spring.compr(:,1) ) == 1
-            joint(i_j).spring.compr = ones(n_copies,1) * joint(i_j).spring.compr(1,:) ;
-        end
-        if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).damp )
-            joint(i_j).damp.visc = zeros(n_copies,numel(joint(i_j).spring.coeff(1,:))) ;
-            joint(i_j).damp.pow = ones(n_copies,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-        if ~isfield( joint(i_j) , 'input' ) || isempty( joint(i_j).input )
-            joint(i_j).input = zeros(n_copies,numel(joint(i_j).spring.coeff(1,:))) ;
-        end
-    end
-    if ~isfield( joint(i_j) , 'damp' ) % constraint
-        joint(i_j).damp = joint_temp.damp ;
+    if ~isfield( joint(i_joint) , 'spring' ) % constraint
+        joint(i_joint).spring = joint_temp.spring ;
     else
-        if ~isfield( joint(i_j).damp , 'visc' ) % constraint
-            joint(i_j).damp.visc = [] ;
+        if ~isfield( joint(i_joint).spring , 'coeff' ) % constraint
+            joint(i_joint).spring.coeff = [] ;
         end
-        if ~isfield( joint(i_j).damp , 'pow' ) % constraint
-            joint(i_j).damp.pow = 1 ;
+        if ~isfield( joint(i_joint).spring , 'init' ) % constraint
+            joint(i_joint).spring.init = [] ;
         end
-    end
-    if ~isempty( joint(i_j).damp.visc )
-        if numel( joint(i_j).damp.visc(:,1) ) == 1
-            joint(i_j).damp.visc = ones(n_copies,1) * joint(i_j).damp.visc(1,:) ;
-        end
-        if ~isfield( joint(i_j).damp , 'pow' ) || isempty( joint(i_j).damp.pow )
-            joint(i_j).damp.pow = ones(n_copies,numel(joint(i_j).damp.visc(1,:))) ;
-        end
-        if numel( joint(i_j).damp.pow(1,:) ) == 1
-            joint(i_j).damp.pow = joint(i_j).damp.pow(1,:) * ones(1,numel(joint(i_j).damp.visc(1,:))) ;
-        end
-        if numel( joint(i_j).damp.pow(:,1) ) == 1
-            joint(i_j).damp.pow = ones(n_copies,1) * joint(i_j).damp.pow(1,:) ;
-        end
-        if ~isfield( joint(i_j) , 'spring' ) || isempty( joint(i_j).spring )
-            joint(i_j).spring.coeff = zeros(n_copies,numel(joint(i_j).damp.visc(1,:))) ;
-            joint(i_j).spring.init = zeros(n_copies,numel(joint(i_j).damp.visc(1,:))) ;
-            joint(i_j).spring.compr = ones(n_copies,numel(joint(i_j).damp.visc(1,:))) ;
-        end
-        if ~isfield( joint(i_j) , 'input' ) || isempty( joint(i_j).input )
-            joint(i_j).input = zeros(n_copies,numel(joint(i_j).damp.visc(1,:))) ;
+        if ~isfield( joint(i_joint).spring , 'compr' ) % constraint
+            joint(i_joint).spring.compr = [] ;
         end
     end
-    if ~isfield( joint(i_j) , 'input' )
-        joint(i_j).input = 0 ;
-    end
-    if ~isempty( joint(i_j).input )
-        if numel( joint(i_j).input(:,1) ) == 1
-            joint(i_j).input = ones(n_copies,1) * joint(i_j).input(1,:) ;
-        end
-        if ~isfield( joint(i_j) , 'spring' ) || isempty( joint(i_j).spring )
-            joint(i_j).spring.coeff = zeros(n_copies,numel(joint(i_j).input(1,:))) ;
-            joint(i_j).spring.init = zeros(n_copies,numel(joint(i_j).input(1,:))) ;
-            joint(i_j).spring.compr = ones(n_copies,numel(joint(i_j).input(1,:))) ;
-        end
-        if ~isfield( joint(i_j) , 'damp' ) || isempty( joint(i_j).damp )
-            joint(i_j).damp.visc = zeros(n_copies,numel(joint(i_j).input(1,:))) ;
-            joint(i_j).damp.pow = ones(n_copies,numel(joint(i_j).input(1,:))) ;
-        end
-    end
-    if ~isfield( joint(i_j) , 'fixed' )
-        joint(i_j).fixed = [] ;
-    end
-    if ~isempty( joint(i_j).fixed )
-        if numel( joint(i_j).fixed(1,:) ) > 7
-            error( 'numel( joint(i_j).fixed(1,:) ) error!' ) ;
-        end
-        if numel( joint(i_j).fixed(1,:) ) < 6
-            joint(i_j).fixed = [ joint(i_j).fixed, zeros( numel( joint(i_j).fixed(:,1) ) , 7 - numel( joint(i_j).fixed(1,:) ) ) ] ;
-        end
-        if numel( joint(i_j).fixed(:,1) ) == 1
-            joint(i_j).fixed = ones(n_copies,1) * joint(i_j).fixed(1,:) ;
-        end
-        if ~isfield( joint(i_j) , 'control' ) || isempty( joint(i_j).control )
-            joint(i_j).control = zeros(n_copies, numel( joint(i_j).fixed(1,:) )) ;
+    if ~isempty( joint(i_joint).spring.coeff )
+        if ~isfield( joint(i_joint).spring , 'coeff' ) || isempty( joint(i_joint).spring.coeff )
+            joint(i_joint).spring.coeff = zeros(n_copy,1) ;
         else
-            if numel( joint(i_j).control(1,:) ) == 1
-                joint(i_j).control = joint(i_j).control(1,:) * ones(1, numel( joint(i_j).fixed(1,:) )) ;
-            end
-            if numel( joint(i_j).control(1,:) ) < numel( joint(i_j).fixed(1,:) )
-                joint(i_j).control = [ joint(i_j).control, zeros( numel( joint(i_j).control(:,1) ) , 7 - numel( joint(i_j).control(1,:) ) ) ] ;
-            end
-            if numel( joint(i_j).control(:,1) ) == 1
-                joint(i_j).control = ones(n_copies,1) * joint(i_j).control(1,:) ;
-            end
-            if numel(joint(i_j).control(1,:)) ~= numel( joint(i_j).fixed(1,:) )
-                error( 'numel(joint(i_j).control(1,:)) ~= numel( joint(i_j).fixed(1,:) ) error!' ) ;
+            if numel( joint(i_joint).spring.coeff(:,1) ) == 1
+                joint(i_joint).spring.coeff = ones(n_copy,1) * joint(i_joint).spring.coeff(1,:) ;
             end
         end
-        if ~isfield( joint(i_j) ,'refbody' ) || isempty( joint(i_j).refbody )
-            joint(i_j).refbody = ones(n_copies,1) * [ 0 1 0 ] ; % [body_no mesh_no location_lengh]
-        else
-            if numel( joint(i_j).refbody(1,:) ) == 1
-                joint(i_j).refbody(:,2:3) = [ 1 0 ] ;
-            end
-            if numel( joint(i_j).refbody(:,1) ) == 1
-                joint(i_j).refbody = ones(n_copies,1) * joint(i_j).refbody(1,:) ;
-            end
+        if ~isfield( joint(i_joint).spring , 'init' ) || isempty( joint(i_joint).spring.init )
+            joint(i_joint).spring.init = zeros(n_copy,numel(joint(i_joint).spring.coeff(1,:))) ;
         end
-        if isempty( joint(i_j).spring.coeff )
-            joint(i_j).spring.coeff = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.coeff(1,:) ) == 1
-                joint(i_j).spring.coeff = joint(i_j).spring.coeff * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.coeff(:,1) ) == 1
-                joint(i_j).spring.coeff = ones(n_copies,1) * joint(i_j).spring.coeff ;
-            end
-            if numel( joint(i_j).spring.coeff(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.coeff(1,:) ) ~= 6 error!' ) ;
-            end
+        if numel( joint(i_joint).spring.init(1,:) ) == 1
+            joint(i_joint).spring.init = joint(i_joint).spring.init(1,:) * ones(1,numel(joint(i_joint).spring.coeff(1,:))) ;
         end
-        if isempty( joint(i_j).spring.init )
-            joint(i_j).spring.init = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.init(1,:) ) == 1
-                joint(i_j).spring.init = joint(i_j).spring.init * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.init(:,1) ) == 1
-                joint(i_j).spring.init = ones(n_copies,1) * joint(i_j).spring.init ;
-            end
-            if numel( joint(i_j).spring.init(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.init(1,:) ) ~= 6 error!' ) ;
-            end
+        if numel( joint(i_joint).spring.init(:,1) ) == 1
+            joint(i_joint).spring.init = ones(n_copy,1) * joint(i_joint).spring.init(1,:) ;
         end
-        if isempty( joint(i_j).spring.compr )
-            joint(i_j).spring.compr = ones(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.compr(1,:) ) == 1
-                joint(i_j).spring.compr = joint(i_j).spring.compr * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.compr(:,1) ) == 1
-                joint(i_j).spring.compr = ones(n_copies,1) * joint(i_j).spring.compr ;
-            end
-            if numel( joint(i_j).spring.compr(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.compr(1,:) ) ~= 6 error!' ) ;
-            end
+        if ~isfield( joint(i_joint).spring , 'compr' ) || isempty( joint(i_joint).spring.compr )
+            joint(i_joint).spring.compr = ones(n_copy,numel(joint(i_joint).spring.coeff(1,:))) ;
         end
-        if isempty( joint(i_j).damp.visc )
-            joint(i_j).damp.visc = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).damp.visc(1,:) ) == 1
-                joint(i_j).damp.visc = joint(i_j).damp.visc * ones(1,6) ;
-            end
-            if numel( joint(i_j).damp.visc(:,1) ) == 1
-                joint(i_j).damp.visc = ones(n_copies,1) * joint(i_j).damp.visc  ;
-            end
-            if numel( joint(i_j).damp.visc(1,:) ) ~= 6
-                error( 'numel( joint(i_j).damp.visc(1,:) ) ~= 6 error!' ) ;
-            end
+        if numel( joint(i_joint).spring.compr(1,:) ) == 1
+            joint(i_joint).spring.compr = joint(i_joint).spring.compr(1,:) * ones(1,numel(joint(i_joint).spring.coeff(1,:))) ;
         end
-        if isempty( joint(i_j).damp.pow )
-            joint(i_j).damp.pow = ones(n_copies,6) ;
-        else
-            if numel( joint(i_j).damp.pow(1,:) ) == 1
-                joint(i_j).damp.pow = joint(i_j).damp.pow * ones(1,6) ;
-            end
-            if numel( joint(i_j).damp.pow(:,1) ) == 1
-                joint(i_j).damp.pow = ones(n_copies,1) * joint(i_j).damp.pow  ;
-            end
-            if numel( joint(i_j).damp.pow(1,:) ) ~= 6
-                error( 'numel( joint(i_j).damp.pow(1,:) ) ~= 6 error!' ) ;
-            end
+        if numel( joint(i_joint).spring.compr(:,1) ) == 1
+            joint(i_joint).spring.compr = ones(n_copy,1) * joint(i_joint).spring.compr(1,:) ;
         end
-        if isempty( joint(i_j).input )
-            joint(i_j).input = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).input(1,:) ) == 1
-                joint(i_j).input = joint(i_j).input * ones(1,6) ;
-            end
-            if numel( joint(i_j).input(:,1) ) == 1
-                joint(i_j).input = ones(n_copies,1) * joint(i_j).input ;
-            end
-            if numel( joint(i_j).input(1,:) ) ~= 6
-                error( 'numel( joint(i_j).input(1,:) ) ~= 6 error!' ) ;
-            end
+        if ~isfield( joint(i_joint) , 'damp' ) || isempty( joint(i_joint).damp )
+            joint(i_joint).damp.visc = zeros(n_copy,numel(joint(i_joint).spring.coeff(1,:))) ;
+            joint(i_joint).damp.pow = ones(n_copy,numel(joint(i_joint).spring.coeff(1,:))) ;
+        end
+        if ~isfield( joint(i_joint) , 'input' ) || isempty( joint(i_joint).input )
+            joint(i_joint).input = zeros(n_copy,numel(joint(i_joint).spring.coeff(1,:))) ;
         end
     end
-    if joint(i_j).rom.isROM
-        if isempty( joint(i_j).spring.coeff )
-            joint(i_j).spring.coeff = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.coeff(1,:) ) == 1
-                joint(i_j).spring.coeff = joint(i_j).spring.coeff * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.coeff(:,1) ) == 1
-                joint(i_j).spring.coeff = ones(n_copies,1) * joint(i_j).spring.coeff ;
-            end
-            if numel( joint(i_j).spring.coeff(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.coeff(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-        if isempty( joint(i_j).spring.init ) % [ number of points along backbone x 6 ]
-            joint(i_j).spring.init = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.init(1,:) ) == 1
-                joint(i_j).spring.init = joint(i_j).spring.init * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.init(:,1) ) == 1
-                joint(i_j).spring.init = ones(n_copies,1) * joint(i_j).spring.init ;
-            end
-            if numel( joint(i_j).spring.init(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.init(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-        if isempty( joint(i_j).spring.compr )
-            joint(i_j).spring.compr = ones(n_copies,6) ;
-        else
-            if numel( joint(i_j).spring.compr(1,:) ) == 1
-                joint(i_j).spring.compr = joint(i_j).spring.compr * ones(1,6) ;
-            end
-            if numel( joint(i_j).spring.compr(:,1) ) == 1
-                joint(i_j).spring.compr = ones(n_copies,1) * joint(i_j).spring.compr ;
-            end
-            if numel( joint(i_j).spring.compr(1,:) ) ~= 6
-                error( 'numel( joint(i_j).spring.compr(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-        if isempty( joint(i_j).damp.visc )
-            joint(i_j).damp.visc = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).damp.visc(1,:) ) == 1
-                joint(i_j).damp.visc = joint(i_j).damp.visc * ones(1,6) ;
-            end
-            if numel( joint(i_j).damp.visc(:,1) ) == 1
-                joint(i_j).damp.visc = ones(n_copies,1) * joint(i_j).damp.visc ;
-            end
-            if numel( joint(i_j).damp.visc(1,:) ) ~= 6
-                error( 'numel( joint(i_j).damp.visc(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-        if isempty( joint(i_j).damp.pow )
-            joint(i_j).damp.pow = ones(n_copies,6) ;
-        else
-            if numel( joint(i_j).damp.pow(1,:) ) == 1
-                joint(i_j).damp.pow = joint(i_j).damp.pow * ones(1,6) ;
-            end
-            if numel( joint(i_j).damp.pow(:,1) ) == 1
-                joint(i_j).damp.pow = ones(n_copies,1) * joint(i_j).damp.pow ;
-            end
-            if numel( joint(i_j).damp.pow(1,:) ) ~= 6
-                error( 'numel( joint(i_j).damp.pow(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-        if isempty( joint(i_j).input )
-            joint(i_j).input = zeros(n_copies,6) ;
-        else
-            if numel( joint(i_j).input(1,:) ) == 1
-                joint(i_j).input = joint(i_j).input * ones(1,6) ;
-            end
-            if numel( joint(i_j).input(:,1) ) == 1
-                joint(i_j).input = ones(n_copies,1) * joint(i_j).input ;
-            end
-            if numel( joint(i_j).input(1,:) ) ~= 6
-                error( 'numel( joint(i_j).input(1,:) ) ~= 6 error!' ) ;
-            end
-        end
-    end
-    if numel( joint(i_j).spring.init ) == 1 && isnan( joint(i_j).spring.init )
-        joint(i_j).spring.init = [ nan nan nan nan nan nan ] ;
-    end
-    if ~isfield( joint(i_j) , 'radi' ) || isempty( joint(i_j).radi ) % cross-section radius for plotting
-        joint(i_j).radi = ones(n_copies,1) * joint_temp.radi ;
+    if ~isfield( joint(i_joint) , 'damp' ) % constraint
+        joint(i_joint).damp = joint_temp.damp ;
     else
-        joint(i_j).radi = ones(n_copies,1) * joint(i_j).radi ;
+        if ~isfield( joint(i_joint).damp , 'visc' ) % constraint
+            joint(i_joint).damp.visc = [] ;
+        end
+        if ~isfield( joint(i_joint).damp , 'pow' ) % constraint
+            joint(i_joint).damp.pow = 1 ;
+        end
+    end
+    if ~isempty( joint(i_joint).damp.visc )
+        if numel( joint(i_joint).damp.visc(:,1) ) == 1
+            joint(i_joint).damp.visc = ones(n_copy,1) * joint(i_joint).damp.visc(1,:) ;
+        end
+        if ~isfield( joint(i_joint).damp , 'pow' ) || isempty( joint(i_joint).damp.pow )
+            joint(i_joint).damp.pow = ones(n_copy,numel(joint(i_joint).damp.visc(1,:))) ;
+        end
+        if numel( joint(i_joint).damp.pow(1,:) ) == 1
+            joint(i_joint).damp.pow = joint(i_joint).damp.pow(1,:) * ones(1,numel(joint(i_joint).damp.visc(1,:))) ;
+        end
+        if numel( joint(i_joint).damp.pow(:,1) ) == 1
+            joint(i_joint).damp.pow = ones(n_copy,1) * joint(i_joint).damp.pow(1,:) ;
+        end
+        if ~isfield( joint(i_joint) , 'spring' ) || isempty( joint(i_joint).spring )
+            joint(i_joint).spring.coeff = zeros(n_copy,numel(joint(i_joint).damp.visc(1,:))) ;
+            joint(i_joint).spring.init = zeros(n_copy,numel(joint(i_joint).damp.visc(1,:))) ;
+            joint(i_joint).spring.compr = ones(n_copy,numel(joint(i_joint).damp.visc(1,:))) ;
+        end
+        if ~isfield( joint(i_joint) , 'input' ) || isempty( joint(i_joint).input )
+            joint(i_joint).input = zeros(n_copy,numel(joint(i_joint).damp.visc(1,:))) ;
+        end
+    end
+    if ~isfield( joint(i_joint) , 'input' )
+        joint(i_joint).input = 0 ;
+    end
+    if ~isempty( joint(i_joint).input )
+        if numel( joint(i_joint).input(:,1) ) == 1
+            joint(i_joint).input = ones(n_copy,1) * joint(i_joint).input(1,:) ;
+        end
+        if ~isfield( joint(i_joint) , 'spring' ) || isempty( joint(i_joint).spring )
+            joint(i_joint).spring.coeff = zeros(n_copy,numel(joint(i_joint).input(1,:))) ;
+            joint(i_joint).spring.init = zeros(n_copy,numel(joint(i_joint).input(1,:))) ;
+            joint(i_joint).spring.compr = ones(n_copy,numel(joint(i_joint).input(1,:))) ;
+        end
+        if ~isfield( joint(i_joint) , 'damp' ) || isempty( joint(i_joint).damp )
+            joint(i_joint).damp.visc = zeros(n_copy,numel(joint(i_joint).input(1,:))) ;
+            joint(i_joint).damp.pow = ones(n_copy,numel(joint(i_joint).input(1,:))) ;
+        end
+    end
+    if ~isfield( joint(i_joint) , 'fixed' )
+        joint(i_joint).fixed = [] ;
+    end
+    if ~isempty( joint(i_joint).fixed )
+        if numel( joint(i_joint).fixed(1,:) ) > 7
+            error( 'numel( joint(i_joint).fixed(1,:) ) error!' ) ;
+        end
+        if numel( joint(i_joint).fixed(1,:) ) < 6
+            joint(i_joint).fixed = [ joint(i_joint).fixed, zeros( numel( joint(i_joint).fixed(:,1) ) , 7 - numel( joint(i_joint).fixed(1,:) ) ) ] ;
+        end
+        if numel( joint(i_joint).fixed(:,1) ) == 1
+            joint(i_joint).fixed = ones(n_copy,1) * joint(i_joint).fixed(1,:) ;
+        end        
+        if ~isfield( joint(i_joint) , 'control_acc' ) || isempty( joint(i_joint).control_acc )
+            joint(i_joint).control_acc = zeros(n_copy, numel( joint(i_joint).fixed(1,:) )) ;
+        else
+            if numel( joint(i_joint).control_acc(1,:) ) == 1
+                joint(i_joint).control_acc = joint(i_joint).control_acc(1,:) * ones(1, numel( joint(i_joint).fixed(1,:) )) ;
+            end
+            if numel( joint(i_joint).control_acc(1,:) ) < numel( joint(i_joint).fixed(1,:) )
+                joint(i_joint).control_acc = [ joint(i_joint).control_acc, zeros( numel( joint(i_joint).control_acc(:,1) ) , 7 - numel( joint(i_joint).control_acc(1,:) ) ) ] ;
+            end
+            if numel( joint(i_joint).control_acc(:,1) ) == 1
+                joint(i_joint).control_acc = ones(n_copy,1) * joint(i_joint).control_acc(1,:) ;
+            end
+            if numel(joint(i_joint).control_acc(1,:)) ~= numel( joint(i_joint).fixed(1,:) )
+                error( 'numel(joint(i_joint).control_acc(1,:)) ~= numel( joint(i_joint).fixed(1,:) ) error!' ) ;
+            end
+        end        
+        if ~isfield( joint(i_joint) , 'control_vel' ) || isempty( joint(i_joint).control_vel )
+            joint(i_joint).control_vel = zeros(n_copy, numel( joint(i_joint).fixed(1,:) )) ;
+        else
+            if numel( joint(i_joint).control_vel(1,:) ) == 1
+                joint(i_joint).control_vel = joint(i_joint).control_vel(1,:) * ones(1, numel( joint(i_joint).fixed(1,:) )) ;
+            end
+            if numel( joint(i_joint).control_vel(1,:) ) < numel( joint(i_joint).fixed(1,:) )
+                joint(i_joint).control_vel = [ joint(i_joint).control_vel, zeros( numel( joint(i_joint).control_vel(:,1) ) , 7 - numel( joint(i_joint).control_vel(1,:) ) ) ] ;
+            end
+            if numel( joint(i_joint).control_vel(:,1) ) == 1
+                joint(i_joint).control_vel = ones(n_copy,1) * joint(i_joint).control_vel(1,:) ;
+            end
+            if numel(joint(i_joint).control_vel(1,:)) ~= numel( joint(i_joint).fixed(1,:) )
+                error( 'numel(joint(i_joint).control_vel(1,:)) ~= numel( joint(i_joint).fixed(1,:) ) error!' ) ;
+            end
+        end        
+        if ~isfield( joint(i_joint) , 'control_pos' ) || isempty( joint(i_joint).control_pos )
+            joint(i_joint).control_pos = zeros(n_copy, numel( joint(i_joint).fixed(1,:) )) ;
+        else
+            if numel( joint(i_joint).control_pos(1,:) ) == 1
+                joint(i_joint).control_pos = joint(i_joint).control_pos(1,:) * ones(1, numel( joint(i_joint).fixed(1,:) )) ;
+            end
+            if numel( joint(i_joint).control_pos(1,:) ) < numel( joint(i_joint).fixed(1,:) )
+                joint(i_joint).control_pos = [ joint(i_joint).control_pos, zeros( numel( joint(i_joint).control_pos(:,1) ) , 7 - numel( joint(i_joint).control_pos(1,:) ) ) ] ;
+            end
+            if numel( joint(i_joint).control_pos(:,1) ) == 1
+                joint(i_joint).control_pos = ones(n_copy,1) * joint(i_joint).control_pos(1,:) ;
+            end
+            if numel(joint(i_joint).control_pos(1,:)) ~= numel( joint(i_joint).fixed(1,:) )
+                error( 'numel(joint(i_joint).control_pos(1,:)) ~= numel( joint(i_joint).fixed(1,:) ) error!' ) ;
+            end
+        end           
+        if ~isfield( joint(i_joint) , 'control_err0' ) || isempty( joint(i_joint).control_err0 )
+            joint(i_joint).control_err0 = zeros(n_copy, numel( joint(i_joint).fixed(1,:) )) ;
+        else
+            if numel( joint(i_joint).control_err0(1,:) ) == 1
+                joint(i_joint).control_err0 = joint(i_joint).control_err0(1,:) * ones(1, numel( joint(i_joint).fixed(1,:) )) ;
+            end
+            if numel( joint(i_joint).control_err0(1,:) ) < numel( joint(i_joint).fixed(1,:) )
+                joint(i_joint).control_err0 = [ joint(i_joint).control_err0, zeros( numel( joint(i_joint).control_err0(:,1) ) , 7 - numel( joint(i_joint).control_err0(1,:) ) ) ] ;
+            end
+            if numel( joint(i_joint).control_err0(:,1) ) == 1
+                joint(i_joint).control_err0 = ones(n_copy,1) * joint(i_joint).control_err0(1,:) ;
+            end
+            if numel(joint(i_joint).control_err0(1,:)) ~= numel( joint(i_joint).fixed(1,:) )
+                error( 'numel(joint(i_joint).control_err0(1,:)) ~= numel( joint(i_joint).fixed(1,:) ) error!' ) ;
+            end
+        end
+        if ~isfield( joint(i_joint) ,'refbody' ) || isempty( joint(i_joint).refbody )
+            joint(i_joint).refbody = ones(n_copy,1) * [ 0 1 0 ] ; % [body_no mesh_no location_lengh]
+        else
+            if numel( joint(i_joint).refbody(1,:) ) == 1
+                joint(i_joint).refbody(:,2:3) = [ 1 0 ] ;
+            end
+            if numel( joint(i_joint).refbody(:,1) ) == 1
+                joint(i_joint).refbody = ones(n_copy,1) * joint(i_joint).refbody(1,:) ;
+            end
+        end
+        if isempty( joint(i_joint).spring.coeff )
+            joint(i_joint).spring.coeff = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.coeff(1,:) ) == 1
+                joint(i_joint).spring.coeff = joint(i_joint).spring.coeff * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.coeff(:,1) ) == 1
+                joint(i_joint).spring.coeff = ones(n_copy,1) * joint(i_joint).spring.coeff ;
+            end
+            if numel( joint(i_joint).spring.coeff(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.coeff(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).spring.init )
+            joint(i_joint).spring.init = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.init(1,:) ) == 1
+                joint(i_joint).spring.init = joint(i_joint).spring.init * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.init(:,1) ) == 1
+                joint(i_joint).spring.init = ones(n_copy,1) * joint(i_joint).spring.init ;
+            end
+            if numel( joint(i_joint).spring.init(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.init(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).spring.compr )
+            joint(i_joint).spring.compr = ones(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.compr(1,:) ) == 1
+                joint(i_joint).spring.compr = joint(i_joint).spring.compr * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.compr(:,1) ) == 1
+                joint(i_joint).spring.compr = ones(n_copy,1) * joint(i_joint).spring.compr ;
+            end
+            if numel( joint(i_joint).spring.compr(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.compr(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).damp.visc )
+            joint(i_joint).damp.visc = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).damp.visc(1,:) ) == 1
+                joint(i_joint).damp.visc = joint(i_joint).damp.visc * ones(1,6) ;
+            end
+            if numel( joint(i_joint).damp.visc(:,1) ) == 1
+                joint(i_joint).damp.visc = ones(n_copy,1) * joint(i_joint).damp.visc  ;
+            end
+            if numel( joint(i_joint).damp.visc(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).damp.visc(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).damp.pow )
+            joint(i_joint).damp.pow = ones(n_copy,6) ;
+        else
+            if numel( joint(i_joint).damp.pow(1,:) ) == 1
+                joint(i_joint).damp.pow = joint(i_joint).damp.pow * ones(1,6) ;
+            end
+            if numel( joint(i_joint).damp.pow(:,1) ) == 1
+                joint(i_joint).damp.pow = ones(n_copy,1) * joint(i_joint).damp.pow  ;
+            end
+            if numel( joint(i_joint).damp.pow(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).damp.pow(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).input )
+            joint(i_joint).input = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).input(1,:) ) == 1
+                joint(i_joint).input = joint(i_joint).input * ones(1,6) ;
+            end
+            if numel( joint(i_joint).input(:,1) ) == 1
+                joint(i_joint).input = ones(n_copy,1) * joint(i_joint).input ;
+            end
+            if numel( joint(i_joint).input(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).input(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+    end
+    if joint(i_joint).rom.isROM
+        if isempty( joint(i_joint).spring.coeff )
+            joint(i_joint).spring.coeff = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.coeff(1,:) ) == 1
+                joint(i_joint).spring.coeff = joint(i_joint).spring.coeff * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.coeff(:,1) ) == 1
+                joint(i_joint).spring.coeff = ones(n_copy,1) * joint(i_joint).spring.coeff ;
+            end
+            if numel( joint(i_joint).spring.coeff(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.coeff(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).spring.init ) % [ number of points along backbone x 6 ]
+            joint(i_joint).spring.init = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.init(1,:) ) == 1
+                joint(i_joint).spring.init = joint(i_joint).spring.init * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.init(:,1) ) == 1
+                joint(i_joint).spring.init = ones(n_copy,1) * joint(i_joint).spring.init ;
+            end
+            if numel( joint(i_joint).spring.init(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.init(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).spring.compr )
+            joint(i_joint).spring.compr = ones(n_copy,6) ;
+        else
+            if numel( joint(i_joint).spring.compr(1,:) ) == 1
+                joint(i_joint).spring.compr = joint(i_joint).spring.compr * ones(1,6) ;
+            end
+            if numel( joint(i_joint).spring.compr(:,1) ) == 1
+                joint(i_joint).spring.compr = ones(n_copy,1) * joint(i_joint).spring.compr ;
+            end
+            if numel( joint(i_joint).spring.compr(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).spring.compr(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).damp.visc )
+            joint(i_joint).damp.visc = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).damp.visc(1,:) ) == 1
+                joint(i_joint).damp.visc = joint(i_joint).damp.visc * ones(1,6) ;
+            end
+            if numel( joint(i_joint).damp.visc(:,1) ) == 1
+                joint(i_joint).damp.visc = ones(n_copy,1) * joint(i_joint).damp.visc ;
+            end
+            if numel( joint(i_joint).damp.visc(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).damp.visc(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).damp.pow )
+            joint(i_joint).damp.pow = ones(n_copy,6) ;
+        else
+            if numel( joint(i_joint).damp.pow(1,:) ) == 1
+                joint(i_joint).damp.pow = joint(i_joint).damp.pow * ones(1,6) ;
+            end
+            if numel( joint(i_joint).damp.pow(:,1) ) == 1
+                joint(i_joint).damp.pow = ones(n_copy,1) * joint(i_joint).damp.pow ;
+            end
+            if numel( joint(i_joint).damp.pow(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).damp.pow(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+        if isempty( joint(i_joint).input )
+            joint(i_joint).input = zeros(n_copy,6) ;
+        else
+            if numel( joint(i_joint).input(1,:) ) == 1
+                joint(i_joint).input = joint(i_joint).input * ones(1,6) ;
+            end
+            if numel( joint(i_joint).input(:,1) ) == 1
+                joint(i_joint).input = ones(n_copy,1) * joint(i_joint).input ;
+            end
+            if numel( joint(i_joint).input(1,:) ) ~= 6
+                error( 'numel( joint(i_joint).input(1,:) ) ~= 6 error!' ) ;
+            end
+        end
+    end
+    if numel( joint(i_joint).spring.init ) == 1 && isnan( joint(i_joint).spring.init )
+        joint(i_joint).spring.init = [ nan nan nan nan nan nan ] ;
+    end
+    if ~isfield( joint(i_joint) , 'radi' ) || isempty( joint(i_joint).radi ) % cross-section radius for plotting
+        joint(i_joint).radi = ones(n_copy,1) * joint_temp.radi ;
+    else
+        joint(i_joint).radi = ones(n_copy,1) * joint(i_joint).radi ;
     end
     
 end
 
 
 % final check
-for i_j = 1 : numel( joint )
-    if ~isfield( joint(i_j) , 'first' )
-        joint(i_j).first = [] ;
+for i_joint = 1 : numel( joint )
+    if ~isfield( joint(i_joint) , 'first' )
+        joint(i_joint).first = [] ;
     end
-    if ~isfield( joint(i_j) , 'second' )
-        joint(i_j).second = [] ;
+    if ~isfield( joint(i_joint) , 'second' )
+        joint(i_joint).second = [] ;
     end
-    if ~isfield( joint(i_j) , 'rom' )
-        joint(i_j).rom = joint_temp.rom;
+    if ~isfield( joint(i_joint) , 'rom' )
+        joint(i_joint).rom = joint_temp.rom;
     end
-    if ~isfield( joint(i_j) ,'tr' )
-        joint(i_j).tr = joint_temp.tr ;
+    if ~isfield( joint(i_joint) ,'tr' )
+        joint(i_joint).tr = joint_temp.tr ;
     end
-    if ~isfield( joint(i_j) , 'dof' )
-        joint(i_j).dof = joint_temp.dof ;
+    if ~isfield( joint(i_joint) , 'dof' )
+        joint(i_joint).dof = joint_temp.dof ;
     end
-    if ~isfield( joint(i_j) ,'tr2nd' )
-        joint(i_j).tr2nd = joint_temp.tr ;
+    if ~isfield( joint(i_joint) ,'tr2nd' )
+        joint(i_joint).tr2nd = joint_temp.tr ;
     end
-    if ~isfield( joint(i_j) , 'dir' )
-        joint(i_j).dir = 0 ;
+    if ~isfield( joint(i_joint) , 'dir' )
+        joint(i_joint).dir = 0 ;
     end
-    if ~isfield( joint(i_j) , 'xaxis' )
-        joint(i_j).xaxis = [] ;
+    if ~isfield( joint(i_joint) , 'xaxis' )
+        joint(i_joint).xaxis = [] ;
     end
-    if ~isfield( joint(i_j) , 'spring' )
-        joint(i_j).spring = joint_temp.spring ;
+    if ~isfield( joint(i_joint) , 'spring' )
+        joint(i_joint).spring = joint_temp.spring ;
     end
-    if ~isfield( joint(i_j) , 'damp' )
-        joint(i_j).damp = joint_temp.damp ;
+    if ~isfield( joint(i_joint) , 'damp' )
+        joint(i_joint).damp = joint_temp.damp ;
     end
-    if ~isfield( joint(i_j) , 'input' )
-        joint(i_j).input = 0 ;
+    if ~isfield( joint(i_joint) , 'input' )
+        joint(i_joint).input = 0 ;
     end
-    if ~isfield( joint(i_j) , 'fixed' )
-        joint(i_j).fixed = [] ;
+    if ~isfield( joint(i_joint) , 'fixed' )
+        joint(i_joint).fixed = [] ;
     end
-    if ~isfield( joint(i_j) , 'control' )
-        joint(i_j).control = [] ;
+    if ~isfield( joint(i_joint) , 'control_acc' )
+        joint(i_joint).control_acc = [] ;
+    end    
+    if ~isfield( joint(i_joint) , 'control_vel' )
+        joint(i_joint).control_vel = [] ;
+    end    
+    if ~isfield( joint(i_joint) , 'control_pos' )
+        joint(i_joint).control_pos = [] ;
+    end 
+    if ~isfield( joint(i_joint) , 'control_err0' )
+        joint(i_joint).control_err0 = [] ;
     end
-    if ~isfield( joint(i_j) , 'refbody' )
-        joint(i_j).refbody = [] ;
+    if ~isfield( joint(i_joint) , 'refbody' )
+        joint(i_joint).refbody = [] ;
     end
 end
 
@@ -987,15 +1162,15 @@ for i_b = 1 : numel( body )
     for j_count = 1 : numel( joint )
         
         if joint(j_count).second(1,1) == i_b
-            n_copies = numel( joint(j_count).first(1,:) ) - 1 ;
+            n_copy = numel( joint(j_count).first(1,:) ) - 1 ;
             
             if ~isfield( body(i_b) ,'m' ) || isempty( body(i_b).m )
                 body(i_b).m = body_temp.m ;
             end
             if numel( body(i_b).m ) == 1
-                body(i_b).m = ones(n_copies,1) * body(i_b).m ;
+                body(i_b).m = ones(n_copy,1) * body(i_b).m ;
             else
-                if numel( body(i_b).m(:,1) ) ~= n_copies
+                if numel( body(i_b).m(:,1) ) ~= n_copy
                     error( 'body(i_b).m size error!' ) ;
                 end
             end
@@ -1005,28 +1180,28 @@ for i_b = 1 : numel( body )
             end
             if numel( body(i_b).I(1,1,:) ) == 1
                 tmp = body(i_b).I(:,:) ;
-                for i_d = 1 : n_copies
-                    body(i_b).I(:,:,i_d) = tmp ;
+                for i_copy = 1 : n_copy
+                    body(i_b).I(:,:,i_copy) = tmp ;
                 end
             else
-                if numel( body(i_b).I(1,1,:) ) ~= n_copies
+                if numel( body(i_b).I(1,1,:) ) ~= n_copy
                     error( 'body(i_b).I size error!' ) ;
                 end
             end
             
             if ~isfield( body(i_b) ,'radi' ) || isempty( body(i_b).radi )
-                body(i_b).radi = ones(n_copies,1) * body_temp.radi ;
+                body(i_b).radi = ones(n_copy,1) * body_temp.radi ;
             else
-                body(i_b).radi = ones(n_copies,1) * body(i_b).radi ;
+                body(i_b).radi = ones(n_copy,1) * body(i_b).radi ;
             end
             
             if ~isfield( body(i_b) ,'l_com' ) || isempty( body(i_b).l_com )
                 body(i_b).l_com = body_temp.l_com ;
             end
             if numel( body(i_b).l_com(:,1) ) == 1
-                body(i_b).l_com = ones(n_copies,1) * body(i_b).l_com  ;
+                body(i_b).l_com = ones(n_copy,1) * body(i_b).l_com  ;
             else
-                if numel( body(i_b).l_com(:,1) ) ~= n_copies
+                if numel( body(i_b).l_com(:,1) ) ~= n_copy
                     error( 'body(i_b).l_com size error!' ) ;
                 end
             end
@@ -1035,9 +1210,9 @@ for i_b = 1 : numel( body )
                 body(i_b).tip = 2 * body(i_b).l_com ;
             end
             if numel( body(i_b).tip(:,1) ) == 1
-                body(i_b).tip = ones(n_copies,1) * body(i_b).tip  ;
+                body(i_b).tip = ones(n_copy,1) * body(i_b).tip  ;
             else
-                if numel( body(i_b).tip(:,1) ) ~= n_copies
+                if numel( body(i_b).tip(:,1) ) ~= n_copy
                     error( 'body(i_b).tip size error!' ) ;
                 end
             end
@@ -1053,13 +1228,13 @@ end
 % final check
 for i_b = 1 : numel( body )
     if ~isfield( body(i_b) ,'m' )
-        body(i_b).m = ones(n_copies,1) * body_temp.m ;
+        body(i_b).m = ones(n_copy,1) * body_temp.m ;
     end
     if ~isfield( body(i_b) ,'I' )
-        body(i_b).I = ones(n_copies,1) * body_temp.I ;
+        body(i_b).I = ones(n_copy,1) * body_temp.I ;
     end
     if ~isfield( body(i_b) ,'radi' )
-        body(i_b).radi = ones(n_copies,1) * body_temp.radi ;
+        body(i_b).radi = ones(n_copy,1) * body_temp.radi ;
     end
     if ~isfield( body(i_b) ,'l_com' )
         body(i_b).l_com = [] ;
@@ -1081,20 +1256,20 @@ for i_l = 1 : numel( exload )
         if numel( exload(i_l).exbody(:,1) ) == 1 % [body_no, mesh_no; 0, location_lengh]
             exload(i_l).exbody(2,1) = 0;
         end
-        n_copies = numel( exload(i_l).exbody(1,:) ) ;
-        if n_copies > 1
-            n_copies = n_copies - 1 ;
+        n_copy = numel( exload(i_l).exbody(1,:) ) ;
+        if n_copy > 1
+            n_copy = n_copy - 1 ;
         else
             exload(i_l).exbody(1,2) = 1 ;
         end
         if ~isfield( exload(i_l) ,'refbody' ) || isempty( exload(i_l).refbody )
-            exload(i_l).refbody = ones(n_copies,1) * [ 0 1 0 ] ; % wrt ref frame by default: [body_no mesh_no location_lengh]
+            exload(i_l).refbody = ones(n_copy,1) * [ 0 1 0 ] ; % wrt ref frame by default: [body_no mesh_no location_lengh]
         else
             if numel( exload(i_l).refbody(1,:) ) == 1
                 exload(i_l).refbody(:,2:3) = [ 1 0 ] ;
             end
             if numel( exload(i_l).refbody(:,1) ) == 1
-                exload(i_l).refbody = ones(n_copies,1) * exload(i_l).refbody(1,:) ;
+                exload(i_l).refbody = ones(n_copy,1) * exload(i_l).refbody(1,:) ;
             end
         end
         
@@ -1116,14 +1291,14 @@ for i_l = 1 : numel( exload )
             end
         end
         if ~isfield( exload(i_l) ,'ftau' ) || isempty( exload(i_l).ftau )
-            exload(i_l).ftau = zeros(n_copies,6) ;
+            exload(i_l).ftau = zeros(n_copy,6) ;
         else
             if numel( exload(i_l).ftau(:,1) ) == 1
-                exload(i_l).ftau = ones(n_copies,1) * exload(i_l).ftau(1,:) ;
+                exload(i_l).ftau = ones(n_copy,1) * exload(i_l).ftau(1,:) ;
             end
         end
         if numel( exload(i_l).ftau(1,:) ) ~= 6
-            exload(i_l).ftau = [ exload(i_l).ftau zeros( n_copies , 6 - numel( exload(i_l).ftau ) ) ] ;
+            exload(i_l).ftau = [ exload(i_l).ftau zeros( n_copy , 6 - numel( exload(i_l).ftau ) ) ] ;
         end
         
     end
@@ -1132,42 +1307,42 @@ end
 
 
 %% mesh
-for i_d = 1 : numel( mesh )
+for i_copy = 1 : numel( mesh )
     
-    if ~isempty( mesh(i_d).file_name )
+    if ~isempty( mesh(i_copy).file_name )
         
-        if ~isfield( mesh(i_d) ,'file_name' ) || isempty( mesh(i_d).file_name )
-            error( 'mesh(i_d).file_name' ) ;
+        if ~isfield( mesh(i_copy) ,'file_name' ) || isempty( mesh(i_copy).file_name )
+            error( 'mesh(i_copy).file_name' ) ;
         end
-        if ~isfield( mesh(i_d) ,'tol' ) || isempty( mesh(i_d).tol )
-            mesh(i_d).tol = 1e-4 ;
+        if ~isfield( mesh(i_copy) ,'tol' ) || isempty( mesh(i_copy).tol )
+            mesh(i_copy).tol = 1e-4 ;
         end
-        if ~isfield( mesh(i_d) ,'body' ) || isempty( mesh(i_d).body )
-            error( 'mesh(i_d).body' ) ;
+        if ~isfield( mesh(i_copy) ,'body' ) || isempty( mesh(i_copy).body )
+            error( 'mesh(i_copy).body' ) ;
         end
-        if ~isfield( mesh(i_d) ,'joint' ) || isempty( mesh(i_d).joint ) || numel( mesh(i_d).joint ) ~= 2
-            error( 'mesh(i_d).joint' ) ;
+        if ~isfield( mesh(i_copy) ,'joint' ) || isempty( mesh(i_copy).joint ) || numel( mesh(i_copy).joint ) ~= 2
+            error( 'mesh(i_copy).joint' ) ;
         end
-        if ~isfield( mesh(i_d) ,'tr' ) || isempty( mesh(i_d).tr )
-            mesh(i_d).tr.trans = [ 0 0 0 ] ;
-            mesh(i_d).tr.rot = [ 1 0 0 0 ] ;
-            mesh(i_d).tr.init_quat = [ 1 0 0 0 ] ;
-            mesh(i_d).tr.type = 'none' ;
+        if ~isfield( mesh(i_copy) ,'tr' ) || isempty( mesh(i_copy).tr )
+            mesh(i_copy).tr.trans = [ 0 0 0 ] ;
+            mesh(i_copy).tr.rot = [ 1 0 0 0 ] ;
+            mesh(i_copy).tr.init_quat = [ 1 0 0 0 ] ;
+            mesh(i_copy).tr.type = 'none' ;
         end
-        for i = 1 : numel( mesh(i_d).tr )
-            if ~isfield( mesh(i_d).tr(i) ,'trans' ) || isempty( mesh(i_d).tr(i).trans )
-                mesh(i_d).tr(i).trans = [ 0 0 0 ] ;
+        for i = 1 : numel( mesh(i_copy).tr )
+            if ~isfield( mesh(i_copy).tr(i) ,'trans' ) || isempty( mesh(i_copy).tr(i).trans )
+                mesh(i_copy).tr(i).trans = [ 0 0 0 ] ;
             end
-            if ~isfield( mesh(i_d).tr(i) ,'rot' ) || isempty( mesh(i_d).tr(i).rot )
-                mesh(i_d).tr(i).rot = [ 1 0 0 0 ] ;
-                mesh(i_d).tr(i).init_quat = [ 1 0 0 0 ] ;
-                mesh(i_d).tr(i).type = 'none' ;
+            if ~isfield( mesh(i_copy).tr(i) ,'rot' ) || isempty( mesh(i_copy).tr(i).rot )
+                mesh(i_copy).tr(i).rot = [ 1 0 0 0 ] ;
+                mesh(i_copy).tr(i).init_quat = [ 1 0 0 0 ] ;
+                mesh(i_copy).tr(i).type = 'none' ;
             end
-            if ~isfield( mesh(i_d).tr(i) ,'init_quat' ) || isempty( mesh(i_d).tr(i).init_quat )
-                mesh(i_d).tr(i).init_quat = [ 1 0 0 0 ] ;
+            if ~isfield( mesh(i_copy).tr(i) ,'init_quat' ) || isempty( mesh(i_copy).tr(i).init_quat )
+                mesh(i_copy).tr(i).init_quat = [ 1 0 0 0 ] ;
             end
-            if ~isfield( mesh(i_d).tr(i) ,'type' ) || isempty( mesh(i_d).tr(i).type )
-                mesh(i_d).tr(i).type = 'none' ;
+            if ~isfield( mesh(i_copy).tr(i) ,'type' ) || isempty( mesh(i_copy).tr(i).type )
+                mesh(i_copy).tr(i).type = 'none' ;
             end
         end
         

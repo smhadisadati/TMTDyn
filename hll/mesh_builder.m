@@ -16,7 +16,7 @@ classdef mesh_builder < handle
     properties (GetAccess = public, SetAccess = public)
         pipe;
         joints;
-        i_j = 0;
+        i_joint = 0;
 		i_t = 0;
         i_S = 1; % counter for executed functions of the full DDL input in the current (this) object
     end
@@ -58,23 +58,23 @@ classdef mesh_builder < handle
         end
         
         function joint = joint(self,name)
-            self.i_j = self.i_j + 1;
+            self.i_joint = self.i_joint + 1;
             joint = joint_builder(self,name);
-            self.joints{self.i_j} = joint ;
+            self.joints{self.i_joint} = joint ;
             self.i_S = self.i_S + 1;
         end
 
         function joint = with_node_dof(self,name)
-            self.i_j = 1;
+            self.i_joint = 1;
             joint = joint_builder(self,name);
-            self.joints{self.i_j} = joint ;
+            self.joints{self.i_joint} = joint ;
             self.i_S = self.i_S + 1;
         end
 
         function joint = with_edge(self,name)
-            self.i_j = 2;
+            self.i_joint = 2;
             joint = joint_builder(self,name);
-            self.joints{self.i_j} = joint ;
+            self.joints{self.i_joint} = joint ;
             self.i_S = self.i_S + 1;
         end
         

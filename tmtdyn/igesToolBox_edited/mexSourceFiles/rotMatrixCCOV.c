@@ -1,5 +1,5 @@
 
-/* Written by Per Bergström */
+/* Written by Per Bergstrï¿½m */
 
 /* Required length of doubleVars 38 */
 

@@ -1,5 +1,5 @@
 
-/* Written by Per Bergström */
+/* Written by Per Bergstrï¿½m */
 
 static void getRotMat(double *anglVec, double *rotMatrxs, double *doubleVars){
     /* Required length of rotMatrxs 9 */

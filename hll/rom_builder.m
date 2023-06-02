@@ -4,8 +4,7 @@ classdef rom_builder < handle
         source;
         
         default_order_val;
-        type_val;
-        length_val; % [l_start_rom, l_end_rom, type, coeff(-+1), i_j(joint), i_d(mesh), i_h(DOF), i_r(coeff order in rom), l_rom(length along rom)]
+        length_val; % [l_start_rom, l_end_rom, type, coeff(-+1), i_joint(joint), i_copy(mesh), i_dofAxis(DOF), i_coeff(coeff order in rom), curve_length(along rom)]
 		base_condition_val;
 		free_base_val;
 		init_s_val;
@@ -42,102 +41,27 @@ classdef rom_builder < handle
             self.pipe.default_order = order;
             self.i_S = self.i_S + 1;
         end
-
-        function self = growing_from(self, type) % {'none', 'tip', 'base', 'sliding'}
-            if nargin == 1
-                type = 'none';
-            end
-            switch type
-                case 'base'
-                    type = -1;
-                case 'sliding'
-                    type = -2;
-                otherwise
-                    type = 0;
-            end
-            type = ones(self.source.n_copies,1) .* type;
-            self.type_val = type;
-            for i = 1 : numel(type) % for mesh
-                self.pipe.length(i,3) = type(i);
-            end
-            self.length_val = self.pipe.length;
-            self.i_S = self.i_S + 1;
-        end
         
-        function self = length(self, length_ie, length_e) % integration range along length
+        function self = length(self, length_ie, length_e) % integration range along curve_length
             if nargin == 2
-                length = [zeros(numel(length_ie),1), length_ie];
+                curve_length = [zeros(numel(length_ie),1), length_ie];
             else
-                length = [length_ie, length_e];
+                curve_length = [length_ie, length_e];
             end
-            length = ones(self.source.n_copies,1) .* length;
+            curve_length = ones(self.source.n_copy,1) .* curve_length;
             for i = 1 : numel(length_ie) % for mesh
-                self.pipe.length(i,1:2) = length(i,:);
+                self.pipe.length(i,1:2) = curve_length(i,:);
             end
             self.length_val = self.pipe.length;
             self.i_S = self.i_S + 1;
         end
         
-		function self = varies_with_dof(self, coeff, i_j, i_h, i_d) % note order change
-			if nargin == 3
-				i_d = 1 * ones(numel(coeff(:,1)), 1); % results in all mesh nodes having the same equal2 property
-			end
-            temp = ones(self.source.n_copies,1) .* [coeff, i_j, i_d, i_h, ones(numel(coeff(:,1)), 1), zeros(numel(coeff(:,1)), 1)];
-            for i = 1 : self.source.n_copies % for mesh
-                self.pipe.length(i,4:end) = temp(i,:);
-            end
-            self.length_val = self.pipe.length;
-            self.i_S = self.i_S + 1;
-		end
-        
-		function self = varies_with_dof_order(self, coeff, i_j, i_h, i_r, i_d) % note the order change
-            if nargin == 5
-                i_d = 1 * ones(numel(coeff(:,1)), 1); % results in all mesh nodes having the same equal2 property
-            end
-            temp = ones(self.source.n_copies,1) .* [coeff, i_j, i_d, i_h, i_r, zeros(numel(coeff(:,1)), 1)];
-            for i = 1 : self.source.n_copies % for mesh
-                self.pipe.length(i,4:end) = temp(i,:);
-            end
-            self.length_val = self.pipe.length;
-            self.i_S = self.i_S + 1;
-		end
-		
-		function self = varies_with_dof_at_axial_location(self, coeff, i_j, i_h, l, i_d) % note the order change
-			if nargin == 4
-				l = 0 * ones(numel(coeff(:,1)), 1); % equal to the other joint/dof at base
-			end
-			if nargin == 5
-				i_d = 1 * ones(numel(coeff(:,1)), 1); % results in all mesh nodes having the same equal2 property
-			end
-            temp = ones(self.source.n_copies,1) .* [coeff, i_j, i_d, i_h, zeros(numel(coeff(:,1)), 1), l];
-            for i = 1 : self.source.n_copies % for mesh
-                self.pipe.length(i,4:end) = temp(i,:);
-            end
-            self.length_val = self.pipe.length;
-            self.i_S = self.i_S + 1;
-		end
-        
-		function self = varies_with_dof_at_tip(self, coeff, i_j, i_h, l, i_d) % note the order change
-			if nargin == 4
-				l = NAN * ones(numel(coeff(:,1)), 1); % equal to the other joint/dof at tip
-			end
-			if nargin == 5
-				i_d = 1 * ones(numel(coeff(:,1)), 1); % results in all mesh nodes having the same equal2 property
-			end
-            temp = ones(self.source.n_copies,1) .* [coeff, i_j, i_d, i_h, zeros(numel(coeff(:,1)), 1), l];
-            for i = 1 : self.source.n_copies % for mesh
-                self.pipe.length(i,4:end) = temp(i,:);
-            end
-            self.length_val = self.pipe.length;
-            self.i_S = self.i_S + 1;
-		end
-		
         function self = from_body_frame(self, condition)
             self.base_condition_val = condition;
 			switch condition
-				case 'relative' % IC @s=0..l should be in from_body local frame: Q_0 = Q_0_loc for both dof and spring
+				case 'relative' % IC @s=0..length should be in from_body local frame: Q_0 = Q_0_loc for both dof and spring
 					self.pipe.rel_base = 1;
-				case 'absolute' % IC @s=0..l should be in absolute frame minus the ansolute IC of from_body frame: Q_0 = Q_0_abs - Q_from_body_abs for dof but Q_0 = Q_0_loc for spring
+				case 'absolute' % IC @s=0..length should be in absolute frame minus the ansolute IC of from_body frame: Q_0 = Q_0_abs - Q_from_body_abs for dof but Q_0 = Q_0_loc for spring
 					self.pipe.rel_base = 0;
 			end
             self.i_S = self.i_S + 1;
@@ -177,8 +101,8 @@ classdef rom_builder < handle
             end
             self.fit_type_val = [type, knots];
             self.pipe.fit_type = [type, knots];
-            self.spring_fit_type_val = self.fit_type_val;
-            self.pipe.spring_fit_type = self.pipe.fit_type;
+            % self.spring_fit_type_val = self.fit_type_val;
+            % self.pipe.spring_fit_type = self.pipe.fit_type;
             self.i_S = self.i_S + 1;
         end
         
@@ -220,14 +144,14 @@ classdef rom_builder < handle
         end
              
         function self = default_axial_offset(self, offset)
-            self.rom_offset(1,:) = offset;
-            self.pipe.rom_offset(1,:) = offset;
+            self.rom_offset = offset;
+            self.pipe.rom_offset = offset;
             self.i_S = self.i_S + 1;
         end
         
         function self = default_relaxed_state_axial_offset(self, offset)
-            self.spring_rom_offset(1,:) = offset;
-            self.pipe.spring_rom_offset(1,:) = offset;
+            self.spring_rom_offset = offset;
+            self.pipe.spring_rom_offset = offset;
             self.i_S = self.i_S + 1;
         end
         
@@ -237,15 +161,9 @@ classdef rom_builder < handle
             self.i_S = self.i_S + 1;
         end
 
-        function self = stiffness_model(self, select) % 'continuous', 'discretized'
-            switch select
-                case 'continuous'
-                    select = 1 ; % default
-                case 'discretized'
-                    select = 2 ;
-            end
-            self.stiffmodel = select;
-            self.pipe.stiffmodel = select;
+        function self = numerical_spatial_differentiation(self)
+            self.stiffmodel = 2;
+            self.pipe.stiffmodel = 2; % numerical differentiation
             self.i_S = self.i_S + 1;
         end
 

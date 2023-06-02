@@ -63,8 +63,8 @@ n_poly_order = joint(i_joint).rom.order(i_copies,i_dofAxsAngl) ; % polynomial or
 source.init(i_copies,:) = sym( source.init(i_copies,:) );
 source.init_s(i_copies,:) = sym( source.init_s(i_copies,:) );
 if ~joint(i_joint).rom.var_init % improve performance by setting all initial symbolic values to double
-    source.init(i_copies,:) = subs( source.init(i_copies,:), par.sym, par.var );
-    source.init_s(i_copies,:) = subs( source.init_s(i_copies,:), par.sym, par.var );
+    source.init(i_copies,:) = double( subs( source.init(i_copies,:), par.sym, par.var ) );
+    source.init_s(i_copies,:) = double( subs( source.init_s(i_copies,:), par.sym, par.var ) );
 else % otherwise only set the control symbolic values (inputs) to double
     source.init(i_copies,:) = subs( source.init(i_copies,:), par.control_sym, par.control_var );
     source.init_s(i_copies,:) = subs( source.init_s(i_copies,:), par.control_sym, par.control_var );
@@ -72,20 +72,19 @@ end
    
 source.fit_type = sym( source.fit_type ) ; % to avoid sym-double assignment error
 
-axial_offset_user = source.rom_offset(i_copies,2); % axial offset from original integration range, no need to modify spline_knots since logistic function s and s_knot cancels each other; l_tip updates automatically
-axial_offset_s_init = 0 ; % s_init offset for enforcing continuity
+axial_offset_user = source.rom_offset(i_copies) ; % axial offset from original integration range, no need to modify spline_knots since logistic function s and s_knot cancels each other; only updates the 1st spline segment since for the latter ones its effect is in the s_knot, l_tip updates automatically
 
 n_C_dof = 0 ; % number of doeff coeff.s
 
 % spring similar to the dof
 if isnan( source.init(i_copies,1) ) % only happens if source.init = NAN and has only 1 element
-    source.equal2{1}(i_copies,:) = [i_joint, i_copies, i_dofAxsAngl, nan, 0, 0, 1] ; % {i_coeff}[i_joint, i_copies, i_dofAxsAngl, i_coeff, l_rom, diff_order, coeff] x i_dof_mult
+    source.equal2{1}{1}(i_copies,:) = [i_joint, i_copies, i_dofAxsAngl, nan, 0, 0, 1] ; % {i_coeff}[i_joint, i_copy, i_dofAxis, i_coeff, curve_length, n_diffOrder, coeff] x i_dof_mult
 end
 
 % spline fitting    
-if isnan( source.equal2{1}(i_copies,4) ) % copy whole dof axis/angle from other axis/angle
+if isnan( source.equal2{1}{1}(i_copies,4) ) % copy whole dof axis/angle from other axis/angle
     
-    temp = source.equal2{1}(i_copies,:) ; % {i_coeff}[i_joint, i_copies, i_dofAxsAngl, i_coeff, l_rom, diff_order, coeff] x i_dof_mult
+    temp = source.equal2{1}{1}(i_copies,:) ; % {i_coeff}[i_joint, i_copy, i_dofAxis, i_coeff, curve_length, n_diffOrder, coeff] x i_dof_mult
     
     % NOT NEEDED! Also may cause the change of dimension of a single row which is impossible
     % source.init_s(i_copies,:) = joint(temp(1)).dof(temp(3)).init_s(temp(2),:) ; % copy over intial s locations
@@ -93,17 +92,26 @@ if isnan( source.equal2{1}(i_copies,4) ) % copy whole dof axis/angle from other 
     
     source.fit_type(i_copies,1:numel(joint(temp(1)).dof(temp(3)).fit_type(temp(2),:))) = joint(temp(1)).dof(temp(3)).fit_type(temp(2),:) ; % copy segmentation info, i.e type and s_knots
     source.qCs{i_copies} = sym_empty ; % no new dof coeff.s
-    source.qs{i_copies} = joint(temp(1)).dof(temp(3)).qs{temp(2),:} ; % copy over all q_states
-    source.init_qs{i_copies} = joint(temp(1)).dof(temp(3)).init_qs{temp(2),:} ; % copy over all qs initial values
+    source.qs{i_copies} = joint(temp(1)).dof(temp(3)).qs{temp(2)} ; % copy over all q_states
+    source.init_qs{i_copies} = joint(temp(1)).dof(temp(3)).init_qs{temp(2)} ; % copy over all qs initial values
     source.index_qCs{i_copies} = joint(temp(1)).dof(temp(3)).index_qCs{temp(2)} ; % copy over all qs initial values
     source.series{i_copies} = joint(temp(1)).dof(temp(3)).series{temp(2)} ; % copy over the final spline series
     source.init_series{i_copies} = joint(temp(1)).dof(temp(3)).init_series{temp(2)} ; % copy over the final spline init_series
     
-    source.spline{i_copies} = joint(temp(1)).dof(temp(3)).spline{temp(2)}; % copy over all spline elments
+    source.spline{i_copies} = joint(temp(1)).dof(temp(3)).spline{temp(2)}; % copy over all spline elments    
+    
+    % offset after fitting, similar to updating integration range updated to have an offset
+    % condition does not need modification here!
+    source.series{i_copies} = subs( source.series{i_copies} , s , s + axial_offset_user ) ;
+    source.init_series{i_copies} = subs( source.init_series{i_copies} , s , s + axial_offset_user ) ;
+    for i_segm = 1 : numel( source.spline{i_copies}.series )
+        source.spline{i_copies}.series{i_segm} = subs( source.spline{i_copies}.series{i_segm} , s , s + axial_offset_user ) ;
+        source.spline{i_copies}.init_series{i_segm} = subs( source.spline{i_copies}.init_series{i_segm} , s , s + axial_offset_user ) ;
+    end
     
 else % fit a brand new spline
     
-    for i_segm = 1 : numel( source.fit_type(i_copies,:) ) % number of segments is one less than number of elements in fit_type
+    for i_segm = 1 : numel( source.fit_type(i_copies,:) ) % number of segments is one less than number of knots and similar to the number of elements in fit_type
         
         % init values
         init_s_index{i_segm} = 1 : numel( source.init_s(i_copies,:) ); % index of elements in init_s for the current spline segment, default is all the elements
@@ -126,22 +134,32 @@ else % fit a brand new spline
         
         % segmentation: SEGMENTATION DISREGARDS VARIABLE INTIAL STATES!!!
         if i_segm < numel( source.fit_type(i_copies,:) ) % extract init_s lower than segment domain upper range, not needed for the last segment
-            init_s_index{i_segm} = find( subs(source.init_s(i_copies,:), par.sym, par.var) <= ... % elements smaller equal to the segment length upper range
+            temp_index = find( subs(source.init_s(i_copies,:), par.sym, par.var) <= ... % elements smaller equal to the segment length upper range
                 subs(source.fit_type(i_copies,i_segm+1), par.sym, par.var) ) ;
+            if isempty( temp_index ) % if no init data is provided for this segment
+                init_s_index{i_segm} = [1, min( 2 , numel( source.init_s(i_copies,:) ) ) ] ;  % choose the 1st two points (or if not possible, only the 1st point), i.e. after the 1st segment range              
+            else 
+                init_s_index{i_segm} = temp_index ;
+            end
         end
         
         if i_segm > 1 % extract init_s larger than segment domain lower range, not needed for the first segment
             
-            init_s_index{i_segm} = find( subs(source.init_s(i_copies,init_s_index{i_segm}), par.sym, par.var) >= ... % elements larger equal to the segment length lower range in remaining elements from previous step
+            temp_index = find( subs(source.init_s(i_copies,init_s_index{i_segm}), par.sym, par.var) >= ... % elements larger equal to the segment length lower range in remaining elements from previous step
                 subs(source.fit_type(i_copies,i_segm), par.sym, par.var) ) ;
+            if isempty( temp_index ) % if no init data is provided for this segment
+                init_s_index{i_segm} = [ init_s_index{i_segm}(end) , min( init_s_index{i_segm}(end) + 1 , numel( source.init_s(i_copies,:) ) ) ] ;  % choose the points before and after the range (or if not possible, the only last point)
+            else 
+                init_s_index{i_segm} = temp_index ;
+            end
             
             % continuity conditionition at segment locations
-            axial_offset_s_init = source.fit_type(i_copies,i_segm) ; % new segment polynomial axial shift to match the spatial integration range; vars in spline_knots will not be substituted by par.var or par.control_var
+            axial_offset_user = - source.fit_type(i_copies,i_segm) ; % new segment polynomial axial shift to match the spatial integration range; vars in spline_knots will not be substituted by par.var or par.control_var
             
-            for i_p = 1 : source.spc_order % continuity kinematic constraint for new segment; implemented up to the spline continuity order spc_order
+            for i_p = 1 : min( source.spc_order , n_poly_order + 1 )  % continuity kinematic constraint for new segment; implemented up to the spline continuity order spc_order or the spline max order (n_poly_order+1)
                 is_cont_const = 1 ; % is contuinity constraint
-                source.equal2{i_p} = sym( source.equal2{i_p} ); % [i_joint, i_copies, i_axsAngl, i_coeff, l_rom, diff_order, mult_coeff] x i_dof_mult
-                source.equal2{i_p}(i_copies,:) =  [i_joint, i_copies, i_dofAxsAngl, 0, source.fit_type(i_copies,i_segm), i_p-1, 1] ; % coefficient_similar_to_dof_at_tip
+                source.equal2{i_segm}{i_p} = sym( source.equal2{i_segm}{i_p} ); % [i_joint, i_copy, i_dofAxis, i_coeff, curve_length, n_diffOrder, mult_coeff] x i_dof_mult
+                source.equal2{i_segm}{i_p}(i_copies,:) =  [i_joint, i_copies, i_dofAxsAngl, 0, source.fit_type(i_copies,i_segm), i_p-1, 1] ; % coefficient_similar_to_dof_at_tip
             end
             
         end
@@ -153,9 +171,9 @@ else % fit a brand new spline
             if i_segm == 1 % base segment
                 condition_piecewise(i_segm) = ( sw <= source.fit_type(i_copies,i_segm+1) ) ;
             elseif i_segm ==  numel( source.fit_type(i_copies,:) ) % tip segment
-                condition_piecewise(i_segm) = ( sw > source.fit_type(i_copies,end) ) ;
+                condition_piecewise(i_segm) = ( sw >= source.fit_type(i_copies,end) ) ;
             else % other middle segments
-                condition_piecewise(i_segm) = ( sw > source.fit_type(i_copies,i_segm) && sw < source.fit_type(i_copies,i_segm+1) );
+                condition_piecewise(i_segm) = ( sw > source.fit_type(i_copies,i_segm) & sw < source.fit_type(i_copies,i_segm+1) );
             end
             
             % spline_logistic_function
@@ -165,31 +183,28 @@ else % fit a brand new spline
             end
             
         end
-        
-        % if no init data is provided for this segment
-        ... TODO
-        
+                
         % coeff equality constraints
         for i_coeff = 1 : n_poly_order + 1 % check all the polynomial coeff.s
             
-            if source.equal2{i_coeff}(i_copies,1) ~= 0 % it is a constraint
+            if source.equal2{i_segm}{i_coeff}(i_copies,1) ~= 0 % it is a constraint
                 
                 b = [ b , (s)^(i_coeff-1) ] ; % corresponding shape function for a constant coefficient
-                temp = source.equal2{i_coeff}(i_copies,:) ; % [i_joint, i_copies, i_axsAngl, i_coeff, l_rom, diff_order, mult_coeff] x i_dof_mult
+                temp = source.equal2{i_segm}{i_coeff}(i_copies,:) ; % [i_joint, i_copy, i_dofAxis, i_coeff, curve_length, n_diffOrder, mult_coeff] x i_dof_mult
                 if temp(7) == 0; temp(7) = 1; end % set default multiplication coeff. if not specified, used for gearing or chnag constraint direction when needed
                 
                 if isnan( temp(1) ) % i_joint is nan: ground fixed or set_rom_coefficient
-                    C_const{i_segm} = [ C_const{i_segm} ; temp(5) ] ; % set to l_rom (i.e. fixed position)
+                    C_const{i_segm} = [ C_const{i_segm} ; temp(5) ] ; % set to curve_length (i.e. fixed position)
                 else
                     if temp(4) > 0 % i_coeff of the target dof is provided
                         C_const{i_segm} = [ C_const{i_segm} ; temp(7)*diff( joint(temp(1)).dof(temp(3)).spline(temp(2)).coeff_all{i_segm}(temp(4)) , s , temp(6) ) ] ;
                     else
                         if isnan( temp(4) ) % i_coeff is nan: same i_coeff of the target dof as i_coeff of the current dof
                             C_const{i_segm} = [ C_const{i_segm} ; temp(7)*diff( joint(temp(1)).dof(temp(3)).spline(temp(2)).coeff_all{i_segm}(i_coeff) , s , temp(6) ) ] ;
-                        else % otherwise it is l_rom case: equal to a location along the curve of the other dof axis/angle spline
-                            if isnan( temp(5) ) % l_rom is nan: consider tip
+                        else % otherwise it is curve_length case: equal to a location along the curve of the other dof axis/angle spline
+                            if isnan( temp(5) ) % curve_length is nan: consider tip
                                 C_const{i_segm} = [ C_const{i_segm} ; temp(7)*subs( diff( joint(temp(1)).dof(temp(3)).series{temp(2)} , s , temp(6) ) , [s, sw] , joint(temp(1)).rom.length(temp(2),2) * [1, 1] ) ] ; % should include s offset
-                            else % l_rom is an actual value
+                            else % curve_length is an actual value
                                 if is_cont_const && i_coeff <= source.spc_order % continouity constraint w.r.t. previous segment: point to the segment series not joint series to fully support ligistic functions too
                                     C_const{i_segm} = [ C_const{i_segm} ; temp(7)*subs( diff( source.spline{i_copies}.series{i_segm-1} , s , temp(6) ) , [s, sw] , temp(5) * [1, 1] ) ] ; % should include s offset
                                 else % general constraint
@@ -218,7 +233,7 @@ else % fit a brand new spline
                     S = [ S (s)^(i_coeff-1) ] ; % update shape function vector for variable coeff.s
                     n_C_dof = n_C_dof + 1 ; %  number of dof coeff.s
                     C_dof_index{i_segm} = [ C_dof_index{i_segm}, [ i_segm ; i_coeff ]  ] ; % i_segm = 1 x i_C_dof; i_coeff = 2 x i_C_dof; overal 2 x n_C_dof
-                    if isSpring
+                    if ~isSpring
                         C_dof{i_segm} = [ C_dof{i_segm} , sym( [ 'qC' num2str( n_C_dof ) ] , 'real' ) ] ; % dof coeff.s are defined as symbolic variables: qC_i
                     else
                         C_dof{i_segm} = [ C_dof{i_segm} , sym( [ 'qCS' num2str( n_C_dof ) ] , 'real' ) ] ; % dof coeff.s are defined as symbolic variables: qC_i
@@ -237,7 +252,7 @@ else % fit a brand new spline
         b0 = sym_empty ; % initial values for b
         
         for i_coeff = init_s_index{i_segm} % check only elements found to be in the current segment axial range
-            s0 = source.init(i_copies,i_coeff) - axial_offset_s_init ; % s to start from 0 for the continuity constraint to properly work
+            s0 = source.init_s(i_copies,i_coeff) + axial_offset_user ; % s to start from 0 for the continuity constraint to properly work
             S0 = [ S0 ; subs( S , s , s0 ) ] ;
             b0 = [ b0 ; subs( b , s , s0 ) ] ;
         end
@@ -249,8 +264,8 @@ else % fit a brand new spline
         
         if ~joint(i_joint).rom.var_init % improve performance by setting inital values to double if not already set to
             C_const_init = subs( C_const_init , par.sym , par.var ) ;
-            S0 = subs( S0 , par.sym , par.var ) ;
-            b0 = subs( b0 , par.sym , par.var ) ;
+            S0 = double( subs( S0 , par.sym , par.var ) ) ;
+            b0 = double( subs( b0 , par.sym , par.var ) ) ;
         else
             C_const_init = subs( C_const_init , par.control_sym , par.control_var ) ;
             S0 = subs( S0 , par.control_sym , par.control_var ) ;
@@ -277,10 +292,10 @@ else % fit a brand new spline
         
         C_all_init{i_segm} = subs( C_all{i_segm} , qC , qC0 ) ; % initial value for all the segment coeff.; qC is used to cover q & qC from constraints too
              
-        % correct axial offset: segment series starts from 0 but segment integration range starts from axial_offset_s_init
+        % offset after fitting, similar to updating integration range updated to have an offset
         % condition does not need modification here!
-        series(i_segm) = subs( series(i_segm) , s , s - axial_offset_s_init + axial_offset_user ) ;
-        init_series(i_segm) = subs( init_series(i_segm) , s , s - axial_offset_s_init + axial_offset_user ) ;
+        series(i_segm) = subs( series(i_segm) , s , s + axial_offset_user ) ;
+        init_series(i_segm) = subs( init_series(i_segm) , s , s + axial_offset_user ) ;
 
         % export terms
         source.qCs{i_copies} = [ source.qCs{i_copies} , C_dof{i_segm} ] ; % add C_dof to all joint.dof.qCs
@@ -317,8 +332,8 @@ else % fit a brand new spline
                     source.series{i_copies} = series(i_segm) ;
                     source.init_series{i_copies} = init_series(i_segm) ;
                 else % adding the rest of segments
-                    source.series{i_copies} = source.series{i_copies} + condition_logistic(i_segm) * ( series(i_segm) - series(i_segm-1) ) ;
-                    source.init_series{i_copies} = source.init_series{i_copies} + condition_logistic(i_segm) * ( init_series(i_segm) - init_series(i_segm-1) ) ;
+                    source.series{i_copies} = simplify( source.series{i_copies} + condition_logistic(i_segm) * ( series(i_segm) - series(i_segm-1) ) ) ;
+                    source.init_series{i_copies} = simplify( source.init_series{i_copies} + condition_logistic(i_segm) * ( init_series(i_segm) - init_series(i_segm-1) ) ) ;
                 end
                 
             otherwise % polynomial ROM or rigid-body joints
@@ -351,7 +366,11 @@ if par.plotIC > 1 % compare fit curve with init data
     lgnd = { 'initial state' , 'relaxed state' } ;
     mrkrs = { 'o' , 'x' } ; % markers
     lnstl = { '-' , '--' } ; % line style
-    if ~isSpring ; isSpring = 1 ; else isSpring = 2 ; end
+    if ~isSpring % dof
+        isSpring = 1 ;
+    else % spring
+        isSpring = 2 ;
+    end
     
     figure(figure_states);
     i_lgnds = numel( lgnds ) ;
@@ -387,7 +406,7 @@ if par.plotIC > 1 % compare fit curve with init data
     s_segm = linspace(segmn_s_ends(1,1), segmn_s_ends(1,2), par.n_int); % fitted spline datapoints
     
     % fitted spline
-    spline_sgmn = subs(subs(subs(source.init_series{i_copies}, par.sym, par.var), sw, s), s, s_segm);
+    spline_sgmn = subs(subs(subs(pw2logF(source.init_series{i_copies}), par.sym, par.var), sw, s), s, s_segm);
     plot(s_segm, spline_sgmn, lnstl{isSpring}, 'linewidth', 2); hold on
     
     if i_segm ~= 0 % single segment
@@ -397,12 +416,15 @@ if par.plotIC > 1 % compare fit curve with init data
     end
     
     % labeling
-    title(['joint: ' num2str(i_joint) ', mesh instance: ' num2str(i_copies) ', dof: ' num2str(i_dofAxsAngl) ', spline segment: ' num2str(i_segm)])
+    title(['joint: ' num2str(i_joint) ', copy instance: ' num2str(i_copies) ', dof: ' num2str(i_dofAxsAngl) ', spline segment: ' num2str(i_segm)])
     xlabel('s [m]'); ylabel('state');
     legend( lgnds{:} ) ;
     
     % report
-    fprintf( 'Interpolation check! Press any key to continue... \n' )
-    pause
+    if i_segm == 0 && isSpring == 2 % only pause for the overal plot
+        fprintf( 'Interpolation check! Press any key to continue... \n' )
+        pause
+    end
     
 end
+

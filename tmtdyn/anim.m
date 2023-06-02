@@ -16,7 +16,7 @@ eps = 1e-6 ;
 vars = par.var ;
 [ par.n_mass_anim , ~ ] = size ( rjtipF_mex( vars , z(1,:)' , 0 , 0 , 0 ) ); % number of bodies
 [ par.n_ks_anim , ~ ] = size ( rksF_mex( vars , z(1,:)' , 0 , 0 , 0 ) ); % number of spring/dampers
-ss = length ( t ) ; % simulation steps
+tt = length ( t ) ; % simulation steps
 
 % temp1 = rjtipF_mex( vars , z(i,:) , 1 ) ;
 % if ~ismember( nan , temp1(:,4) ) % no ROM
@@ -24,14 +24,14 @@ ss = length ( t ) ; % simulation steps
 % end
 
 is_rom = 0; % is there a ROM element?
-for n_t = 1 : ss
+for n_t = 1 : tt
     [ ~ , par_mex ] = dyn_mid_step( t(n_t) , z(n_t,:)' , par.par_mex ) ;
     vars = par_mex.var ;
     temp2 = rksF_mex( vars , z(n_t,:)' , 0 , 0 , 0 ) ; % [ xyz_b xyz_t Q_b Q_t radi ]
     for i_sd = 1 : par.n_ks_anim
         r_anim.sprdmp(i_sd).r(1:2,1:3,n_t) = [ temp2(i_sd,1:3) ; temp2(i_sd,4:6) ] ;
         r_anim.sprdmp(i_sd).Q(1:2,:,n_t) = [ temp2(i_sd,7:10) ; temp2(i_sd,11:14) ] ;
-        r_anim.sprdmp(i_sd).radi = temp2(i_sd,15); % link radius for plotting
+        r_anim.sprdmp(i_sd).radi(1:2) = temp2(i_sd,15); % link radius for plotting
         if par.anim_frame
             r_anim.sprdmp(i_sd).r(1:2,1:12,n_t) = [ r_anim.sprdmp(i_sd).r(1:2,1:3,n_t) , ...
                                                   [ Q_rot( temp2(i_sd,7:10)' , [ 1 0 0 ] ) , ... 
@@ -44,7 +44,7 @@ for n_t = 1 : ss
     end
     for i_s = 1 : par.n_animpoints + 1
         s = ( 1 - eps ) / par.n_animpoints * ( i_s - 1 ) + eps ; % normalized length
-        temp1 = rjtipF_mex( vars , z(n_t,:)' , s , 0 , 0 ) ; % [ xyz_b xyz_t Q_b Q_t radi ]
+        temp1 = rjtipF_mex( vars , z(n_t,:)' , s , 0 , 0 ) ; % [ xyz_b xyz_t Q_b Q_t radi ], rjtip used normalized curve length in [0, 1]
         for i_m = 1 : par.n_mass_anim
             if ~isnan( temp1(i_m,4) ) % rigid
                 if i_s == 1 % only needed once for rigid links
@@ -71,7 +71,7 @@ for n_t = 1 : ss
                                                        Q_rot( temp1(i_m,7:10)' , [ 0 0 1 ] ) ] ;                    
                 end
             end
-            r_anim.mass(i_m).radi = temp1(i_m,15); % link radius for plotting
+            r_anim.mass(i_m).radi(i_s) = temp1(i_m,15); % link radius for plotting
         end
         if ~is_rom % quit loop if there is no continuum ROM element
             i_s = par.n_animpoints + 2 ;
@@ -79,10 +79,10 @@ for n_t = 1 : ss
     end
 end
 
-rjtip = zeros ( par.n_mass_anim , 6 , ss );
-rks = zeros ( par.n_ks_anim , 6 , ss );
-Qjtip = zeros ( par.n_mass_anim , 8 , ss );
-Qks = zeros ( par.n_ks_anim , 8 , ss );
+rjtip = zeros ( par.n_mass_anim , 6 , tt );
+rks = zeros ( par.n_ks_anim , 6 , tt );
+Qjtip = zeros ( par.n_mass_anim , 8 , tt );
+Qks = zeros ( par.n_ks_anim , 8 , tt );
 for i_m = 1 : par.n_mass_anim
     rjtip(i_m,:,:) = [ r_anim.mass(i_m).r(1,1,:)   r_anim.mass(i_m).r(1,2,:)   r_anim.mass(i_m).r(1,3,:) , ...
                        r_anim.mass(i_m).r(end,1,:) r_anim.mass(i_m).r(end,2,:) r_anim.mass(i_m).r(end,3,:) ] ;
@@ -127,10 +127,15 @@ axis_limits = [ window_xmin+window_xmax window_xmin+window_xmax ...
 window_diag = sqrt( ( window_xmax - window_xmin ) ^ 2 + ( window_ymax - window_ymin ) ^ 2 + ( window_zmax - window_zmin ) ^ 2 ) ;
 scle = 0.05 * window_diag ;
 
+% video recording set
+if par.movie == 1
+    open( par.vid ) ;
+end
+    
 % Animation:
 clr = { 'black' , 'yellow' , 'cyan', 'red' , 'green' , 'blue' , 'magenta' };
 
-for n_t = 1 : sk : ss % update the points
+for n_t = 1 : sk : tt % update the points
     if par.anim_frame == 2 || par.anim_frame == 12 % plot frames
         xyzview = subplot(3,4,[1:3,5:7,9:11]);
     end
@@ -138,7 +143,7 @@ for n_t = 1 : sk : ss % update the points
     % bodies init.
     for i = 1 : par.n_mass_anim % creat lines ending to each joint
         if ~par.anim_line
-            plot3( r_anim.mass(i).r(:,1,n_t) , r_anim.mass(i).r(:,2,n_t) , r_anim.mass(i).r(:,3,n_t) , 'LineWidth' , 2 ,'Color' , clr{mod(i,6)+1} ); % draw line
+            plot3( r_anim.mass(i).r(:,1,n_t) , r_anim.mass(i).r(:,2,n_t) , r_anim.mass(i).r(:,3,n_t) , 'LineWidth' , 2 ,'Color' , clr{mod(i+1,6)+1} ); % draw line, avoid yellow color at first
         else
             tubeplot( [ r_anim.mass(i).r(:,1,n_t) , r_anim.mass(i).r(:,2,n_t) , r_anim.mass(i).r(:,3,n_t) ]' , r_anim.mass(i).radi , clr{mod(i,6)+1} , par.anim_edge , 0 ) ; % draw tube
         end
@@ -147,7 +152,7 @@ for n_t = 1 : sk : ss % update the points
     % spring/dampers init.
     for i = 1 : par.n_ks_anim % creat lines ending to each joint
         if ~par.anim_line
-            plot3( r_anim.sprdmp(i).r(:,1,n_t) , r_anim.sprdmp(i).r(:,2,n_t) , r_anim.sprdmp(i).r(:,3,n_t) , 'LineWidth' , 2 ,'Color' , clr{mod(i,6)+1} ); % draw dash-line
+            plot3( r_anim.sprdmp(i).r(:,1,n_t) , r_anim.sprdmp(i).r(:,2,n_t) , r_anim.sprdmp(i).r(:,3,n_t) , '--' , 'LineWidth' , 2 ,'Color' , clr{mod(i+1,6)+1} ); % draw dash-line, avoid yellow color at first
         else
             tubeplot( [ r_anim.sprdmp(i).r(:,1,n_t) , r_anim.sprdmp(i).r(:,2,n_t) , r_anim.sprdmp(i).r(:,3,n_t) ]' , r_anim.sprdmp(i).radi , clr{mod(i,6)+1} , par.anim_edge , 1 ) ; % draw wire frame tube
         end
@@ -218,6 +223,7 @@ for n_t = 1 : sk : ss % update the points
     lighting gouraud % {none, flat, gouraud} preferred lighting for a curved surface
     grid off
     hold off
+    % view([0,-1,0])
     
     % side views
     if par.anim_frame == 2 || par.anim_frame == 12 % plot frames
@@ -233,7 +239,9 @@ for n_t = 1 : sk : ss % update the points
         axis equal ; axis ( axis_limits ); xlabel( 'x[m]' ) ; ylabel( 'y[m]' ) ; view(2);
     end
     
-    if par.movie == 1 ; writeVideo( par.vid , getframe( gcf ) ) ; end
+    if par.movie == 1
+        writeVideo( par.vid , getframe( gcf ) ) ;
+    end
     pause( p );
     
 end

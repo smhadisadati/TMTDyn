@@ -59,17 +59,17 @@ classdef body_builder < handle
             if nargin < 2
                 name = [self.name '_joint'];
             end
-			self.source.i_j = self.source.i_j + 1;
+			self.source.i_joint = self.source.i_joint + 1;
             joint = joint_builder(self.source, name, self.source.i_m, 1);
-            self.source.joints{self.source.i_j} = joint;
+            self.source.joints{self.source.i_joint} = joint;
             self.source.pipe.body(self.source.i_m) = self.pipe;
             self.i_S = self.i_S + 1;
         end
         
         function joint = connected_to_repeated_joint(self, mesh_no)
-			self.source.i_j = self.source.i_j + 1;
+			self.source.i_joint = self.source.i_joint + 1;
             joint = joint_builder(self.source, [self.name '_joint'], self.source.i_m, mesh_no);
-            self.source.joints{self.source.i_j} = joint;
+            self.source.joints{self.source.i_joint} = joint;
             self.source.pipe.body(self.source.i_m) = self.pipe;
             self.i_S = self.i_S + 1;
         end

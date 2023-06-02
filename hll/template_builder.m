@@ -1,6 +1,6 @@
 function [world, body, joint, exload, mesh, par] = template_builder()
 
-addpath('./tmtdyn','./tmtdyn/sundials_matlab','./tmtdyn/radau','./tmtdyn/funcs','./hll','./eom','./tmtdyn/tubeplot','./tmtdyn/igesToolBox_edited');
+addpath('./tmtdyn','./tmtdyn/sundials_matlab','./tmtdyn/radau','./tmtdyn/funcs','./hll','./eom','./eom/user_codes','./tmtdyn/tubeplot','./tmtdyn/igesToolBox_edited');
 
 syms dummy1 real
 empty_sym = sym([]);
@@ -13,7 +13,7 @@ par.control_sym = dummy1; % e.g. inputs and varying, always replaced for I.C. ex
 par.control_var = zero_sym;
 par.derive = 0; % set 1:rederive in TMT, 2: rederive neglecting TMDu (small velocity linearization)
 par.user_pars = 0;
-par.cores = 0; % use parallel computing for derivations, 0 (default) to use all available cores
+par.cores = inf; % use parallel computing for derivations, inf (default) to use all available cores
 par.opv = 0; % optimize derivation files
 par.clean = 0; % free up memory
 par.simplify = 0; % simplify derivations, default: vpa
@@ -41,6 +41,13 @@ par.pw2lg = 0; % piecewise to logistic function convertsion
 par.anim_line = 0; % animation line type, line: 0, tube: 1
 par.fps = 30; % animation fps for video recording
 par.anim_edge = 10; % tube cross-section edge
+par.Rayleigh_M_coeff = 0 ; % Rayleigh damping proportional mass coefficients
+par.Rayleigh_M_type = 0 ; % adaptive method for Rayleigh damping proportional mass coefficients, 0: none, 1: adaptive_svd
+par.Rayleigh_K_coeff = 0 ; % Rayleigh damping proportional stiffness coefficients
+par.control_type = 0 ; % default value
+par.numdiff = 0; % 0 for analytical temporal differentiation
+par.ATol = 1e-2; % dyn sim ATol (not for external solver)
+par.RTol = 1e-2; % dyn sim RTol (not for external solver)
 
 % world
 world.g = sym([0, 0, 0]);
@@ -63,8 +70,8 @@ spring.coeff = empty_sym;
 spring.init = empty_sym; % set 
 spring.init_s = empty_sym;
 spring.compr = empty_sym;
-spring.equal2{1} = sym(zeros(1, 7));
-spring.rom_offset = []; % 1st element: acts after fitting for each dof, affects logistic switch unit length but not the spline knots, 2nd element: act before fitting including spline knots
+spring.equal2{1}{1} = sym(zeros(1, 7)); % {i_segm}{i_coeff}[i_joint(joint), i_copy(mesh), i_dofAxis(DOF in joint), i_coeff(rom coeff), curve_length(along rom), i_p(derivative order), c(coeff)]
+spring.rom_offset = []; % acts only on series s after fitting for each dof (not switch condition or knots)
 spring.fit_type = []; % [type, knots]; type: []- default copy from rom_default, 1-'polynomial', 2-'spline_piecewise', 3-'spline_logistic_func'; default not ROM
 spring.spc_order = []; % spline transition continuity order (starting form polynomial coeff. C_0), to be filled by rom.spc_order if not specified
 
@@ -72,23 +79,27 @@ spring.spc_order = []; % spline transition continuity order (starting form polyn
 damp.visc = empty_sym;
 damp.pow = sym(1);
 
-%pid [P,I,D]: result in P*u+I*q+D*a
-pid.p = zero_sym;
-pid.i = zero_sym;
-pid.d = zero_sym;
+%controller gains [k0, k1, K_sliding, L_sliding]: k0*e , k1*de, and diagonal design coeff and gain for sliding mode controller
+gains.k0 = zero_sym;
+gains.k1 = zero_sym;
+gains.k_slide = zero_sym;
+gains.l_slide = zero_sym;
 
 % dof
-dof.equal2{1} = sym(zeros(1, 7)); % doesn't copy one line for all mesh, should be specified individually for all elements!
+dof.equal2{1}{1} = sym(zeros(1, 7)); % doesn't copy one line for all mesh, should be specified individually for all elements!
 dof.init = empty_sym;
-dof.rom_offset = zero_sym * ones(1,2); % 1st element: acts after fitting for each dof, affects logistic switch unit length but not the spline knots, affects rom_series, not when it is used for dof equality constraint or init_rom_series used for spring equality constraint; 2nd element: act before fitting including spline knots
+dof.rom_offset = zero_sym ; % acts only on series s after fitting for each dof (not switch condition or knots)
 dof.init_s = empty_sym;
 dof.spring = spring;
 dof.dir = 0;
 dof.damp = damp;
 dof.input = zero_sym;
 dof.fixed = zero_sym; % 1: constraint with Lagrange Multiplier, or inf: controller/known wo. LM
-dof.control = zero_sym; % known trajectory
-dof.pid = pid; % [P,I,D]: result in P*u+I*q+D*a
+dof.control_acc = zero_sym; % desired trajectory acc
+dof.control_vel = zero_sym; % desired trajectory vel
+dof.control_pos = zero_sym; % desired trajectory pos
+dof.control_err0 = zero_sym; % initial error with the desired trajectory
+dof.gains = gains; % [k0, k1, K_slide,L_slide]: k0*e , k1*de, and diagonal design coeff and gain for sliding mode controller
 dof.xaxis = empty_sym;
 dof.s = empty_sym;
 dof.fit_type = []; % [type, knots], type: []- default copy from rom_default, 1-'polynomial', 2-'spline_piecewise', 3-'spline_logistic_func'
@@ -99,17 +110,17 @@ rom.order = 0; % dof polynomial order, default (0) means rigid-link DOFs
 rom.isROM = 0; % is a continuum ROM joint?
 rom.default_order = 0;
 rom.spc_order = 2; % spline transition continuity order (starting form polynomial coeff. C_0)
-rom.length = sym(zeros(1,9)); % [l_start_rom, l_end_rom, type, coeff(e.g. -+1), i_j(joint), i_d(mesh), i_h(DOF), i_r(coeff order in rom), l_rom(length along rom)], type:{'none', 'tip_growing', 'base_growing', 'sliding'}, coeff: inf for new dof
+rom.length = sym(zeros(1,9)); % [l_start_rom, l_end_rom, type, coeff(e.g. -+1), i_joint(joint), i_copy(mesh), i_dofAxis(DOF), i_coeff(coeff order in rom), curve_length(along rom)], type:{'none', 'tip_growing', 'base_growing', 'sliding'}, coeff: inf for new dof
 rom.rel_base = 1;
 rom.free_base = 0;
 rom.init_s = empty_sym;
 rom.fit_type = 0; % [type, knots]; type: 0- default rigid-link, 1-'polynomial', 2-'spline_piecewise', 3-'spline_logistic_func'; default not ROM
 rom.spring_fit_type = 0; % [type, knots]; type: 0- default rigid-link, 1-'polynomial', 2-'spline_piecewise', 3-'spline_logistic_func'; default not ROM
-rom.rom_offset = zero_sym * ones(1,2); % overrides dof.rom_offset
-rom.spring_rom_offset = zero_sym * ones(1,2); % overrides spring.rom_offset
+rom.rom_offset = empty_sym; % overrides dof.rom_offset
+rom.spring_rom_offset = empty_sym; % overrides spring.rom_offset
 rom.growth = sym( 200 ); % dof spline growth rate
 rom.simpKnot = 0; % assume similar knot for all DOFs
-rom.stiffmodel = 1; % rom stiffness model: 1- continuous, 2- discretized
+rom.stiffmodel = 1; % rom spatial differentitation method: 1- analytical, 2- numerical (discretized)
 rom.var_init = 1; % variable init. val.s
 rom.singleBody = 1;
 
@@ -122,14 +133,18 @@ joint.dof = dof;
 joint.tr2nd = tr;
 joint.spring = spring;
 joint.dir = 0;
+joint.curv_frame_director = empty_sym ; % [x y z] axis in local curvilinear frame, for simplifying beam strain (not curvature) action calculation
 joint.damp = damp;
 joint.input = empty_sym;
 joint.xaxis = empty_sym;
 joint.fixed = []; % 1: constraint with Lagrange Multiplier, or inf: controller/known wo. LM
-joint.control = empty_sym; % ve_elems = value: desired trajectory, or NAN: no controller on the direction
-joint.pid = pid; % [P,I,D]: result in P*u+I*q+D*a
+joint.control_acc = empty_sym; % ve_elems = value: desired trajectory acc, or NAN: no controller on the direction
+joint.control_vel = empty_sym; % ve_elems = value: desired trajectory vel, or NAN: no controller on the direction
+joint.control_pos = empty_sym; % ve_elems = value: desired trajectory pos, or NAN: no controller on the direction
+joint.control_err0 = empty_sym; % initial error with the desired trajectory
+joint.gains = gains; % [k0, k1, K_slide,L_slide]: k0*e , k1*de, and diagonal design coeff and gain for sliding mode controller
 joint.refbody = [];
-joint.n_copies = 1;
+joint.n_copy = 1;
 joint.radi = 1e-3; % joint cross-section radius for animation only
 
 % exload

@@ -5,7 +5,7 @@ classdef joint_builder < handle
         name;
 		template;
         
-        n_copies;
+        n_copy;
         rom_val;
         radius_val;
         first_body;
@@ -17,10 +17,14 @@ classdef joint_builder < handle
         the_spring;
         the_damping;
         input_val;
-        pid_val;
+        gains_val;
         refbody_val;
         fixed_dirs;
-        desired_control;        
+        desired_control_acc; 
+        desired_control_vel; 
+        desired_control_pos; 
+        desired_control_err0; 
+        curv_frame_director_val;
     end
 
     properties (GetAccess = public, SetAccess=public)
@@ -51,8 +55,8 @@ classdef joint_builder < handle
                 self.second_body = [0, 1];
                 self.pipe.second = [0, 1];
             end
-            self.pipe.n_copies = numel(mesh_no);
-            self.n_copies = numel(mesh_no);
+            self.pipe.n_copy = numel(mesh_no);
+            self.n_copy = numel(mesh_no);
         end
         
         function rom = rom(self)
@@ -184,6 +188,12 @@ classdef joint_builder < handle
             self.pipe.input = input;
             self.i_S = self.i_S + 1;
         end
+                
+        function self = beam_simplify_for_curvlinear_frame(self, director)
+            self.curv_frame_director_val = director;
+            self.pipe.curv_frame_director = director;
+            self.i_S = self.i_S + 1;
+        end
         
         function self = beam_cross_section_radius(self, radius)
             self.radius_val = radius;
@@ -230,43 +240,67 @@ classdef joint_builder < handle
         %     self.fixed_directions(fixed_directions);
         % end
         
-        function self = known_trajectory(self, control_vec)
-            for i_c = 1 : numel( control_vec )
+        function self = known_trajectory(self, desired_acc, desired_vel, desired_pos, init_pos_error)
+            for i_c = 1 : numel( desired_acc )
                 if ~isnan( control_vec(i_c) ) % constraint directions
                     self.fixed_dirs(i_c) = 1; % constraint: with Lagrange multiplier
                     self.pipe.fixed(i_c) = 1;
                 end
             end                    
-            self.desired_control = control_vec;
-            self.pipe.control = control_vec;
+            self.desired_control_acc = desired_acc;
+            self.pipe.control_acc = desired_acc;
+            self.desired_control_vel = desired_vel;
+            self.pipe.control_vel = desired_vel;
+            self.desired_control_pos = desired_pos;
+            self.pipe.control_pos = desired_pos;
+            self.desired_control_err0 = init_pos_error;
+            self.pipe.control_err0 = init_pos_error;
             self.i_S = self.i_S + 1;
         end
         
-        function self = desired_trajectory(self, control_vec)
-            for i_c = 1 : numel( control_vec )
+        function self = desired_trajectory(self, desired_acc, desired_vel, desired_pos, init_pos_error)
+            for i_c = 1 : numel( desired_acc )
                 if ~isnan( control_vec(i_c) ) % constraint directions
                     self.fixed_dirs(i_c) = inf; % desired/known: no Lagrange multiplier
                     self.pipe.fixed(i_c) = inf;
                 end
             end     
-            self.desired_control = control_vec;
-            self.pipe.control = control_vec;
+            self.desired_control_acc = desired_acc;
+            self.pipe.control_acc = desired_acc;
+            self.desired_control_vel = desired_vel;
+            self.pipe.control_vel = desired_vel;
+            self.desired_control_pos = desired_pos;
+            self.pipe.control_pos = desired_pos;
+            self.desired_control_err0 = init_pos_error;
+            self.pipe.control_err0 = init_pos_error;
             self.i_S = self.i_S + 1;
         end
         
-        function self = pid_controller_gains(self, p_vec, i_vec, d_vec)
-            self.pipe.pid.p = p_vec;
-            self.pipe.pid.i = i_vec;
-            self.pipe.pid.d = d_vec;
-            self.pid_val = self.pipe.pid;
+        function self = controller_gains(self, k0_vec, k1_vec, k_slide_vec, l_slide_vec)
+            self.pipe.gains.k0 = k0_vec;
+            self.pipe.gains.k1 = k1_vec;
+            if nargin > 4
+                self.pipe.gains.k_slide = k_slide_vec;
+                self.pipe.gains.l_slide = l_slide_vec;
+            else
+                self.pipe.gains.k_slide = 0 * p_vec;
+                self.pipe.gains.l_slide = 0 * p_vec;
+            end
+            self.gains_val = self.pipe.gains;
             self.i_S = self.i_S + 1;
         end
         
-        function self = pid_controller_gains_at_strain(self, n_r, p_vec, i_vec, d_vec)
-            self.pipe.pid.p(:,n_r) = p_vec;
-            self.pipe.pid.i(:,n_r) = i_vec;
-            self.pipe.pid.d(:,n_r) = d_vec;
-            self.pid_val = self.pipe.pid;
+        function self = strain_controller_gains(self, n_coeff, k0_vec, k1_vec, k_slide_vec, l_slide_vec)
+            self.pipe.gains.k0(:,n_coeff) = k0_vec;
+            self.pipe.gains.k1(:,n_coeff) = k1_vec;
+            if nargin > 5
+                self.pipe.gains.k_slide(:,n_coeff) = k_slide_vec;
+                self.pipe.gains.l_slide(:,n_coeff) = l_slide_vec;
+            else
+                self.pipe.gains.k_slide(:,n_coeff) =  0 * p_vec;
+                self.pipe.gains.l_slide(:,n_coeff) =  0 * p_vec;
+            end
+            self.gains_val = self.pipe.gains;
             self.i_S = self.i_S + 1;
         end
                 
@@ -279,7 +313,7 @@ classdef joint_builder < handle
                     rethrow(e)
                 end
                 % e.message
-            	self.source.pipe.joint(self.source.i_j) = self.pipe;
+            	self.source.pipe.joint(self.source.i_joint) = self.pipe;
 				self.source.i_S = 1 ; % reset i_S of the source object to start executing from 1st line of DSL input % reset i_S of the source object
                 [varargout{1:nargout}] = builtin('subsref', self.source, S(2*self.i_S-1:end)); % pass the unexecuted lines to the source object
             end

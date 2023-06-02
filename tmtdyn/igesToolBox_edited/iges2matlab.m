@@ -38,7 +38,7 @@ function [ParameterData,EntityType,numEntityType,unknownEntityType,numunknownEnt
 % m-file can be downloaded at
 % http://www.mathworks.com/matlabcentral/fileexchange/13253-iges-toolbox
 %
-% written by Per Bergström 2014-10-28
+% written by Per Bergstrï¿½m 2014-10-28
 %
 
 
@@ -623,7 +623,7 @@ for i=(sumSfind+sumGfind+1):2:(sumSfind+sumGfind+sumDfind-1)
         
         ParameterData{entiall}.original=1;
         
-        ParameterData{entiall}.l=round((Pvec(2)+1)/2);
+        ParameterData{entiall}.length=round((Pvec(2)+1)/2);
         ParameterData{entiall}.c=round((Pvec(3)+1)/2);
         ParameterData{entiall}.sa=Pvec(4);
         ParameterData{entiall}.ta=Pvec(5);
@@ -2028,8 +2028,8 @@ for i=1:noent
         
         if boool
             
-            p1=ParameterData{ParameterData{i}.l}.p1;
-            rotDir=ParameterData{ParameterData{i}.l}.p2-p1;
+            p1=ParameterData{ParameterData{i}.length}.p1;
+            rotDir=ParameterData{ParameterData{i}.length}.p2-p1;
             rotDir=rotDir/norm(rotDir);
             
             CRVp(1,:)=CRVp(1,:)-p1(1);

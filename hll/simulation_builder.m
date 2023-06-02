@@ -25,7 +25,9 @@ classdef simulation_builder < handle
         end
         
         function self = var(self, vars, variable_values)
-			assume( vars , 'real' ) ;
+            if isa( vars , 'sym' )
+                assume( vars , 'real' ) ;
+            end
 			self.vars = [self.vars, vars];
             self.pipe.sym = self.vars;
 
@@ -36,7 +38,9 @@ classdef simulation_builder < handle
         end
         
         function self = variables(self, vars, variable_values) % same as var
-			assume( vars , 'real' ) ;
+            if isa( vars , 'sym' )
+                assume( vars , 'real' ) ;
+            end
 			self.vars = [self.vars, vars];
             self.pipe.sym = self.vars;
 
@@ -47,7 +51,9 @@ classdef simulation_builder < handle
         end
         
         function self = control_variables(self, vars, variable_values) % complementary to var
-			assume( vars , 'real' ) ;
+            if isa( vars , 'sym' )
+                assume( vars , 'real' ) ;
+            end
 			self.control_vars = [self.control_vars, vars];
 			self.vars = [self.vars, vars];
             self.pipe.sym = self.vars;
@@ -78,12 +84,12 @@ classdef simulation_builder < handle
                 select = 'full';
             end
             switch select
-                case 'full_system'
-                    select = 1;
                 case 'assume_small_velocities'
                     select = 2;
                 case 'no'
                     select = 0;
+                otherwise % e.g. 'full_system'
+                    select = 1;
             end
             self.derive_par = eom_derive_builder(self, select);
             derive = self.derive_par;

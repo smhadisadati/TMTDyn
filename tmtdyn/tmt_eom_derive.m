@@ -5,10 +5,10 @@
 % ===========================================
 % Author:
 % S.M.Hadi Sadati, PhD in Robotics
-% Research Associate in Morphological Computation with Spiders' Web
-% University of Bristol
+% Research Fellow
+% King's College London
 % smh_sadati@kcl.ac.uk
-% 2021
+% 2023
 %
 % ============================================
 
@@ -29,13 +29,18 @@ end
 [ s , world , body , joint , exload , mesh , par , symbols ] = check( par , world , body , joint , exload , mesh ) ; % final check of all elements
 
 %% Initialization
-global par_simplify par_sparse
+global par_simplify par_sparse  par_sym par_var pw2lg q_numdiff
 par_simplify = par.simplify ; % simplify the derivations
 par_sparse = par.sparse ; % use sparse matrices
+par_sym = par.sym ; % symbolic variables in the system
+par_var = par.var ; % numeric values for par_sym
+pw2lg = par.pw2lg ; % use piecewise to logistic function conversion
+q_numdiff = par.numdiff ; % temporal differentiation step, 0 for analytical differentiation
 
 syms sw ... % unit length for logistic or piecewise function conditions (switches) to avoid issues with diff.s w.r.t. s
      ds ... % delta_s (axial length spacing) for discretized differential kinematics
-     t_sym % time dependant terms are passed with t_sym as time parameter
+     t_sym ... % time dependant terms are passed with t_sym as time parameter
+     real
 
 [ ~ , n_bodies ] = size( body ) ; % extract number of bodies
 [ ~ , n_extLoads ] = size( exload ) ; % extract number of ext. forces/torques
@@ -58,6 +63,7 @@ u = sym_empty ; % system state time-derivative (velocity) vector for entire syst
 q0 = sym_empty ; % state IC vector for entire system
 lambda = sym_empty ; % lagrangian multiplier vector for entire system
 dlambda = sym_empty ; % lagrangian multiplier time-derivative vector for entire system
+lambda_err_0 = sym_empty ; % constraint or dontroller error dynamic initial vector for entire system
 gamma = sym_empty ; % unknown input vector for entire system
 dgamma = sym_empty ; % unknown inout time-derivative vector for entire system
 
@@ -103,7 +109,7 @@ Tj_u = sym_empty ;  % T matrix for all unknown direct inputs on q states
 
 rom.sprdmp = [] ; % [l_start l_end isDiscrete] Reduced-Order Model indicator and integration range
 
-if par.plotIC > 0 ; figure_states = figure ; else ; figure_states = [] ; end % initialize a figure if plotting DOF ICs is needed, e.g. IC spline fit
+if par.plotIC == 2 ; figure_states = figure ; else ; figure_states = [] ; end % initialize a figure if plotting DOF ICs is needed, e.g. IC spline fit
 
 %% Enumarators
 n_sprdmps = 0 ; % number of spring/dampers
@@ -117,16 +123,16 @@ fprintf( 'Deriving joint transformations for joint... \n' )
 for i_joint = 1 : n_jonts % look into all joints
     
     i_joint % prints out current joint number on terminal    
-    joint(i_joint).n_copies = ... % number of copies out of this joint based on the elements in the joint.first and joint.second
+    joint(i_joint).n_copy = ... % number of copies out of this joint based on the elements in the joint.first and joint.second
         max( [ numel( joint(i_joint).first(1,:) ) , numel( joint(i_joint).second(1,:) ) ] ) - 1;
     
-    for i_copies = 1 : joint(i_joint).n_copies % iterate over the copies of each joint
+    for i_copies = 1 : joint(i_joint).n_copy % iterate over the copies of each joint
         
         joint(i_joint).Q{i_copies}.loc = sym( [ 1 0 0 0 ].' ); % joint Quaternion 
         joint(i_joint).TQ{i_copies}.loc = sym( [ 1 0 0 0 ; 0 0 0 0 ].' ); % [Quaternion_rotation; 0 joint_translation ]'
         joint(i_joint).spring.Q{i_copies}.loc = sym( [ 1 0 0 0 ].' ); % compliance relaxed state Quaternion 
         joint(i_joint).spring.TQ{i_copies}.loc = sym( [ 1 0 0 0 ; 0 0 0 0 ].' ); % compliance relaxed state [1 joint_translation ; Quaternion_rotation ] 
-        joint(i_joint).rom.delta_s{i_copies} = sym_zero; % axial (tangent) sliding of a rom beam
+        joint(i_joint).rom.delta_s(i_copies,1) = sym_zero; % axial (tangent) sliding of a rom beam
                      
         i_dofAxsAngl = 0 ; % dof counter in each joint copy
         [ ~ , n_joint_transfs ] = size( joint(i_joint).tr ) ; % number of transforamtions in a joint
@@ -172,7 +178,7 @@ for i_joint = 1 : n_jonts % look into all joints
                         % form the derivation output for each spring
                         rom.sprdmp = [ rom.sprdmp; 0, 0, 0 ] ; % no integration range and continous form for this spring/damper
                         
-                        sprdmp(n_sprdmps).Tt(n_q_states,1) = 1 ; % T transpose matrix           
+                        sprdmp(n_sprdmps).Tt(n_q_states,1) = 1 ; % T transpose matrix (i.e. virtual displacement)         
                                                 
                         if isinf( joint(i_joint).dof(i_dofAxsAngl).input(i_copies,coeff_order) ) % if input is considered part of the inverse controller
                             
@@ -182,7 +188,7 @@ for i_joint = 1 : n_jonts % look into all joints
                             gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ; % construct unknown input vector with gamma
                             dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ; % gamma velocity
                             
-                            sprdmp(n_sprdmps).Tt_u = sprdmp(n_sprdmps).Tt ; % T transpose matrix for inputs
+                            sprdmp(n_sprdmps).Tt_u = smplfy( sprdmp(n_sprdmps).Tt ) ; % T transpose matrix for inputs
                             Tj_u(n_q_states,n_control_inputs) = 1 ; % for unknown input to be found from inverse Jacobian controller
 
                         end
@@ -193,18 +199,18 @@ for i_joint = 1 : n_jonts % look into all joints
                         else
                             sprdmp(n_sprdmps).kx = smplfy( - joint(i_joint).dof(i_dofAxsAngl).spring.coeff(i_copies,coeff_order) * ...
                                 ( q(n_q_states) - joint(i_joint).dof(i_dofAxsAngl).spring.compr(i_copies,coeff_order) * joint(i_joint).dof(i_dofAxsAngl).spring.init(i_copies,coeff_order) ) ) ; % spring compliance action
-                            sprdmp(n_sprdmps).dl = smplfy( q(n_q_states) - joint(i_joint).dof(i_dofAxsAngl).spring.init(i_copies,coeff_order) ) ; % spring delta-l
+                            sprdmp(n_sprdmps).dl = smplfy( q(n_q_states) - joint(i_joint).dof(i_dofAxsAngl).spring.init(i_copies,coeff_order) ) ; % spring delta-length
                         end
-                        sprdmp(n_sprdmps).vd = smplfy( - joint(i_joint).dof(i_dofAxsAngl).damp.visc(i_copies,coeff_order) ...
+                        sprdmp(n_sprdmps).vd = smplfy( - ( joint(i_joint).dof(i_dofAxsAngl).damp.visc(i_copies,coeff_order) + par.Rayleigh_K_coeff * joint(i_joint).dof(i_dofAxsAngl).spring.coeff(i_copies,coeff_order) ) ...
                             * u(n_q_states) ) ; % viscous damping
                         if joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) ~= 1 % nonlinear damping only if the damping power is not 1
-                            sprdmp(n_sprdmps).vd = sprdmp(n_sprdmps).vd * abs( u(n_q_states) ).^( joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) - 1 ) ;
+                            sprdmp(n_sprdmps).vd = smplfy( sprdmp(n_sprdmps).vd * abs( u(n_q_states) ).^( joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) - 1 ) ) ;
                         end
                         sprdmp(n_sprdmps).in = smplfy( joint(i_joint).dof(i_dofAxsAngl).input(i_copies,coeff_order) ) ; % external input
                         sprdmp(n_sprdmps).k_mat(1,n_q_states) = smplfy( joint(i_joint).dof(i_dofAxsAngl).spring.coeff(i_copies,coeff_order) ) ; % spring
-                        sprdmp(n_sprdmps).vd_linear(1,n_q_states) = smplfy( - joint(i_joint).dof(i_dofAxsAngl).damp.visc(i_copies,coeff_order) ) ; % viscous
+                        sprdmp(n_sprdmps).vd_linear(1,n_q_states) = smplfy( - ( joint(i_joint).dof(i_dofAxsAngl).damp.visc(i_copies,coeff_order) + par.Rayleigh_K_coeff * joint(i_joint).dof(i_dofAxsAngl).spring.coeff(i_copies,coeff_order) ) ) ; % viscous
                         if joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) ~= 1
-                            sprdmp(n_sprdmps).vd_linear(1,n_q_states) = sprdmp(n_sprdmps).vd_linear(1,n_q_states) * abs( u(n_q_states) ).^( joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) - 1 ) ;
+                            sprdmp(n_sprdmps).vd_linear(1,n_q_states) = smplfy( sprdmp(n_sprdmps).vd_linear(1,n_q_states) * abs( u(n_q_states) ).^( joint(i_joint).dof(i_dofAxsAngl).damp.pow(i_copies,coeff_order) - 1 ) ) ;
                         end
                                                         
                         switch joint(i_joint).dof(i_dofAxsAngl).dir(i_copies,coeff_order)
@@ -217,45 +223,50 @@ for i_joint = 1 : n_jonts % look into all joints
                         end
                         
                         % better to keep this form rather than sprdmp
-                        fj_k(n_q_states,1) = fj_k(n_q_states,1) ... % spring on DOFs
-                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).kx ;
-                        fj_vd(n_q_states,1) = fj_vd(n_q_states,1) ... % damper on DOFs
-                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).vd ;
-                        fj_in(n_q_states,1) = fj_in(n_q_states,1) ... % inputs on DOFs
-                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).in ;
-                        fj_sdi(n_q_states,1) = sprdmp(n_sprdmps).dir * ( sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ; % all spring/damper/input force virtual work
-                        fj_k_mat(n_q_states,n_q_states) = fj_k_mat(n_q_states,n_q_states) ... % spring on DOFs
-                            + sprdmp(n_sprdmps).k_mat(1,n_q_states) ;
-                        fj_vd_mat(n_q_states,n_q_states) = fj_vd_mat(n_q_states,n_q_states) ... % damper on DOFs
-                            + sprdmp(n_sprdmps).vd_linear(1,n_q_states) ;
+                        fj_k(n_q_states,1) = smplfy( fj_k(n_q_states,1) ... % spring on DOFs
+                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).kx ) ;
+                        fj_vd(n_q_states,1) = smplfy( fj_vd(n_q_states,1) ... % damper on DOFs
+                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).vd ) ;
+                        fj_in(n_q_states,1) = smplfy( fj_in(n_q_states,1) ... % inputs on DOFs
+                            + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).in ) ;
+                        fj_sdi(n_q_states,1) = smplfy( sprdmp(n_sprdmps).dir * ( sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ) ; % all spring/damper/input force virtual work
+                        fj_k_mat(n_q_states,n_q_states) = smplfy( fj_k_mat(n_q_states,n_q_states) ... % spring on DOFs
+                            + sprdmp(n_sprdmps).k_mat(1,n_q_states) ) ;
+                        fj_vd_mat(n_q_states,n_q_states) = smplfy( fj_vd_mat(n_q_states,n_q_states) ... % damper on DOFs
+                            + sprdmp(n_sprdmps).vd_linear(1,n_q_states) ) ;
                         
                         % if direct geometrical control available
-                        if joint(i_joint).dof(i_dofAxsAngl).control(i_copies,coeff_order) ~= 0
+                        if joint(i_joint).dof(i_dofAxsAngl).control_acc(i_copies,coeff_order) ~= 0
                             sprdmp(n_sprdmps).in = 0 ;
                             fj_in(n_q_states,1) = 0;
                             
                             n_constraints = n_constraints + 1 ;
-                            pid = joint(i_joint).dof(i_dofAxsAngl).pid; % PID: P*u+I*q+D*a
-                            pid_3 = 1; if pid.d(i_copies,coeff_order) ~= 0; pid_3 = pid.d(i_copies,coeff_order); end
+                            gains = joint(i_joint).dof(i_dofAxsAngl).gains; % controller gains: [ k0_pos k1_vel k_sliding_mode l_sliding_mode ]
                             
-                            cnst(n_constraints).r = q(n_q_states) ; % constraint relation
-                            cnst(n_constraints).T = pid_3 * sprdmp(n_sprdmps).Tt.' ; % use T.' in dynamics EOM and T in algebraic part
+                            cnst(n_constraints).r = smplfy( q(n_q_states) ) ; % constraint relation
+                            cnst(n_constraints).u = smplfy( u(n_q_states) ) ; % constraint relation velocity
+                            cnst(n_constraints).T = smplfy( sprdmp(n_sprdmps).Tt.' ) ; % use T.' in dynamics EOM and T in algebraic part
                             vcn = cnst(n_constraints).T * u.' ;
                             cnst(n_constraints).D = myJacobian( vcn , q ) ;
-                            cnst(n_constraints).in = - pid.p(i_copies,coeff_order) * u(n_q_states) - pid.i(i_copies,coeff_order) * q(n_q_states) + ...
-                                joint(i_joint).dof(i_dofAxsAngl).control(i_copies,coeff_order) ;
+                            cnst(n_constraints).in = smplfy( ... 
+                                1 * joint(i_joint).dof(i_dofAxsAngl).control_acc(i_copies,coeff_order) ... 
+                                + gains.k1(i_copies,coeff_order) * joint(i_joint).dof(i_dofAxsAngl).control_vel(i_copies,coeff_order) ...
+                                + gains.k0(i_copies,coeff_order) * joint(i_joint).dof(i_dofAxsAngl).control_pos(i_copies,coeff_order) ) ; % desired trajectory
+                            
+                            cnst(n_constraints).gains = [ gains.k0(i_copies,coeff_order) , gains.k1(i_copies,coeff_order) , gains.k_slide(i_copies,coeff_order) , gains.l_slide(i_copies,coeff_order) ] ; % controller gains k0 & k1, and sliding mode diagonal design parameter (K_slide) and sliding gain (L_slide)
                             
                             if isinf( joint(i_joint).dof(i_dofAxsAngl).fixed(i_copies,coeff_order) ) % desired or known so no Tt
                                 cnst(n_constraints).Tt = [] ;
                             else % constraint
-                                cnst(n_constraints).Tt = cnst(n_constraints).T.'; % doesn't need pid
+                                cnst(n_constraints).Tt = cnst(n_constraints).T.'; % doesn't need nonlinear controller
                                 % lambdaf = [ lambdaf, lambda_vpa(n_cn) ] ;
                                 lambda = [ lambda, sym( [ 'lambda' num2str( n_constraints ) ] , 'real' ) ] ;
                                 dlambda = [ dlambda, sym( [ 'dlambda' num2str( n_constraints ) ] , 'real' ) ] ;
+                                lambda_err_0 = [ lambda_err_0, ( gains.k1(i_copies,coeff_order) * joint(i_joint).dof(i_dofAxsAngl).control_err0(i_copies,coeff_order) ) ] ; %d/dt (acc+k1*vel+k0*pos), no intial desired velocity or error integral
                             end
                             
                             if par.derive_collect == 5 % collect most terms
-                                cnst(n_constraints).dc = - cnst(n_constraints).Dc * u.' + cnst(n_constraints).in;
+                                cnst(n_constraints).dc = smplfy( - cnst(n_constraints).Dc * u.' + cnst(n_constraints).in ) ;
                             end
                             
                             % sparse matrix
@@ -265,10 +276,10 @@ for i_joint = 1 : n_jonts % look into all joints
                         end
                         
                         if par.derive_collect == 5% collect most terms
-                            sprdmp(n_sprdmps).w_vd_j = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                            sprdmp(n_sprdmps).w_sd = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                            sprdmp(n_sprdmps).w_in = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                            sprdmp(n_sprdmps).Tt_u = sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
+                            sprdmp(n_sprdmps).w_vd_j = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                            sprdmp(n_sprdmps).w_sd = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                            sprdmp(n_sprdmps).w_in = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                            sprdmp(n_sprdmps).Tt_u = smplfy( sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
                         end
                         
                         % sparse matrices
@@ -293,37 +304,24 @@ for i_joint = 1 : n_jonts % look into all joints
 
             end
             
-            % calculating transformation and rotation quaternions and vectors for the joint transformation
-            [ Q_temp , TQ_temp ] = TQ_mat( transl_rot , [ q s ] , joint(i_joint).tr(i_transfs).type , joint(i_joint).tr(i_transfs).init_quat );
-            joint(i_joint).Q{i_copies}.loc = Q_mult( joint(i_joint).Q{i_copies}.loc , Q_temp ) ;
-            joint(i_joint).TQ{i_copies}.loc = TQ_mult( joint(i_joint).TQ{i_copies}.loc , TQ_temp ) ;
-            
-            % calculating transformation and rotation quaternions and vectors for the joint relaxed state
-            [ Q_temp , TQ_temp ] = TQ_mat( transl_rot_springIC , [ q s ] , joint(i_joint).tr(i_transfs).type , joint(i_joint).tr(i_transfs).init_quat );
-            joint(i_joint).spring.Q{i_copies}.loc = Q_mult( joint(i_joint).spring.Q{i_copies}.loc , Q_temp ) ;
-            joint(i_joint).spring.TQ{i_copies}.loc = TQ_mult( joint(i_joint).spring.TQ{i_copies}.loc , TQ_temp ) ;
-            
+            if ~strcmp( joint(i_joint).tr(i_transfs).type , 'growing' ) % growing DOF will be handled as axial transformations
+                % calculating transformation and rotation quaternions and vectors for the joint transformation
+                [ Q_temp , TQ_temp ] = TQ_mat( transl_rot , [ q s ] , joint(i_joint).tr(i_transfs).type , joint(i_joint).tr(i_transfs).init_quat );
+                joint(i_joint).Q{i_copies}.loc = Q_mult( joint(i_joint).Q{i_copies}.loc , Q_temp ) ;
+                joint(i_joint).TQ{i_copies}.loc = TQ_mult( joint(i_joint).TQ{i_copies}.loc , TQ_temp ) ;
+                
+                % calculating transformation and rotation quaternions and vectors for the joint relaxed state
+                [ Q_temp , TQ_temp ] = TQ_mat( transl_rot_springIC , [ q s ] , joint(i_joint).tr(i_transfs).type , joint(i_joint).tr(i_transfs).init_quat );
+                joint(i_joint).spring.Q{i_copies}.loc = Q_mult( joint(i_joint).spring.Q{i_copies}.loc , Q_temp ) ;
+                joint(i_joint).spring.TQ{i_copies}.loc = TQ_mult( joint(i_joint).spring.TQ{i_copies}.loc , TQ_temp ) ;
+            else % curvilinear axial transformation (growing) DOF
+                joint(i_joint).rom.delta_s(i_copies,1) = transl_rot(3) ;
+            end
+                            
         end
         
-        % ROM variable length: placed here for cases where dl is a function of same joint dof
+        % ROM variable length
         if joint(i_joint).rom.isROM % only for reduced order model
-
-            % sliding dof is defined in the form of equality constraint w.r.t. a previously defined dof
-            if joint(i_joint).rom.length(i_copies,4) ~= 0 % length: [init_length_start, init_length_end, type, coeff, i_joint, i_copies, i_axsAngl, i_coeffs, l_rom]
-
-                temp = joint(i_joint).rom.length(i_copies,5:end) ; % [i_joint, i_copies, i_axsAngl, i_coeffs, l_rom]
-
-                if temp(4) > 0 % i_coeffs is availavle, so the constraints point to a state
-                    joint(i_joint).rom.delta_s(i_copies,1) = joint(i_joint).rom.length(i_copies,4) * ... % coeff(e.g. -+1) defining sliding direction
-                        joint(temp(1)).dof(temp(3)).rom_coeff{temp(2),1}(temp(4)) ;
-
-                else % otehrwise the constraint point to a location along the spline function
-                    joint(i_joint).rom.delta_s(i_copies,1) = joint(i_joint).rom.length(i_copies,4) * ... % coeff(e.g. -+1) defining sliding direction
-                        subs( joint(temp(1)).dof(temp(3)).series{temp(2)}(1,end) , [s, sw] , temp(5) * [1, 1] ) ;
-
-                end
-
-            end
 
             % update joint spatial integration range by sliding value delta_s
             if joint(i_joint).rom.length(i_copies,3) < 0 % base_growing or sliding
@@ -336,14 +334,14 @@ for i_joint = 1 : n_jonts % look into all joints
                     joint(i_joint).rom.length(i_copies,1) = joint(i_joint).rom.length(i_copies,1) - joint(i_joint).rom.delta_s(i_copies,1) ; % base_growing shuold be integrated for -q_s:original_length
                 end
 
-            else % otherwise: tip growing with no mass transfer (i.e. sliding)
+            else % otherwise: tip growing with no axial mass transfer
                 
                 % update tip bound, no change for the lower bound
                 joint(i_joint).rom.length(i_copies,2) = joint(i_joint).rom.length(i_copies,2) + joint(i_joint).rom.delta_s(i_copies,1) ; % tip moves with delta_s
 
             end            
 
-            for ij_dof = 1 : i_dofAxsAngl % update rom series too for kin. const.s at tip
+            for ij_dof = 1 : i_dofAxsAngl % update rom series for individual dof axes too for kin. const.s at tip in the next joints or copies
 
                 joint(i_joint).dof(ij_dof).series{i_copies} = subs( joint(i_joint).dof(ij_dof).series{i_copies} , [s, sw] , [s, sw] + joint(i_joint).rom.delta_s(i_copies,1) ) ;
             
@@ -416,30 +414,30 @@ if par.plotIC > 0 % compare overall fit curves with init data
         
         if joint(i_joint).rom.isROM % plot only for ROM elements
 
-            for i_copies = 1 : joint(i_joint).n_copies
+            for i_copies = 1 : joint(i_joint).n_copy
                 
                 s_test = subs( subs( joint(i_joint).rom.length(i_copies,1), q, q0 ), par.sym,par.var ) : 1e-3 : ...
                     subs( subs( joint(i_joint).rom.length(i_copies,2), q, q0 ), par.sym, par.var );
-                pos_test = subs( subs( subs( subs( joint(i_joint).TQ{i_copies}.loc(:,2), q, q0 ), par.sym, par.var ), sw, s), s, s_test );
-                pos_spring_test = subs( subs( subs( subs( joint(i_joint).spring.TQ{i_copies}.loc(:,2), q, q0 ), par.sym, par.var ), sw, s), s, s_test );
-                Q_test = subs( subs( subs( subs( joint(i_joint).TQ{i_copies}.loc(:,1), q, q0 ), par.sym, par.var ), sw, s), s, s_test );
-                Q_spring_test = subs( subs( subs( subs( joint(i_joint).spring.TQ{i_copies}.loc(:,1), q, q0 ), par.sym, par.var ), sw, s), s, s_test );
+                pos_test = subs( pw2logF( subs( subs( subs( joint(i_joint).TQ{i_copies}.loc(:,2) , q, q0 ), par.sym, par.var ), sw, s) ), s, s_test );
+                pos_spring_test = subs( pw2logF( subs( subs( subs( joint(i_joint).spring.TQ{i_copies}.loc(:,2), q, q0 ), par.sym, par.var ), sw, s) ), s, s_test );
+                Q_test = subs( pw2logF( subs( subs( subs( joint(i_joint).TQ{i_copies}.loc(:,1), q, q0 ), par.sym, par.var ), sw, s) ), s, s_test );
+                Q_spring_test = subs( pw2logF( subs( subs( subs( joint(i_joint).spring.TQ{i_copies}.loc(:,1), q, q0 ), par.sym, par.var ), sw, s) ), s, s_test );
                 
                 subplot(2,2,1); plot3( pos_test(2,:), pos_test(3,:), pos_test(4,:) );
                 hold on; axis equal
                 subplot(2,2,1); plot3( pos_spring_test(2,:), pos_spring_test(3,:), pos_spring_test(4,:), '--' );
-                hold on; axis equal; xlabel('x'); ylabel('y'); zlabel('z'); legend('IC', 'relaxed state'); title('Initial configuration')
+                hold on; axis equal; xlabel('x'); ylabel('y'); zlabel('z'); legend('IC', 'relaxed state' , 'Location' , 'north' ); title('Initial configuration')
                 subplot(2,2,2); plot(s_test, Q_test(1,:), '-', s_test, Q_spring_test(1,:), '--' );
-                hold on; xlabel('x'); ylabel('Q_0'); legend('Q_0'); legend('IC', 'relaxed state'); title('Initial orientation')
+                hold on; xlabel('s'); ylabel('Q_0'); legend('Q_0'); legend('IC', 'relaxed state'); title('Initial orientation')
                 
                 % strains, curvatures, toraion
-                temp = subs( subs( joint(i_joint).TQ{i_copies}.loc, q, q0 ), par.sym, par.var );
+                temp = pw2logF( subs( subs( joint(i_joint).TQ{i_copies}.loc, q, q0 ), par.sym, par.var ) );
                 dr = subs( diff( temp(:,2), s ), sw, s);
                 dQ = subs( diff( temp(:,1), s ), sw, s);
                 temp = subs( temp, sw, s);
                 uQ = double( subs( Q_omega( temp(:,1) , dQ ), s, s_test ) ); % same as 2*Q_conj*dQ but less computation in derivation phase
                 vr = double( subs( Q_rot( Q_conj( temp(:,1) ) , dr ), s, s_test ) ); % transfer to local frame in which K is defined
-                temp0 = subs( subs( joint(i_joint).spring.TQ{i_copies}.loc, q, q0 ), par.sym, par.var );
+                temp0 = pw2logF( subs( subs( joint(i_joint).spring.TQ{i_copies}.loc, q, q0 ), par.sym, par.var ) );
                 dr0 = subs( diff( temp0(:,2), s ), sw, s);
                 dQ0 = subs( diff( temp0(:,1), s ), sw, s);
                 temp0 = subs( temp0, sw, s);
@@ -485,9 +483,9 @@ for b_count = 1 : n_bodies % number of bodies
             
             % continuum body integration range
             body(b_count).rom = [] ;
-            body(b_count).n_copies = numel( joint(i_joint).first(1,:) ) - 1; % multiple body based on instances of main kin joint (not other joints)
+            body(b_count).n_copy = numel( joint(i_joint).first(1,:) ) - 1; % multiple body based on instances of main kin joint (not other joints)
             
-            for i_copies = 1 : body(b_count).n_copies
+            for i_copies = 1 : body(b_count).n_copy
 
                 if ~joint(i_joint).rom.isROM
 
@@ -495,8 +493,8 @@ for b_count = 1 : n_bodies % number of bodies
                 
                 else % DON'T include int limits into system EOM so their q don't appear in diff
                     
-                    body(b_count).rom.l(i_copies,:) = joint(i_joint).rom.length(i_copies,1:2) ;
-                    rom.mass = [ rom.mass ; body(b_count).rom.l(i_copies,:) ] ;
+                    body(b_count).rom.length(i_copies,:) = joint(i_joint).rom.length(i_copies,1:2) ;
+                    rom.mass = [ rom.mass ; body(b_count).rom.length(i_copies,:) ] ;
                 
                 end
                 
@@ -521,7 +519,7 @@ for b_count = 1 : n_bodies % number of bodies
 
                         if isnan( joint(i_joint).first(2,i_copies+1) ) % at tip
                             joint(i_joint).first = sym( joint(i_joint).first );
-                            joint(i_joint).first(2,i_copies+1) = body(joint(i_joint).first(1,1)).rom.l(joint(i_joint).first(1,i_copies+1),2);
+                            joint(i_joint).first(2,i_copies+1) = body(joint(i_joint).first(1,1)).rom.length(joint(i_joint).first(1,i_copies+1),2);
                         end
 
                         Q = subs( Q , [s, sw] , joint(i_joint).first(2,i_copies+1) * [1, 1] ) ;
@@ -547,27 +545,32 @@ for b_count = 1 : n_bodies % number of bodies
                         joint(i_joint).TQ{i_copies}.abs(1:4,1).' , TQ_temp(1:4,1).' , ...
                         body(b_count).radi(i_copies) ] ; % radius for plotting
                 else
-                    s1 = s * ( body(b_count).rom.l(i_copies,2) - body(b_count).rom.l(i_copies,1) ) + body(b_count).rom.l(i_copies,1) ; % normalized curve length
+                    s1 = s * ( body(b_count).rom.length(i_copies,2) - body(b_count).rom.length(i_copies,1) ) + body(b_count).rom.length(i_copies,1) ; % normalized curve length in [0, 1]
                     r_jtips = [ r_jtips ; subs( joint(i_joint).rho(i_copies,:) , [s, sw] , s1 * [1, 1] ) nan nan nan , ... % axial location
                         subs( joint(i_joint).TQ{i_copies}.abs(1:4,1).' , [s, sw] , s1 * [1, 1] ) nan nan nan nan , ... % axial orientation
-                        body(b_count).radi(i_copies) ] ;  % radius for plotting
+                        subs( body(b_count).radi(i_copies) , [s, sw] , s1 * [1, 1] ) ] ;  % radius for plotting
                 end
                 
                 n_m = n_m + 1 ;
                 im = 6 * n_m ; % 6 elements for mass and inertia matrix
                 mass(n_m).M(1:3,1:3) = smplfy( sym( body(b_count).m(i_copies) * eye( 3 ) ) ) ;
-                mass(n_m).M(4:6,4:6) = smplfy( sym( body(b_count).I(:,:,i_copies) ) ) ;
+                if par.derive == 2 % EOM simplification
+                    mass(n_m).M(4:6,4:6) = zeros(3,3) ; % slower absolute rotations compared to translations
+                else
+                    mass(n_m).M(4:6,4:6) = smplfy( sym( body(b_count).I(:,:,i_copies) ) ) ;
+                end
                 
                 % rotational terms in local (curvilinear) frame where I is defined
-                temp = myJacobian( body(b_count).Q{i_copies}.abs , q ) ;
-                % temp4 = 2 * Q_mult( Q_conj( body(b_count).Q{i_copies}.abs ) , temp ) ; % omega_loc = 2 * Q^{-1} * Q_{,t}
-                temp4 = Q_omega( body(b_count).Q{i_copies}.abs , temp ) ;
-                body(b_count).omega(i_copies).abs_loc = ( temp4(2:4,:) * u.' ).' ; % abs omega in local frame
-                
-                mass(n_m).T(4:6,:) = smplfy( temp4(2:4,:) ) ;
-                if par.derive == 2 % linearize velocity higher terms
-                    mass(n_m).Dd(4:6,:) = zeros( size( mass(n_m).T(4:6,:) ) ) ;
+                if par.derive == 2 % EOM simplification
+                    mass(n_m).T(4:6,:) = zeros( 3 , numel( q ) ) ; % slower absolute rotations compared to translations
+                    mass(n_m).Dd(4:6,:) = zeros( 3 , numel( q ) ) ; % slow systems
                 else
+                    temp = myJacobian( body(b_count).Q{i_copies}.abs , q ) ;
+                    % temp4 = 2 * Q_mult( Q_conj( body(b_count).Q{i_copies}.abs ) , temp ) ; % omega_loc = 2 * Q^{-1} * Q_{,t}
+                    temp4 = Q_omega( body(b_count).Q{i_copies}.abs , temp ) ;
+                    body(b_count).omega(i_copies).abs_loc = ( temp4(2:4,:) * u.' ).' ; % abs omega in local frame since I_m is defined in local frame
+                    
+                    mass(n_m).T(4:6,:) = smplfy( temp4(2:4,:) ) ;
                     mass(n_m).Dd(4:6,:) = smplfy( myJacobian( body(b_count).omega(i_copies).abs_loc.' , q ) ) ;
                 end
                 
@@ -575,12 +578,12 @@ for b_count = 1 : n_bodies % number of bodies
                 temp7 = TQ_mult( body(b_count).TQ{i_copies}.abs , [ 1 0 0 0 ; 0 body(b_count).l_com(i_copies,:) ].' ) ;
                 body(b_count).r_com(i_copies,:) = temp7(2:4,2).';
                 rho_coM = [ rho_coM ; body(b_count).r_com(i_copies,:) ] ; % COM position for output
-                temp8 = myJacobian ( temp7(2:4,2) , q );
+                temp8 = myJacobian ( temp7(2:4,2) , q ); % jacobian transforamtion in global frame since m is similar in both local and global frames
                 body(b_count).v_com(i_copies,:) = ( temp8 * u.' ).';
                 
                 mass(n_m).T(1:3,:) = smplfy( temp8 ) ;
-                if par.derive == 2 % linearize velocity higher terms
-                    mass(n_m).Dd(1:3,:) = zeros( size( mass(n_m).T(1:3,:) ) ) ;
+                if par.derive == 2 % EOM simplification
+                    mass(n_m).Dd(1:3,:) = zeros( 3 , numel( q ) ) ; % slow systems
                 else
                     mass(n_m).Dd(1:3,:) = smplfy( myJacobian ( body(b_count).v_com(i_copies,:).' , q ) ) ;
                 end
@@ -589,8 +592,8 @@ for b_count = 1 : n_bodies % number of bodies
                 mass(n_m).fg = ( [ world.g 0 0 0 ].' ) ;
                 
                 if par.derive_collect == 5 % collect most terms
-                    mass(n_m).TMT = mass(n_m).T.' * mass(n_m).M * mass(n_m).T * ( rom.mass(b_count,2) - rom.mass(b_count,1) ) ;
-                    mass(n_m).TMfd = mass(n_m).T.' * mass(n_m).M * ( - mass(n_m).Dd * u.' + mass(n_m).fg ) * ( rom.mass(b_count,2) - rom.mass(b_count,1) ) ;
+                    mass(n_m).TMT = smplfy( mass(n_m).T.' * mass(n_m).M * mass(n_m).T * ( rom.mass(b_count,2) - rom.mass(b_count,1) ) ) ;
+                    mass(n_m).TMfd = smplfy( mass(n_m).T.' * mass(n_m).M * ( - mass(n_m).Dd * u.' + mass(n_m).fg ) * ( rom.mass(b_count,2) - rom.mass(b_count,1) ) ) ;
                 end
                 
                 % sparse matrix
@@ -614,7 +617,7 @@ end
 
 %% spring/dampers/constraint
 % look for the secondary joints that should be constraint or spring/dampers
-fprintf( 'Deriving spring/damper/input dynamics for joints (according to which body they are connected to)... \n' )
+fprintf( 'Deriving spring/damper/input dynamics for joints (according to which body they are connected)... \n' )
 w_sdi = sym_zero ; % total virt. work
 w_k = sym_zero ; % spring virt. work
 w_vd = sym_zero ; % viscous dampers virt. work
@@ -651,7 +654,7 @@ for b_count = 0 : n_bodies % number of bodies
                         if isnan( joint(i_joint).first(2,i_copies+1) ) % at tip
                         
                             joint(i_joint).first = sym( joint(i_joint).first );
-                            joint(i_joint).first(2,i_copies+1) = body(joint(i_joint).first(1,1)).rom.l(joint(i_joint).first(1,i_copies+1),2);
+                            joint(i_joint).first(2,i_copies+1) = body(joint(i_joint).first(1,1)).rom.length(joint(i_joint).first(1,i_copies+1),2);
                         
                         end
                         
@@ -684,7 +687,7 @@ for b_count = 0 : n_bodies % number of bodies
                         TQ = body(joint(i_joint).second(1,1)).TQ{1,joint(i_joint).second(1,i_copies+1)}.abs ;
                 
                         if isnan( joint(i_joint).second(2,i_copies+1) ) % at tip
-                            joint(i_joint).second(2,i_copies+1) = body(joint(i_joint).second(1,1)).rom.l(joint(i_joint).second(1,i_copies+1),2);
+                            joint(i_joint).second(2,i_copies+1) = body(joint(i_joint).second(1,1)).rom.length(joint(i_joint).second(1,i_copies+1),2);
                         end
                 
                         Q = subs( Q , [s, sw] , joint(i_joint).second(2,i_copies+1) * [1, 1] ) ;
@@ -717,7 +720,7 @@ for b_count = 0 : n_bodies % number of bodies
                         else % rom
                             Q_ref = body(joint(i_joint).refbody(i_copies,1)).Q(joint(i_joint).refbody(i_copies,2)).abs ;
                             if isnan( joint(i_joint).refbody(i_copies,3) ) % at tip
-                                joint(i_joint).refbody(i_copies,3) = body(joint(i_joint).refbody(i_copies,1)).rom.l(joint(i_joint).refbody(i_copies,2),2);
+                                joint(i_joint).refbody(i_copies,3) = body(joint(i_joint).refbody(i_copies,1)).rom.length(joint(i_joint).refbody(i_copies,2),2);
                             end
                             Q_ref = subs( Q_ref , [s, sw] , joint(i_joint).refbody(i_copies,3) * [1, 1] ) ;
                         end
@@ -743,27 +746,31 @@ for b_count = 0 : n_bodies % number of bodies
                         if joint(i_joint).fixed(i_copies,i_c) == 1 ... % constraint
                                 || isinf( joint(i_joint).fixed(i_copies,i_c) ) % desired or known
                             n_constraints = n_constraints + 1 ;
-                            pid = joint(i_joint).pid; % PID: P*u+I*q+Da
-                            pid_3 = 1; if pid.d(i_copies,i_c) ~= 0; pid_3 = pid.d(i_copies,i_c); end
+                            gains = joint(i_joint).gains; % controller gains: [k0 k1 k_sliding_mode l_sliding_mode]
                             
                             cnst(n_constraints).r = smplfy( rQ_sd(i_c) ) ; % constraint relation
-                            cnst(n_constraints).T = pid_3 * smplfy( temp(:,i_c).' ) ; % use T.' in dynamics EOM and T in algebraic part
+                            cnst(n_constraints).T = smplfy( temp(:,i_c).' ) ; % use T.' in dynamics EOM and T in algebraic part
                             vcn = smplfy( cnst(n_constraints).T * u.' ) ;
+                            cnst(n_constraints).u = smplfy( vcn ) ; % constraint relation velocity
                             cnst(n_constraints).D = smplfy( myJacobian( vcn , q ) ) ;
-                            cnst(n_constraints).in = - pid.p(i_copies,i_c) * vcn - pid.i(i_copies,i_c) * cnst(n_constraints).r + ...
-                                smplfy( joint(i_joint).control(i_copies,i_c) ) ;
-                            
+                            cnst(n_constraints).in = smplfy( ...
+                                1 * joint(i_joint).control(i_copies,i_c) ... 
+                                + gains.k1(i_copies,coeff_order) * joint(i_joint).control_vel(i_copies,i_c) ...
+                                + gains.k0(i_copies,coeff_order) * joint(i_joint).control_pos(i_copies,i_c) ) ; % desired trajectory
+                            cnst(n_constraints).gains = [ gains.k0(i_copies,i_c) , gains.k1(i_copies,i_c) gains.k_slide(i_copies,i_c) , gains.l_slide(i_copies,i_c) ] ; % controller gains k0 & k1, and sliding mode diagonal design parameter (K_slide) and sliding gain (L_slide)
+                                
                             if isinf( joint(i_joint).fixed(i_copies,i_c) ) % desired or known so no Tt
                                 cnst(n_constraints).Tt = [] ;
                             else % constraint
-                                cnst(n_constraints).Tt = cnst(n_constraints).T.'; % dosen't need pid
+                                cnst(n_constraints).Tt = cnst(n_constraints).T.'; % dosen't need nonlinear controller
                                 % lambdaf = [ lambdaf, lambda_vpa(n_cn) ] ;
                                 lambda = [ lambda, sym( [ 'lambda' num2str( n_constraints ) ] , 'real' ) ] ;
                                 dlambda = [ dlambda, sym( [ 'dlambda' num2str( n_constraints ) ] , 'real' ) ] ;
+                                lambda_err_0 = [ lambda_err_0, ( gains.k1(i_copies,coeff_order) * joint(i_joint).control_err0(i_copies,i_c) ) ] ; % d/dt (acc+k1*vel+k0*pos), no initial desired velocity or error integration
                             end
                             
                             if par.derive_collect == 5 % collect most terms
-                                cnst(n_constraints).dc = - cnst(n_constraints).Dc * u.' + cnst(n_constraints).in;
+                                cnst(n_constraints).dc = smplfy( - cnst(n_constraints).Dc * u.' + cnst(n_constraints).in ) ;
                             end
                             
                             % sparse
@@ -788,7 +795,7 @@ for b_count = 0 : n_bodies % number of bodies
                 if numel( joint(i_joint).spring.coeff(i_copies,:) ) == 1 % simple spring
                     
                     l_sd0 = joint(i_joint).spring.init(i_copies,1) ;
-                    if isnan( joint(i_joint).spring.init(i_copies,1) ) % init. l based on q0 and compression ratio
+                    if isnan( joint(i_joint).spring.init(i_copies,1) ) % init. length based on q0 and compression ratio
                         r_sd0 = subs( r_sd , q , q0 ).' ; % 1x3
                         l_sd0_q0 = sqrt( r_sd0 * r_sd0.' ) ; % based on int. config.
                         l_sd0 = [] ;
@@ -796,8 +803,8 @@ for b_count = 0 : n_bodies % number of bodies
                     end
                     l_sd0 = joint(i_joint).spring.compr(i_copies,1) * l_sd0 ;                    
                     
-                    temp = smplfy( myJacobian( r_sd , q ) ) ;
-                    temp_u = temp * u.' ;
+                    temp = myJacobian( r_sd , q ) ;
+                    u_temp = smplfy( temp * u.' ) ;
                     sprdmp(n_sprdmps).Tt = smplfy( temp.' ) ; % virtual displacement
                     
                     if isinf( l_sd0 ) % if relaxed state is considered part of the inverse controller
@@ -805,15 +812,15 @@ for b_count = 0 : n_bodies % number of bodies
                         n_control_inputs = n_control_inputs + 1 ;
                         gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                         dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                        sprdmp(n_sprdmps).Tt_u = [ sprdmp(n_sprdmps).Tt_u, ...
-                            sprdmp(n_sprdmps).Tt*( - joint(i_joint).spring.coeff(i_copies,1) * r_sd / sqrt( r_sd.' * r_sd ) ) ] ;
+                        sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, ...
+                            sprdmp(n_sprdmps).Tt*( joint(i_joint).spring.coeff(i_copies,1) * r_sd / sqrt( r_sd.' * r_sd ) ) ] ) ; % with (+) sign since: -K*(-rQ_0)
                     end                    
                     if isinf( joint(i_joint).input(i_copies) ) % if input is considered part of the inverse controller
                         joint(i_joint).input(i_copies) = 0 ;
                         n_control_inputs = n_control_inputs + 1 ;
                         gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                         dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                        sprdmp(n_sprdmps).Tt_u = sprdmp(n_sprdmps).Tt * ones(3,1) ;
+                        sprdmp(n_sprdmps).Tt_u = smplfy( sprdmp(n_sprdmps).Tt * ones(3,1) ) ;
                     end
                     
                     sprdmp(n_sprdmps).kx = smplfy( ... % all spring/damper force virtual work
@@ -821,10 +828,10 @@ for b_count = 0 : n_bodies % number of bodies
                         r_sd * ( 1 - l_sd0 / sqrt( r_sd.' * r_sd ) ) ) ) ; % instantanious spring force vector
                     sprdmp(n_sprdmps).dl = smplfy( sqrt( r_sd.' * r_sd ) - l_sd0 ) ; % spring delta_l
                     sprdmp(n_sprdmps).vd = smplfy( ... % viscous damping force virtual work
-                        - joint(i_joint).damp.visc(i_copies).' ...
-                        .* temp_u ) ; % instantanious viscous force matrix
+                        - ( joint(i_joint).damp.visc(i_copies) + par.Rayleigh_K_coeff * joint(i_joint).spring.coeff(i_copies,1) ) ...
+                        .* u_temp ) ; % instantanious viscous force matrix
                     if joint(i_joint).damp.pow(i_copies,1) ~= 1 % speedup trick
-                        sprdmp(n_sprdmps).vd = sprdmp(n_sprdmps).vd .* ( abs( temp_u ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ;
+                        sprdmp(n_sprdmps).vd = smplfy( sprdmp(n_sprdmps).vd .* ( abs( u_temp ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ) ;
                     end
                     sprdmp(n_sprdmps).in = smplfy( ... % input force virtual work
                         joint(i_joint).input(i_copies) * ones(3,1) ) ; % instantanious input value
@@ -836,7 +843,7 @@ for b_count = 0 : n_bodies % number of bodies
                     %     - joint(j_count).damp.visc(i_copies).' ...
                     %     .* temp ) ; % instantanious viscous force matrix
                     % if joint(j_count).damp.pow(i_copies,1) ~= 1 % speedup trick
-                    %     sprdmp(n_sd).vd_mat= sprdmp(n_sd).vd_mat.* ( abs( temp_u ).^( joint(j_count).damp.pow(i_copies,1) - 1 ) ) ;
+                    %     sprdmp(n_sd).vd_mat= smplfy( sprdmp(n_sd).vd_mat.* ( abs( temp_u ).^( joint(j_count).damp.pow(i_copies,1) - 1 ) ) ) ;
                     % end
                     
                     
@@ -871,15 +878,15 @@ for b_count = 0 : n_bodies % number of bodies
                         if isnan( rQ_sd0(i_s) )
                             rQ_sd0 = sym( rQ_sd0 ) ;
                             rQ_sd0(i_s) = subs( rQ_sd(i_s) , q , q0 ) ;
-                            % if i_s == 3 % init. l based on q0 and compression ratio
+                            % if i_s == 3 % init. length based on q0 and compression ratio
                             %     rQ_sd0(i_s) = l_sd0_q0 ;
                             % end
                         end
                     end
                     rQ_sd0 = rQ_sd0 .* joint(i_joint).spring.compr(i_copies,:) ;
                                    
-                    temp = smplfy( myJacobian( rQ_sd , q ) ) ;
-                    temp_u = temp * u.' ;
+                    temp = myJacobian( rQ_sd , q ) ;
+                    u_temp = smplfy( temp * u.' ) ;
                     sprdmp(n_sprdmps).Tt = smplfy( temp.' ) ; % virtual displacement, need to be based on rQ_sd in the same frame as the force, i.e. local frame
                     
                     for i_s = 1 : numel( rQ_sd0 ) % if relaxed state is considered part of the inverse controller
@@ -888,8 +895,8 @@ for b_count = 0 : n_bodies % number of bodies
                             n_control_inputs = n_control_inputs + 1 ;
                             gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                             dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                            sprdmp(n_sprdmps).Tt_u = [ sprdmp(n_sprdmps).Tt_u, ...
-                                sprdmp(n_sprdmps).Tt(:,i_s)*( - joint(i_joint).spring.coeff(i_copies,i_s) ) ] ;
+                            sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, ...
+                                sprdmp(n_sprdmps).Tt(:,i_s)*( joint(i_joint).spring.coeff(i_copies,i_s) ) ] ) ; % with (+) sign since: -K*(-rQ_0)
                         end
                     end
                     for i_in = 1 : numel( joint(i_joint).input(i_copies,:) ) % if input is considered part of the inverse controller
@@ -898,19 +905,19 @@ for b_count = 0 : n_bodies % number of bodies
                             n_control_inputs = n_control_inputs + 1 ;
                             gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                             dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                            sprdmp(n_sprdmps).Tt_u = [ sprdmp(n_sprdmps).Tt_u, sprdmp(n_sprdmps).Tt(:,i_in) ] ;
+                            sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, sprdmp(n_sprdmps).Tt(:,i_in) ] ) ;
                         end
                     end
                     
                     sprdmp(n_sprdmps).kx = smplfy( ... % all spring/damper force virtual work
                         - ( joint(i_joint).spring.coeff(i_copies,:).' ) ...
                         .* ( rQ_sd - rQ_sd0.' ) ) ; % instantanious spring force vector
-                    sprdmp(n_sprdmps).dl = smplfy( sqrt( r_sd.' * r_sd ) - rQ_sd0(3) ) ; % spring delta-l
+                    sprdmp(n_sprdmps).dl = smplfy( sqrt( r_sd.' * r_sd ) - rQ_sd0(3) ) ; % spring delta-length
                     sprdmp(n_sprdmps).vd = smplfy( ... % viscous damping force virtual work
-                        - ( joint(i_joint).damp.visc(i_copies,:).' ) ...
-                        .* temp_u ) ; % instantanious viscous force matrix
+                        - ( joint(i_joint).damp.visc(i_copies,:).' + par.Rayleigh_K_coeff * joint(i_joint).spring.coeff(i_copies,:).' ) ...
+                        .* u_temp ) ; % instantanious viscous force matrix
                     if joint(i_joint).damp.pow(i_copies,1) ~= 1 % speedup trick
-                        sprdmp(n_sprdmps).vd = sprdmp(n_sprdmps).vd .* ( abs( temp_u ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ;
+                        sprdmp(n_sprdmps).vd = smplfy( sprdmp(n_sprdmps).vd .* ( abs( u_temp ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ) ;
                     end
                     sprdmp(n_sprdmps).in = smplfy( ... % input force virtual work
                         joint(i_joint).input(i_copies,:).' ) ; % instantanious input value
@@ -922,7 +929,7 @@ for b_count = 0 : n_bodies % number of bodies
                     %     - ( joint(j_count).damp.visc(i_copies,:).' ) ...
                     %     .* temp ) ; % instantanious viscous force matrix
                     % if joint(j_count).damp.pow(i_copies,1) ~= 1 % speedup trick
-                    %     sprdmp(n_sd).vd_mat= sprdmp(n_sd).vd_mat.* ( abs( temp_u ).^( joint(j_count).damp.pow(i_copies,1) - 1 ) ) ;
+                    %     sprdmp(n_sd).vd_mat= smplfy( sprdmp(n_sd).vd_mat.* ( abs( temp_u ).^( joint(j_count).damp.pow(i_copies,1) - 1 ) ) ) ;
                     % end
                                         
                     % % remove free directions (not needed as we can set k & nu = 0)
@@ -945,10 +952,10 @@ for b_count = 0 : n_bodies % number of bodies
                 end
                 
                 if par.derive_collect == 5 % collect most terms                
-                    sprdmp(n_sprdmps).w_vd_j = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).w_sd = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).w_in = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).Tt_u = sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
+                    sprdmp(n_sprdmps).w_vd_j = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).w_sd = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).w_in = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).Tt_u = smplfy( sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
                 end
                 
                 % sparse matrix
@@ -964,14 +971,14 @@ for b_count = 0 : n_bodies % number of bodies
                 end
                 
                 if ismember( par.derive_collect , [ 3 4 ] ) % for all spring/dampers
-                    w_k = w_k + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx ;
-                    w_vd = w_vd + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd ;
-                    w_in = w_in + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in ;
-                    w_sdi = w_sdi + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * ( ...
-                        sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ; % all spring/damper/input force virtual work
-                    w_k_mat = w_k_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).k_mat ;
-                    w_vd_mat = w_vd_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd_mat;
-                    Tcu = [ Tcu , sprdmp(n_sprdmps).Tt_u ] ;
+                    w_k = smplfy( w_k + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx ) ;
+                    w_vd = smplfy( w_vd + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd ) ;
+                    w_in = smplfy( w_in + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in ) ;
+                    w_sdi = smplfy( w_sdi + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * ( ...
+                        sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ) ; % all spring/damper/input force virtual work
+                    w_k_mat = smplfy( w_k_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).k_mat ) ;
+                    w_vd_mat = smplfy( w_vd_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd_mat ) ;
+                    Tcu = smplfy( [ Tcu , sprdmp(n_sprdmps).Tt_u ] ) ;
                 end
             end
         end
@@ -989,7 +996,7 @@ for b_count = 0 : n_bodies % number of bodies
                     case 1 % continuous
                         dr_sd = diff( r_sd , s ) ;
                         dQ_sd = diff( joint(i_joint).TQ{i_copies}.loc(:,1) , s ) ;
-                        % uQ_sd = 2 * Q_mult( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , dQ_sd ) ;
+                        % uQ_sd = 2 * Q_mult( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , dQ_sd ) ; % in local frame
                         uQ_sd = Q_omega( joint(i_joint).TQ{i_copies}.loc(:,1) , dQ_sd ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
                         vr_sd = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , dr_sd ) ; % transfer to local frame in which K is defined
                         rQ_sd = [ vr_sd(2:4,1) ; uQ_sd(2:4,1) ] ; % [ v u ]: 6 trans. & rot. spring/dampers
@@ -999,7 +1006,7 @@ for b_count = 0 : n_bodies % number of bodies
                             r_sd_spr = joint(i_joint).spring.TQ{i_copies}.loc(:,2) ;
                             dr_sd_spr = diff( r_sd_spr , s ) ;
                             dQ_sd_spr = diff( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , s ) ;
-                            % uQ_sd_spr = 2 * Q_mult( Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) , dQ_sd_spr ) ;
+                            % uQ_sd_spr = 2 * Q_mult( Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) , dQ_sd_spr ) ; % in local frame
                             uQ_sd_spr = Q_omega( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , dQ_sd_spr ) ;
                             vr_sd_spr = Q_rot( Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) , dr_sd_spr ) ;
                             rQ_sd_spr = [ vr_sd_spr(2:4,1) ; uQ_sd_spr(2:4,1) ] ; % [ v u ]: 6 trans. & rot. spring/dampers
@@ -1008,7 +1015,7 @@ for b_count = 0 : n_bodies % number of bodies
                     case 2 % discretized
                         dr_sd = subs( r_sd , [s, sw] , [s, sw]+ds ) - r_sd ;
                         dQ_sd = subs( joint(i_joint).TQ{i_copies}.loc(:,1) , [s, sw] , [s, sw]+ds ) - joint(i_joint).TQ{i_copies}.loc(:,1) ;
-                        % uQ_sd = 2 * Q_mult( Q_conj( joint(j_count).TQ{i_copies}.loc(:,1) ) , dQ_sd ) ;
+                        % uQ_sd = 2 * Q_mult( Q_conj( joint(j_count).TQ{i_copies}.loc(:,1) ) , dQ_sd ) ; % in local frame
                         uQ_sd = Q_omega( joint(i_joint).TQ{i_copies}.loc(:,1) , dQ_sd ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
                         vr_sd = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , dr_sd ) ; % transfer to local frame in which K is defined
                         rQ_sd = [ vr_sd(2:4,1) ; uQ_sd(2:4,1) ] ; % [ v u ]: 6 trans. & rot. spring/dampers
@@ -1018,28 +1025,105 @@ for b_count = 0 : n_bodies % number of bodies
                             r_sd_spr = joint(i_joint).spring.TQ{i_copies}.loc(:,2) ;
                             dr_sd_spr = subs( r_sd_spr , [s, sw] , [s, sw]+ds ) - r_sd_spr ;
                             dQ_sd_spr = subs( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , [s, sw] , [s, sw]+ds ) - joint(i_joint).spring.TQ{i_copies}.loc(:,1) ;
-                            % uQ_sd_spr = 2 * Q_mult( Q_conj( joint(j_count).spring.TQ{i_copies}.loc(:,1) ) , dQ_sd_spr ) ;
+                            % uQ_sd_spr = 2 * Q_mult( Q_conj( joint(j_count).spring.TQ{i_copies}.loc(:,1) ) , dQ_sd_spr ) ; % in local frame
                             uQ_sd_spr = Q_omega( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , dQ_sd_spr ) ;
                             vr_sd_spr = Q_rot( Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) , dr_sd_spr ) ;
                             rQ_sd_spr = [ vr_sd_spr(2:4,1) ; uQ_sd_spr(2:4,1) ] ; % [ v u ]: 6 trans. & rot. spring/dampers
                         end
                         rom.sprdmp(end,end) = 1 ;
                 end
-                
-                % beam relaxed state
+                                         
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % in local frame:
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                % elasticity and damping coefficients in local frame
+                K_uv = diag( joint(i_joint).spring.coeff(i_copies,1:6) ) ;
+                mu_uv = diag( joint(i_joint).damp.visc(i_copies,1:6) ) + par.Rayleigh_K_coeff * K_uv ; 
+
+                % beam relaxed state in local frame
                 % no i_copies for spring.init & spring.init_s at the moment
                 rQ_sd0 = sym( joint(i_joint).spring.init(i_copies,1:6) ) ;
 
-                % % transform strain coeff.s to global frame for less derivation complexity: only the strains not curvatures, no advantages in transforming the curvatures!
-                % if isnan( max( rQ_sd0(1:3) ) ) % all translational strains are extracted from a fitted spline
-                %     rQ_sd(1:3) = dr_sd(2:4,1); % replace with strain in global frame
-                %     rQ_sd_spr(1:3) = dr_sd_spr(2:4,1); % replace with relaxed state strain in global frame
-                %     K_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).spring.coeff(i_copies,1:3) ].' ) ; % transform K to global frame
-                %     joint(i_joint).spring.coeff(i_copies,1:3) = K_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
-                %     mu_v = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [0, joint(i_joint).damp.visc(i_copies,1:3) ].' ) ; % transform mu to global frame
-                %     joint(i_joint).damp.visc(i_copies,1:3) = mu_v(2:4) ; % K_strain in global and k_curvature in local curvilinear frame
-                % end
+                % only for rot_simple_curvilinear_frame when using beam_simfplify_for_curvlinear_frame:
+                % transform strain coeff.s to global frame for less derivation complexity: only the strains not curvatures, no advantages in transforming the curvatures!
+                if ~isempty( joint(i_joint).curv_frame_director ) % dr_sd has only axial component in curvilinear frame, since the frame is already defined based on drds!
+                    rQ_sd(1:3,1) = smplfy( sqrt( dr_sd(2:4,1).' * dr_sd(2:4,1) ) * ... % length of drho/ds
+                        joint(i_joint).curv_frame_director.' / sqrt( joint(i_joint).curv_frame_director * joint(i_joint).curv_frame_director.' ) ) ; % unit vector director
+                    % for spring IC
+                    if max( isnan( joint(i_joint).spring.init(i_copies,1:6) ) )
+                        rQ_sd_spr(1:3) = smplfy( sqrt( dr_sd_spr(2:4,1).' * dr_sd_spr(2:4,1) ) * ... % length of drho/ds
+                            joint(i_joint).curv_frame_director.' / sqrt( joint(i_joint).curv_frame_director * joint(i_joint).curv_frame_director.' ) ) ; % unit vector director
+                    end
+                end
+                                  
+                % virtual displacement of element both ends in local frame, here described by spatial differentiation
+%                 drdq = myJacobian( dr_sd , q ) ;
+%                 temp = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , drdq ) ; % same as Jacobian( ... , q ), need to be based on rQ_sd in the same frame as the force, i.e. local frame
+%                 T_temp(1:3,:) = temp(2:4,:) ; % virtual displacement for strains
+                dQdq = myJacobian( dQ_sd , q ) ;
+                temp = Q_omega( joint(i_joint).TQ{i_copies}.loc(:,1) , dQdq ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
+                T_temp(4:6,:) = temp(2:4,:) ; % virtual displacement for curvature/torsion
                 
+                drdq = myJacobian( dr_sd , q ) ;
+                R_loc = Q2R( joint(i_joint).TQ{i_copies}.loc(:,1) ) ;
+                T_temp(1:3,:) = R_loc.' * drdq(2:4,:) ;
+                
+                % elastic term velocities in local frame for viscous damping:
+                % lin strain: preserves the system lin momentum since the force pairs cancel eachother, but does not preserve the system angular momentum unless projected along the distance vector
+                temp = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , drdq * u.' ) ;
+                u_temp(1:3,1) = temp(2:4,1) ; % liniear deformation velocity
+                % rot strain: damping preserves the system angular momentum since the torque pairs cancel each other
+                temp = Q_omega( joint(i_joint).TQ{i_copies}.loc(:,1) , dQdq * u.' ) ; % assuming small strain
+                % uQ_sdg = 2 * Q_mult( dQ_sd , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ; % using original definition: in global frame based on the original definition
+                % duQ_sdg_dq = myJacobian( uQ_sdg , q ) ; % velocity in global frame
+                % temp = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , duQ_sdg_dq * u.' ) ; % transform velocity in local frame
+                u_temp(4:6,1) = temp(2:4,1) ; % angular deformation velocity
+                %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                
+%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%                 % in global frame: NOT VALID FOR STRAIN/CURVATURE RELAXED-STATE (IN CURVILINEAR FRAME)
+%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                
+%                 % elasticity and damping coefficients in global frame
+%                 K_uv = diag( joint(i_joint).spring.coeff(i_copies,1:6) ) ;
+%                 mu_uv = diag( joint(i_joint).damp.visc(i_copies,1:6) ) + par.Rayleigh_K_coeff * K_uv ; 
+%                 temp = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [zeros(1,6); [ K_uv(1:3,1:3) K_uv(4:6,4:6) ] ] ) ; % transform K to global frame
+%                 K_uv(1:3,1:3) = temp(2:4,1:3) ; % K_v in global frame
+%                 K_uv(4:6,4:6) = temp(2:4,4:6) ; % K_u in global frame
+%                 temp = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [zeros(1,6); [ mu_uv(1:3,1:3) mu_uv(4:6,4:6) ] ] ) ; % transform mu to global frame
+%                 mu_uv(1:3,1:3) = temp(2:4,1:3) ; % mu_v in global frame 
+%                 mu_uv(4:6,4:6) = temp(2:4,4:6) ; % mu_u in global frame 
+%                 
+%                 % beam relaxed state in global frame: NOT VALID FOR STRAIN/CURVATURE RELAXED-STATE (IN CURVILINEAR FRAME)
+%                 % no i_copies for spring.init & spring.init_s at the moment
+%                 temp = Q_rot( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , ...
+%                     sym( [ 0 0; [ joint(i_joint).spring.init(i_copies,1:3).' joint(i_joint).spring.init(i_copies,4:6).' ] ] ) ) ;
+%                 rQ_sd0(1:3) = temp(2:4,1).' ;
+%                 rQ_sd0(4:6) = temp(2:4,2).' ;
+%                 
+%                 rQ_sd(1:3) = dr_sd(2:4,1); % replace with strain in global frame
+%                 uQ_sd = 2 * Q_mult( dQ_sd , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ; % in global frame
+%                 rQ_sd(4:6) = uQ_sd(2:4,1) ; % replace with curvatures in global frame
+%                 
+%                 if max( isnan( joint(i_joint).spring.init(i_copies,1:6) ) )
+%                     rQ_sd_spr(1:3) = dr_sd_spr(2:4,1); % replace with relaxed state strain in global frame
+%                     uQ_sd_spr = 2 * Q_mult( dQ_sd_spr , Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) ) ; % in global frame
+%                     rQ_sd(4:6) = uQ_sd_spr(2:4,1) ; % replace with curvatures in global frame
+%                 end
+% 
+%                 % virtual displacement of element both ends in local frame, here described by spatial differentiation
+%                 drdq = myJacobian( dr_sd , q ) ;
+%                 T_temp(1:3,:) = drdq(2:4,:) ; % virtual displacement for strains
+%                 dQdq = myJacobian( dQ_sd , q ) ;
+%                 temp = 2 * Q_mult( dQdq , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
+%                 T_temp(4:6,:) = temp(2:4,:) ; % virtual displacement for curvature/torsion
+%                 
+%                 % elastic term velocities in global frame for viscous damping
+%                 temp = drdq * u.' ;
+%                 u_temp(1:3,1) = temp(2:4,1) ; % liniear deformation velocity
+%                 temp = 2 * Q_mult( dQdq * u.' , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ;
+%                 u_temp(4:6,1) = temp(2:4,1) ; % angular deformation velocity
+%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+                                               
                 % extract relaxed state from fitted spline
                 % copy over the strains/curvatures extracted from spline fitted for relaxed state
                 for i_s = 1 : numel( rQ_sd0 )
@@ -1049,10 +1133,8 @@ for b_count = 0 : n_bodies % number of bodies
                 end
                 rQ_sd0 = rQ_sd0 .* joint(i_joint).spring.compr(i_copies,:) ;
                 
-                % virtual displacement of element both ends, here described by spatial differentiation
-                temp = smplfy( myJacobian( rQ_sd , q ) ) ; % same as Jacobian( rQ_sd - rQ_sd0 , q ), need to be based on rQ_sd in the same frame as the force, i.e. local frame
-                temp_u = smplfy( temp * u.' ) ;
-                sprdmp(n_sprdmps).Tt = smplfy( temp.' ) ; % virtual displacement
+                % virtual displacement w.r.t. generalized coordinates frame
+                sprdmp(n_sprdmps).Tt = smplfy( T_temp.' ) ;
                   
                 for i_s = 1 : numel( rQ_sd0 ) % if relaxed state is considered part of the inverse controller
                     if isinf( rQ_sd0(i_s) )
@@ -1060,8 +1142,10 @@ for b_count = 0 : n_bodies % number of bodies
                         n_control_inputs = n_control_inputs + 1 ;
                         gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                         dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                        sprdmp(n_sprdmps).Tt_u = [ sprdmp(n_sprdmps).Tt_u, ...
-                            sprdmp(n_sprdmps).Tt(:,i_s)*( -joint(i_joint).spring.coeff(i_copies,i_s) ) ] ;
+                        % sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, ... % in local frame
+                        %     sprdmp(n_sprdmps).Tt(:,i_s)*( joint(i_joint).spring.coeff(i_copies,i_s) ) ] ) ; % with (+) sign since: -K*(-rQ_0)
+                        sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, ... % general form (for both global and local frame)
+                            sprdmp(n_sprdmps).Tt*( K_uv(:,i_s) ) ] ) ; % with (+) sign since: -K*(-rQ_0)
                     end
                 end
                 for i_in = 1 : numel( joint(i_joint).input(i_copies,:) ) % if input is considered part of the inverse controller
@@ -1070,19 +1154,17 @@ for b_count = 0 : n_bodies % number of bodies
                         n_control_inputs = n_control_inputs + 1 ;
                         gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                         dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                        sprdmp(n_sprdmps).Tt_u = [ sprdmp(n_sprdmps).Tt_u, sprdmp(n_sprdmps).Tt(:,i_in) ] ;
+                        sprdmp(n_sprdmps).Tt_u = smplfy( [ sprdmp(n_sprdmps).Tt_u, sprdmp(n_sprdmps).Tt(:,i_in) ] ) ;
                     end
                 end
                 
                 sprdmp(n_sprdmps).kx = smplfy( ... % all spring/damper force virtual work
-                    - ( joint(i_joint).spring.coeff(i_copies,:).' ) ...
-                    .* ( rQ_sd - rQ_sd0.' ) ) ; % instantanious spring force vector
-                sprdmp(n_sprdmps).dl = smplfy( dr_sd(2:4).' ) ; % spring delta-l
+                    - K_uv * ( rQ_sd - rQ_sd0.' ) ) ; % instantanious spring force vector
+                sprdmp(n_sprdmps).dl = smplfy( dr_sd(2:4).' ) ; % spring delta-length
                 sprdmp(n_sprdmps).vd = smplfy( ... % viscous damping force virtual work
-                    - ( joint(i_joint).damp.visc(i_copies,:).' ) ...
-                    .* temp_u ) ; % instantanious viscous force matrix
+                    - mu_uv * u_temp ) ; % instantanious viscous force matrix
                 if joint(i_joint).damp.pow(i_copies,1) ~= 1 % speedup trick
-                    sprdmp(n_sprdmps).vd = sprdmp(n_sprdmps).vd .* ( abs( temp_u ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ;
+                    sprdmp(n_sprdmps).vd = smplfy( sprdmp(n_sprdmps).vd .* ( abs( u_temp ).^( joint(i_joint).damp.pow(i_copies,1) - 1 ) ) ) ;
                 end
                 sprdmp(n_sprdmps).in = smplfy( ... % input force virtual work
                     joint(i_joint).input(i_copies,:).' ) ; % instantanious input value
@@ -1099,10 +1181,10 @@ for b_count = 0 : n_bodies % number of bodies
                 end
                 
                 if par.derive_collect == 5 % collect most terms
-                    sprdmp(n_sprdmps).w_vd_j = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).w_sd = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).w_in = sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
-                    sprdmp(n_sprdmps).Tt_u = sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ;
+                    sprdmp(n_sprdmps).w_vd_j = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).w_sd = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).w_in = smplfy( sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
+                    sprdmp(n_sprdmps).Tt_u = smplfy( sprdmp(n_sprdmps).Tt_u * ( rom.sprdmp(end,2) - rom.sprdmp(end,1) ) ) ;
                 end
                 
                 % sparse matrix
@@ -1118,14 +1200,14 @@ for b_count = 0 : n_bodies % number of bodies
                 end
                 
                 if ismember( par.derive_collect , [ 3 4 ] ) % for all spring/dampers
-                    w_k = w_k + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx ;
-                    w_vd = w_vd + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd ;
-                    w_in = w_in + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in ;
-                    w_sdi = w_sdi + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * ( ...
-                        sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ; % all spring/damper/input force virtual work
-                    w_k_mat = w_k_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).k_mat ;
-                    w_vd_mat = w_vd_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd_mat;
-                    Tcu = [ Tcu , sprdmp(n_sprdmps).Tt_u ] ;
+                    w_k = smplfy( w_k + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).kx ) ;
+                    w_vd = smplfy( w_vd + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd ) ;
+                    w_in = smplfy( w_in + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).in ) ;
+                    w_sdi = smplfy( w_sdi + sprdmp(n_sprdmps).dir * sprdmp(n_sprdmps).Tt * ( ...
+                        sprdmp(n_sprdmps).kx + sprdmp(n_sprdmps).vd + sprdmp(n_sprdmps).in ) ) ; % all spring/damper/input force virtual work
+                    w_k_mat = smplfy( w_k_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).k_mat ) ;
+                    w_vd_mat = smplfy( w_vd_mat + sprdmp(n_sprdmps).Tt * sprdmp(n_sprdmps).vd_mat ) ;
+                    Tcu = smplfy( [ Tcu , sprdmp(n_sprdmps).Tt_u ] ) ;
                 end
             end
         end
@@ -1166,7 +1248,7 @@ for i_exload = 1 : n_extLoads
             TQ = body(exload(i_exload).exbody(1,1)).TQ{exload(i_exload).exbody(1,i_copies+1)}.abs ;
             if isnan( exload(i_exload).exbody(2,i_copies+1) ) % at tip
                 exload(i_exload).exbody = sym( exload(i_exload).exbody );
-                exload(i_exload).exbody(2,i_copies+1) = body(exload(i_exload).exbody(1,1)).rom.l(exload(i_exload).exbody(1,i_copies+1),2);
+                exload(i_exload).exbody(2,i_copies+1) = body(exload(i_exload).exbody(1,1)).rom.length(exload(i_exload).exbody(1,i_copies+1),2);
             end
             Q = subs( Q , [s, sw] , exload(i_exload).exbody(2,i_copies+1) * [1, 1] ) ;
             TQ = subs( TQ , [s, sw] , exload(i_exload).exbody(2,i_copies+1) * [1, 1] ) ;
@@ -1193,7 +1275,7 @@ for i_exload = 1 : n_extLoads
             else % rom
                 Q_ref = body(exload(i_exload).refbody(i_copies,1)).Q(exload(i_exload).refbody(i_copies,2)).abs ;
                 if isnan( exload(i_exload).refbody(i_copies,3) ) % at tip
-                    exload(i_exload).refbody(i_copies,3) = body(exload(i_exload).refbody(i_copies,1)).rom.l(exload(i_exload).refbody(i_copies,2),2);
+                    exload(i_exload).refbody(i_copies,3) = body(exload(i_exload).refbody(i_copies,1)).rom.length(exload(i_exload).refbody(i_copies,2),2);
                 end
                 Q_ref = subs( Q_ref , [s, sw] , exload(i_exload).refbody(i_copies,3) * [1, 1] ) ;
             end
@@ -1210,12 +1292,12 @@ for i_exload = 1 : n_extLoads
                 n_control_inputs = n_control_inputs + 1 ;
                 gamma = [ gamma, sym( [ 'gamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
                 dgamma = [ dgamma, sym( [ 'dgamma' num2str( n_control_inputs ) ] , 'real' ) ] ;
-                loads(i_exload).Tt_o = [ loads(i_exload).Tt_o, loads(i_exload).Tt(:,i_ftau) ] ;
+                loads(i_exload).Tt_o = smplfy( [ loads(i_exload).Tt_o, loads(i_exload).Tt(:,i_ftau) ] ) ;
             end
         end
         
         if par.derive_collect == 5 % collect most terms
-            loads(i_exload).w_f = loads(i_exload).Tt * loads(i_exload).ftau ;
+            loads(i_exload).w_f = smplfy( loads(i_exload).Tt * loads(i_exload).ftau ) ;
         end
         
         % sparse matrix
@@ -1238,7 +1320,7 @@ vd_mat = w_vd_mat + fj_vd_mat ;
 
 if par.clean % clean up memory
     clearvars -except ...
-        q u lambda dlambda gamma dgamma s ds sw t_sym par ...
+        q u lambda dlambda lambda_err_0 gamma dgamma s ds sw t_sym par ...
         mass sprdmp cnst loads ...
         n_q_states nlambda ngamma q0 n_m n_sprdmps n_constraints n_control_inputs n_extLoads ...
         M T fj_k fj_vd fj_in fj_sdi fj_k_mat fj_vd_mat Tj_u ...
@@ -1250,7 +1332,7 @@ end
 %% report:
 save( 'eom/derivations.mat' ) ; % save all
 
-save_func( q , u , lambda , dlambda , gamma , dgamma , s , ds , sw , t_sym , par , ...
+save_func( q , u , lambda , dlambda , lambda_err_0 , gamma , dgamma , s , ds , sw , t_sym , par , ...
     mass , sprdmp , cnst , loads , ...
     n_q_states , nlambda , ngamma , q0 , n_m , n_sprdmps , n_constraints , n_control_inputs , n_extLoads , ...
     M , T , fj_k , fj_vd , fj_in , fj_sdi , fj_k_mat , fj_vd_mat , Tj_u , ...
@@ -1258,7 +1340,9 @@ save_func( q , u , lambda , dlambda , gamma , dgamma , s , ds , sw , t_sym , par
     w_k , w_vd , w_k_mat , w_vd_mat , w_in , r_ks , k_mat , vd_mat , rom ) ;
 
 
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 %% Complementary Functions:
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 function [ Q , TQ ] = TQ_mat( r , qs , type , init_Q_axis )
 % Q = [ q0 r1 r2 r3 ] ; % quaternion format
 % Q1 & Q2 are cloumn vectors
@@ -1313,12 +1397,11 @@ switch type % {'angle_axis', 'rot_strain', 'non_unit_quat', 'frenet_serret', 'si
         % Q = ( Q / sqrt( Q * Q.' ) ).' ;
         
         % simpleset derivation: singular at pi
-        temp = sqrt( 2 + 2 * init_Q_axis(2:4) * t ) ;
-        Q(1,1) = temp / 2 ;
-        Q(1,2:4) = 1 / temp * cross( init_Q_axis(2:4) , t.' ) ; % vectors already normalized
-        Q = Q.' ;        
+        Q(1,1) = sqrt( 0.5 + 0.5 * init_Q_axis(2:4) * t ) ; % i.e. cos( theta / 2 )
+        Q(1,2:4) = 1 / ( 2 * Q(1,1) ) * cross( init_Q_axis(2:4) , t.' ) ; % vectors already normalized
+        Q = Q.' ;
         
-        if isnan(temp); Q = [ 1, 0, 0, 0 ].'; end
+        if isnan( Q(1,1) ); Q = [ 1, 0, 0, 0 ].'; end
         
     case 'bishop_frame' % same as 'simple_curvilinear' for now
         ... TODO
@@ -1327,8 +1410,8 @@ switch type % {'angle_axis', 'rot_strain', 'non_unit_quat', 'frenet_serret', 'si
         Q = [ 1, 0, 0, 0 ].';
 end
 
-TQ = sym ( [ Q , [ 0, r(1:3) ].' ] ) ; % 4x4: Each QR contains a translation and then a rotation
 Q = smplfy( sym( Q ) ) ;
-TQ = smplfy( sym( TQ ) ) ;
+Tr = smplfy( sym( [ 0, r(1:3) ].' ) ) ;
+TQ = [ Q , Tr ] ; % 4x2: Each TQ contains a translation and then a rotation
 
 

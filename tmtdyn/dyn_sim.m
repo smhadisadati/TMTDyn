@@ -2,7 +2,7 @@
 % ====================================================
 % change this for different scenarios
 
-function [ t , z , tfinal , par ] = dyn_sim( z0 , par )
+function [ t , z , tfinal , par ] = dyn_sim( z0 , par , eps )
 t0 = par.t0 ; dt = par.dt ; stepT = par.stepT ;
 fprintf( 'dynamic sim... \n' )
 par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
@@ -10,19 +10,18 @@ toc( par.timer )
 
 global t_report
 t_report = 0 ;
-[ par.nq , par.nlambda , par.ngamma , par.qf0 , par.n_m , par.n_sd , par.n_cn , par.n_co , par.n_ex ] = nqF( par.var ) ; % states' number and init. value
+[ par.nq , par.nlambda , par.ngamma , par.qf0 , par.lambda_err_0 , par.n_m , par.n_sd , par.n_cn , par.n_co , par.n_ex ] = nqF( par.var ) ; % states' number and init. value
 
-eps = [ 1*1e-6 0*1e-9 ] ; % for singularity prevention
-if isempty( z0 ) % check if z0 is provided
-    z0 = [ eps(1)+double( par.qf0 ) eps(1)*ones( 1 , par.nlambda ) eps(1)*ones( 1 , par.ngamma ) eps(2)*ones( 1 , par.nq ) eps(2)*ones( 1 , par.nlambda ) eps(2)*ones( 1 , par.ngamma ) ] ; % initial condition
+if isempty( z0 ) % check if z0 is provided: z0 = [ x0 dx0 ], x = [ a lagrange_multiplier_lambda input_values_gamma input_errorDyn_gamma ]
+    z0 = [ eps(1)+double( par.qf0 ) eps(1)*ones( 1 , par.nlambda ) eps(1)*ones( 1 , par.ngamma ) eps(1)+double( par.lambda_err_0 ) eps(2)*ones( 1 , par.nq ) eps(2)*ones( 1 , par.nlambda ) eps(2)*ones( 1 , par.ngamma ) eps(1)*ones( 1 , par.nlambda ) ] ; % initial condition
 else
     if par.t0 == par.t_init
-        z0 = [ eps(1)+z0(1:end/2) eps(2)+z0(1+end/2:end) ] ;
+        z0 = [ z0(1:end/2) z0(1+end/2:end) ] ;
     end
 end
 
 par.z0 = z0;
-if par.t0 == par.t_init  % drive EOM_mex
+if par.t0 == par.t_init  % drive EOM_mex only for the 1st run
     par = save_eom_mex( z0 , par , 'dyn' ) ;
     % save_eom_mex( z0 , par , 'J' ) ; % WRONG! needs denseJ not J
     if par.solver == 3 % sundials DAE
@@ -44,17 +43,21 @@ if ismember( par.dyn , [2, 3, 4] ) % 2-'generate_mex_file', 3-'old_mex_file', 4-
 	Jfun = @EOM_J_mex ;
 end
 
+% config.s
+ATol = par.ATol ;
+RTol = par.RTol ;
+
 switch par.solver
     case 1 % Matlab ODE:
-        options = odeset ( 'AbsTol' , 1e-4 , 'RelTol' , 1e-3 ) ;
+        options = odeset ( 'AbsTol' , ATol , 'RelTol' , RTol ) ;
         % [ t , z , tfinal ] = ode113( odefun , tspan , z0 , options , par_mex ) ;
         [ t , z , tfinal ] = ode15s ( odefun , tspan , z0 , options , par_mex ) ;
         
     case 2 % Sundials ODE solver        
         startup_STB;
         options = CVodeSetOptions ('UserData', par_mex,...
-                                   'RelTol', 1.0e-3,...
-                                   'AbsTol', 1.0e-4,...
+                                   'RelTol', RTol,...
+                                   'AbsTol', ATol,...
 								   ...'JacobianFn', Jfun,... % WRONG! needs denseJ not J
                                    'InitialStep', 1.0e-23,...
                                    'MaxNumSteps', 1e9);
@@ -77,8 +80,8 @@ switch par.solver
             dz0 = EOM_0 (0, z0', par_mex);
         end
         options = IDASetOptions ('UserData', par_mex,...
-                                 'RelTol', 1.0e-3,...
-                                 'AbsTol', 1.0e-4,...
+                                 'RelTol', RTol,...
+                                 'AbsTol', ATol,...
                                  'VariableTypes', id,...
                                  'suppressAlgVars', 'on',...
                                  'InitialStep', 1.0e-23,...
@@ -98,8 +101,8 @@ switch par.solver
         
     case { 4 , 5 } % radau ODE solver
         options.nAlgVars = par.nlambda + par.ngamma;
-        options.RelTol = 1e-3;
-        options.AbsTol = 1e-4;
+        options.RelTol = RTol;
+        options.AbsTol = ATol;
         options.InitialStep = 1e-23;
         options.t_rep = par.t_rep;
         
@@ -133,60 +136,86 @@ switch par.solver
         end        
         tfinal = t(end);
         
-    case 6 % external solver
-        try
-            fprintf( 'importing external results from file results.txt ... \n' )
-            results_file = './eom/codegen/lib/EOM/results.txt'; % default generated code location from Demo_mex
-            delimiterIn = '\t';
-            results = importdata( results_file, delimiterIn );
-        catch e            
-            switch par.dyn 
-                case { 1, 2, 4, 5 } % 1-'generate_m_file', 2-'generate_mex_file', 4-'generate_mex_from_edited_m_file', 5-'edited_m_file'       
-                    load('config.mat');
-                    fprintf( 'no file is found... \n' )
-                    fprintf( '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> \n' )
-                    fprintf( 'create cpp code (EOM_input & EOM in eom folder) using Matlab coder app for an external solver... \n' )
-                    fprintf( 'run this sample code in the coder app to determine the inputs:... \n' )
-                    fprintf( '[tspan, nz, z0, par_mex] = EOM_input(); EOM( 0 , z0 , par_mex ); ... \n' )
-                    fprintf( 'for optimized code conversion, load the congig.mat and import it to Matlab Coder app ... \n' )
-                    fprintf( 'load(''config.mat''); ... \n' )
-                    fprintf( 'c code is generated in ./eom/codegen/lib/EOM ... \n' )
-                    fprintf( 'see sundials external solver help in ./tmtdyn/sundials_c ... \n' )
-                    fprintf( 'set the number of states in ./eom/codegen/lib/EOM/Demo_mex.c or Demo.c file to nq: #define STATES_NO RCONST(nq) \nwhere nq is ... \n' )
-                    numel(z0)
-                    fprintf( '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> \n' )
-                    par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
-                    toc( par.timer )
-                    coder ;                  
-                    fprintf('when code generation with coder is finished, run the model again with .dynamic_sim(''generate_mex_from_c_files'', ''external'',... \n')
-                    error('no ./eom/EOM_c/results.txt file is found! see above instructions.')
-                    % t = []; z = []; tfinal = [];
-                    % return
-                case 6 % 6-'generate_mex_from_c_files'
-                    par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
-                    toc( par.timer )
-                    fprintf('compile EOM mex file...') % mex compile
-                    mex -IC:\sundials-5.6.1\instdir\include -LC:\sundials-5.6.1\instdir -lsundials_cvode ./eom/codegen/lib/EOM/*.c -output ./eom/codegen/lib/EOM/Demo_mex
+    case 6 % external solver          
+        if tspan(end) ~= par.t_final % only for the last report run
+            error( 'External solver wrapper does not support multiple simulation steps!' )
+        end        
+        if par.dyn ~= 3 % not 3-'old_mex_file'
+            fprintf( '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> \n' )
+            fprintf( 'create cpp code (EOM_input & EOM in eom folder) using Matlab coder app for an external solver... \n' )
+            fprintf( 'run this sample code in the coder app (if needed) to determine the inputs:... \n' )
+            fprintf( '[tspan, nz, z0, par_mex] = EOM_input(); EOM( 0 , z0 , par_mex ); ... \n' )
+            fprintf( 'for optimized code conversion, import the config variable (loaded in the workspace) in the coder app ... \n' )
+            fprintf( 'c code is generated in ./eom/codegen/lib/EOM ... \n' )
+            fprintf( 'see sundials external solver help in ./tmtdyn/sundials_c ... \n' )
+            fprintf( 'set the number of states in ./eom/user_codes/Demo.h file to nq: #define STATES_NO RCONST(nq) \nwhere nq is ... \n' )
+            nq = numel(z0)
+            fprintf( '>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>>> \n' )
+            par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
+            toc( par.timer )
+            try
+                cd eom
+                coder_script( par.dyn ) ;
+                cd ..
+            catch
+                cd ..
+                coder ;
+                error('Generating C code failed! Try coder app to debug. see above instructions. \n')
             end
             par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
             toc( par.timer )
-            fprintf('run external simulation with SUNDIALS ODE...') % run simulation
-            cd eom/codegen/lib/EOM % default generated code location from Demo_mex is the top folder
-            Demo_mex
-            cd ../../../.. % return to top folder
-            fprintf( 'importing external results from file results.txt ... \n' ) % import results
-            results_file = './eom/codegen/lib/EOM/results.txt'; % default generated code location where Demo_mex generate results
-            delimiterIn = '\t';
-            results = importdata( results_file, delimiterIn );
-        end        
-        t = results(:,1);
-        z = results(:,2:end);
+            fprintf('compile mex file for SUNDIALS ODE solver wrapper...\n') % mex compile
+            % mex -IC:\sundials\sundials-5.7.0\instdir\include -I.\eom\codegen\lib\EOM\ -LC:\sundials\sundials-5.7.0\instdir\lib -lsundials_cvode .\eom\user_codes\Demo_mex.c .\eom\codegen\lib\EOM\*.c -output .\eom\user_codes\Demo_mex
+            mex -IC:\sundials\sundials-5.7.0\instdir\include -I.\eom\codegen\lib\EOM\ -I.\eom\codegen\lib\EOM_input\ -LC:\sundials\sundials-5.7.0\instdir\lib -lsundials_cvode .\eom\user_codes\Demo_mex.c .\eom\codegen\lib\EOM\*.c .\eom\codegen\lib\EOM_input\*.c -output .\eom\user_codes\Demo_mex
+        end
+        
+        par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
+        toc( par.timer )
+        fprintf('running external simulation... \n') % run simulation
+        cd eom/user_codes % to save results.txt code at the location where Demo_mex is generated
+        Demo_mex ;
+        fprintf( 'importing external results from file results.txt ... \n' ) % import results
+        cd ../.. % return to the top folder
+        
+        fprintf( 'importing external results from file results.txt ... \n' )
+        results_file = './eom/user_codes/results.txt'; % default generated code location from Demo_mex
+        delimiterIn = '\t';
+        ext_results = importdata( results_file, delimiterIn );
+        t = ext_results(:,1); % placed here to capture errors
+        z = ext_results(:,2:end);
         tfinal = t(end);
-
         fprintf( 'results.txt file is loaded... \n' )
         par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
         toc( par.timer )
         
+    case 7 % load_result
+        importSuccess = false ;
+        while( ~importSuccess ) % try until file is open
+            try
+                fprintf( 'importing external results from file results.txt ... \n' )
+                if floor( tspan(end) / stepT ) == floor( par.t_final / stepT )  % only for the last report run
+                    results_file = './eom/user_codes/results.txt'; % default generated code location from Demo_mex
+                else
+                    results_file = './eom/user_codes/results_current.txt'; % default generated code location from Demo_mex
+                end
+                delimiterIn = '\t';
+                ext_results = importdata( results_file, delimiterIn );
+                t = ext_results(:,1); % placed here to capture errors
+                z = ext_results(:,2:end);
+                tfinal = t(end);
+            catch
+                fprintf( 'trying to open the results.txt file... \n' ) % import results
+                continue
+            end
+            importSuccess = true ;
+        end
+        
 end
+
+% save last report run to data file
+fprintf( 'writing simulation results to file results.txt ... \n' )
+delimiterIn = '\t';
+results_file = './eom/user_codes/results.txt'; % default generated code location from Demo_mex
+writematrix( [t, z], results_file, 'Delimiter', delimiterIn ) ;
 
 
