@@ -1060,13 +1060,13 @@ for b_count = 0 : n_bodies % number of bodies
 %                 drdq = myJacobian( dr_sd , q ) ;
 %                 temp = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , drdq ) ; % same as Jacobian( ... , q ), need to be based on rQ_sd in the same frame as the force, i.e. local frame
 %                 T_temp(1:3,:) = temp(2:4,:) ; % virtual displacement for strains
-                dQdq = myJacobian( dQ_sd , q ) ;
+                dQdq = myJacobian( dQ_sd , q ) ; % virtual reorientation based on the expression in global frame
                 temp = Q_omega( joint(i_joint).TQ{i_copies}.loc(:,1) , dQdq ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
                 T_temp(4:6,:) = temp(2:4,:) ; % virtual displacement for curvature/torsion
                 
-                drdq = myJacobian( dr_sd , q ) ;
-                R_loc = Q2R( joint(i_joint).TQ{i_copies}.loc(:,1) ) ;
-                T_temp(1:3,:) = R_loc.' * drdq(2:4,:) ;
+                drdq = myJacobian( dr_sd , q ) ; % virtual displacement based on expression in global frame
+                R_loc = Q2R( joint(i_joint).TQ{i_copies}.loc(:,1) ) ; % express in local frame
+                T_temp(1:3,:) = R_loc.' * drdq(2:4,:) ; % virtual displacment for tension/shear
                 
                 % elastic term velocities in local frame for viscous damping:
                 % lin strain: preserves the system lin momentum since the force pairs cancel eachother, but does not preserve the system angular momentum unless projected along the distance vector
@@ -1079,51 +1079,7 @@ for b_count = 0 : n_bodies % number of bodies
                 % temp = Q_rot( Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) , duQ_sdg_dq * u.' ) ; % transform velocity in local frame
                 u_temp(4:6,1) = temp(2:4,1) ; % angular deformation velocity
                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-%                 % in global frame: NOT VALID FOR STRAIN/CURVATURE RELAXED-STATE (IN CURVILINEAR FRAME)
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%                
-%                 % elasticity and damping coefficients in global frame
-%                 K_uv = diag( joint(i_joint).spring.coeff(i_copies,1:6) ) ;
-%                 mu_uv = diag( joint(i_joint).damp.visc(i_copies,1:6) ) + par.Rayleigh_K_coeff * K_uv ; 
-%                 temp = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [zeros(1,6); [ K_uv(1:3,1:3) K_uv(4:6,4:6) ] ] ) ; % transform K to global frame
-%                 K_uv(1:3,1:3) = temp(2:4,1:3) ; % K_v in global frame
-%                 K_uv(4:6,4:6) = temp(2:4,4:6) ; % K_u in global frame
-%                 temp = Q_rot( joint(i_joint).TQ{i_copies}.loc(:,1) , [zeros(1,6); [ mu_uv(1:3,1:3) mu_uv(4:6,4:6) ] ] ) ; % transform mu to global frame
-%                 mu_uv(1:3,1:3) = temp(2:4,1:3) ; % mu_v in global frame 
-%                 mu_uv(4:6,4:6) = temp(2:4,4:6) ; % mu_u in global frame 
-%                 
-%                 % beam relaxed state in global frame: NOT VALID FOR STRAIN/CURVATURE RELAXED-STATE (IN CURVILINEAR FRAME)
-%                 % no i_copies for spring.init & spring.init_s at the moment
-%                 temp = Q_rot( joint(i_joint).spring.TQ{i_copies}.loc(:,1) , ...
-%                     sym( [ 0 0; [ joint(i_joint).spring.init(i_copies,1:3).' joint(i_joint).spring.init(i_copies,4:6).' ] ] ) ) ;
-%                 rQ_sd0(1:3) = temp(2:4,1).' ;
-%                 rQ_sd0(4:6) = temp(2:4,2).' ;
-%                 
-%                 rQ_sd(1:3) = dr_sd(2:4,1); % replace with strain in global frame
-%                 uQ_sd = 2 * Q_mult( dQ_sd , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ; % in global frame
-%                 rQ_sd(4:6) = uQ_sd(2:4,1) ; % replace with curvatures in global frame
-%                 
-%                 if max( isnan( joint(i_joint).spring.init(i_copies,1:6) ) )
-%                     rQ_sd_spr(1:3) = dr_sd_spr(2:4,1); % replace with relaxed state strain in global frame
-%                     uQ_sd_spr = 2 * Q_mult( dQ_sd_spr , Q_conj( joint(i_joint).spring.TQ{i_copies}.loc(:,1) ) ) ; % in global frame
-%                     rQ_sd(4:6) = uQ_sd_spr(2:4,1) ; % replace with curvatures in global frame
-%                 end
-% 
-%                 % virtual displacement of element both ends in local frame, here described by spatial differentiation
-%                 drdq = myJacobian( dr_sd , q ) ;
-%                 T_temp(1:3,:) = drdq(2:4,:) ; % virtual displacement for strains
-%                 dQdq = myJacobian( dQ_sd , q ) ;
-%                 temp = 2 * Q_mult( dQdq , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ; % same as 2*Q_conj*dQ but less computation in derivation phase
-%                 T_temp(4:6,:) = temp(2:4,:) ; % virtual displacement for curvature/torsion
-%                 
-%                 % elastic term velocities in global frame for viscous damping
-%                 temp = drdq * u.' ;
-%                 u_temp(1:3,1) = temp(2:4,1) ; % liniear deformation velocity
-%                 temp = 2 * Q_mult( dQdq * u.' , Q_conj( joint(i_joint).TQ{i_copies}.loc(:,1) ) ) ;
-%                 u_temp(4:6,1) = temp(2:4,1) ; % angular deformation velocity
-%                 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-                                               
+                                       
                 % extract relaxed state from fitted spline
                 % copy over the strains/curvatures extracted from spline fitted for relaxed state
                 for i_s = 1 : numel( rQ_sd0 )
