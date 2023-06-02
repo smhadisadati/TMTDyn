@@ -51,17 +51,3 @@ extern int main();
  *
  * [EOF]
  */
-
-////////////////////////////////////////////////////////////////////////////////////
-/* Problem Constants */
-#define STATES_NO RCONST(34) /* CHANGE THIS ACCORDING TO YOUR PROBLEM */
-
-#define RTOL RCONST(1.0e-1)  /* scalar relative tolerance            */
-#define ATOL RCONST(1.0e-2)  /* vector absolute tolerance components */
-#define RTOLF RCONST(1.0e-5)  /* fine tol.s */
-#define ATOLF RCONST(1.0e-6)  
-#define MXSTEP_DEFAULT RCONST(1.0e9)
-#define INITIAL_STEP RCONST(1.0e-23)
-
-#define ZERO  RCONST(0.0)
-////////////////////////////////////////////////////////////////////////////////////

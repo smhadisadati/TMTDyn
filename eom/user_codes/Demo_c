@@ -36,9 +36,6 @@
 #include <stdio.h>
 #include <time.h>
 
-// mex
-#include "mex.h"
-
 // sundials
 #include <cvode/cvode.h>               /* prototypes for CVODE fcts., consts.  */
 #include <nvector/nvector_serial.h>    /* access to serial N_Vector            */
@@ -77,12 +74,14 @@
 
 ////////////////////////////////////////////////////////////////////////////////////
 /* to compile & run:
-mex windows:
-mex -IC:\sundials-5.6.1\instdir\include -LC:\sundials-5.6.1\instdir -lsundials_cvode *.c
-Demo_mex
+linux:
+g++ *.c -O3 -mtune=native -DNDEBUG -o Demo -I"/mnt/c/Program Files/MATLAB/R2019a/extern/include" -I/mnt/c/sundials-5.0.0-dev.1/instdir/include -L/mnt/c/sundials-5.0.0-dev.1/instdir/lib -lsundials_cvode -lsundials_nvecserial -lsundials_nvecmanyvector -lm /usr/lib/x86_64-linux-gnu/librt.so -Wl,-rpath,/mnt/c/sundials-5.0.0-dev.1/instdir/lib
+windows:
+g++ *.c -O3 -mtune=native -DNDEBUG -o Demo -I "C:\Program Files\MATLAB\R2019a\extern\include" -IC:\sundials-5.6.1\instdir\include -LC:\sundials-5.6.1\instdir -lsundials_cvode
+./Demo
 ///////////////////////////////////////////////////////////////////////////////////*
 /* Problem Constants */
-#define STATES_NO RCONST(32) /* CHANGE THIS ACCORDING TO YOUR PROBLEM */
+#define STATES_NO RCONST(34) /* CHANGE THIS ACCORDING TO YOUR PROBLEM */
 
 #define RTOL RCONST(1.0e-1)  /* scalar relative tolerance            */
 #define ATOL RCONST(1.0e-2)  /* vector absolute tolerance components */
@@ -118,8 +117,8 @@ static int check_retval(void *returnvalue, const char *funcname, int opt);
  *-------------------------------
  */
 
-// void main()
-void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
+int main()
+// void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 {
   realtype reltol, reltolf, t, tout;
   N_Vector y, yt, abstol, abstolf;
@@ -149,10 +148,10 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
 
   /* Create serial vector of length NEQ for I.C. and abstol */
   y = N_VNew_Serial(NEQ);
-  if (check_retval((void *)y, "N_VNew_Serial", 0)) return;
+  if (check_retval((void *)y, "N_VNew_Serial", 0)) return(1);
   abstol = N_VNew_Serial(NEQ); 
   abstolf = N_VNew_Serial(NEQ); 
-  if (check_retval((void *)abstol, "N_VNew_Serial", 0)) return;
+  if (check_retval((void *)abstol, "N_VNew_Serial", 0)) return(1);
 
   /* Initialize y */
   for (int i = 0; i < NEQ; i++) {
@@ -172,38 +171,38 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   /* Call CVodeCreate to create the solver memory and specify the 
    * Backward Differentiation Formula */
   cvode_mem = CVodeCreate(CV_BDF);
-  if (check_retval((void *)cvode_mem, "CVodeCreate", 0)) return;
+  if (check_retval((void *)cvode_mem, "CVodeCreate", 0)) return(1);
   
   /* Call CVodeInit to initialize the integrator memory and specify the
    * user's right hand side function in y'=f(t,y), the inital time T0, and
    * the initial dependent variable vector y. */
   retval = CVodeInit(cvode_mem, f, T0, y);
-  if (check_retval(&retval, "CVodeInit", 1)) return;
+  if (check_retval(&retval, "CVodeInit", 1)) return(1);
 
   /* Call CVodeSVtolerances to specify the scalar relative tolerance
    * and vector absolute tolerances */
   retval = CVodeSVtolerances(cvode_mem, reltol, abstol);
-  if (check_retval(&retval, "CVodeSVtolerances", 1)) return;
+  if (check_retval(&retval, "CVodeSVtolerances", 1)) return(1);
   
   // CVodeSetMaxNumSteps 
   retval = CVodeSetMaxNumSteps(cvode_mem, MXSTEP_DEFAULT);
-  if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) return;
+  if (check_retval(&retval, "CVodeSetMaxNumSteps", 1)) return(1);
   
   // CVodeSetInitStep
   retval = CVodeSetInitStep(cvode_mem, INITIAL_STEP);
-  if (check_retval(&retval, "CVodeSetInitStep", 1)) return;
+  if (check_retval(&retval, "CVodeSetInitStep", 1)) return(1);
 
   /* Create dense SUNMatrix for use in linear solves */
   A = SUNDenseMatrix(NEQ, NEQ);
-  if(check_retval((void *)A, "SUNDenseMatrix", 0)) return;
+  if(check_retval((void *)A, "SUNDenseMatrix", 0)) return(1);
 
   /* Create dense SUNLinearSolver object for use by CVode */
   LS = SUNLinSol_Dense(y, A);
-  if(check_retval((void *)LS, "SUNLinSol_Dense", 0)) return;
+  if(check_retval((void *)LS, "SUNLinSol_Dense", 0)) return(1);
 
   /* Call CVodeSetLinearSolver to attach the matrix and linear solver to CVode */
   retval = CVodeSetLinearSolver(cvode_mem, LS, A);
-  if(check_retval(&retval, "CVodeSetLinearSolver", 1)) return;
+  if(check_retval(&retval, "CVodeSetLinearSolver", 1)) return(1);
   
   // prepare .txt file
   FILE *yout_file = fopen("results.txt", "w");
@@ -287,7 +286,7 @@ void mexFunction(int nlhs, mxArray *plhs[], int nrhs, const mxArray *prhs[])
   /* Free the matrix memory */
   SUNMatDestroy(A);
 
-  return;
+  return(retval);
 }
 
 

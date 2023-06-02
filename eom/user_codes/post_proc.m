@@ -6,67 +6,50 @@ fprintf( 'post-processing... \n' )
 par.elapsed_time = [ par.elapsed_time toc( par.timer ) ] ;
 toc( par.timer )
 
-% robot dimensions
-l_s1 = par.var(16);
-l_s2 = par.var(17);
-d_ow = par.var(9) + par.var(10) ; % wire offsets diameter: 2*(r_s21+r_s22)/2
-
-motor_in_sync = zeros(1,6);
-tip_tube_sync = zeros(1,4);
-
-n_tube = numel( rjtip(:,1,1) );
+Err_vec = zeros( 1 , 3 ) ; 
 for i = 1 : numel( t )
-    tip_sim(i,:,1) = rjtip(1,4:6,i) ;
-    motor_in_sync(i,1) = t(i);
-    motor_in_sync(i,2:end) = interp1(par.user_pars.motor_in.pos(:,1), par.user_pars.motor_in.pos(:,2:end), t(i));
-    tip_tube_sync(i,1) = t(i);
-    tip_tube_sync(i,2:end) = interp1(par.user_pars.tip_pos.tube1(:,1), par.user_pars.tip_pos.tube1(:,2:end), t(i));
-    
-    %% curvature inputs
-    q_u = motor_in_sync(i,2:end);
-    l_w = q_u(1:4) + l_s2;
-    
-    % % 3 tendons
-    % kappa = 2*sqrt(l(1)^2+l(2)^2+l(3)^2-l(1)*l(2)-l(1)*l(3)-l(2)*l(3))/(d*(l(1)+l(2)+l(3)));
-    % phi = atan2(sqrt(3)*(l(2)+l(3)-2*l(1)),(3*(l(2)-l(3))));
-    
-    % 4 tendons
-    l_b = ( l_w(1) + l_w(2) + l_w(3) + l_w(4) ) / 4;
-    % l_b = l_s2;
-    phi = atan2(l_w(2)-l_b,l_w(1)-l_b);
-    kappa = ( l_b - l_w(1) ) / ( l_b * d_ow/2 * cos(phi) ) ;
-    % model inputs
-    kappa_x = kappa * sin( phi );
-    kappa_y = kappa * cos( phi );
-    kappa_xy(i,1:2) = [ kappa_x kappa_y ] ;
-    
+    tip_sim(i,:) = rjtip(end,4:6,i) ;
+    % error analysis
+    step = floor( t(i) / 0.05 ) ;
+    Err_vec(i,:) = par.user_pars.tip_pos(step,2:4) - tip_sim(i,:) ;
+    Err_abs_all(i) = sqrt( Err_vec(i,:) * Err_vec(i,:)' ) ;    
 end
 
-% error analysis
-e_rV_t2 = tip_tube_sync(:,2:4) - tip_sim(:,:,1) ;
-e_rdV_t2 = sqrt( e_rV_t2.^2 * ones(3,1) ) ;
-e_rdV_t2_ind = find(~isnan(e_rdV_t2)); e_rdV_t2 = e_rdV_t2(e_rdV_t2_ind);
-e_r_t2 = sum( e_rdV_t2 ) / numel( e_rdV_t2_ind )
-e_rP_t2 = sum( e_rdV_t2 ./ ( l_s1 + motor_in_sync(e_rdV_t2_ind,5) ) ) / numel( e_rdV_t2_ind ) % normalized tip MSE percentage
+Err_abs = mean( Err_abs_all )
+Err_std = std( Err_abs_all )
+Err_norm = Err_abs / ( par.var(5) + par.var(17) ) * 100
 
-figure;
-subplot(2,4,1); plot(t, motor_in_sync(:,2:5), 'LineWidth', 2);
-title( 'tendon displacmenets' )
-subplot(2,4,5); plot(t, kappa_xy, 'LineWidth', 2);
-legend( '\kappa_x' , '\kappa_y' ) ; title( 'initial curvatures' )
-subplot(2,4,[2,6]) ; plot( t, motor_in_sync(:,6), 'LineWidth', 2 ) ;
-title('introducer displacement')
-subplot(2,4,[3,7]); plot(t, tip_sim(:,:,1), 'LineWidth', 2); hold on
-subplot(2,4,[3,7]); plot(t, tip_tube_sync(:,2:4).*[1 1 1], '--', 'LineWidth', 2); hold on
-legend( 'x_{sim}' , 'y_{sim}' , 'z_{sim}' , 'x_{exp}' , 'y_{exp}' , 'z_{exp}' ) ; title( 'Tip Position')
-subplot(2,4,[4,8]); plot3(tip_sim(:,1,1), tip_sim(:,2,1), tip_sim(:,3,1), 'LineWidth', 2); hold on
-subplot(2,4,[4,8]); plot3(tip_tube_sync(:,2), tip_tube_sync(:,3), tip_tube_sync(:,4), '--', 'LineWidth', 2); hold on
-legend( 'sim' , 'exp' , 'Location' , 'north' ) ; title( 'Tip Positions')
-axis equal ; xlabel( 'x[m]' ) ; ylabel( 'y[m]' ) ; zlabel( 'z[m]' ) ;
-% view([0 -1 0]);
+figcompare = figure ;
+subplot(1,2,1)
+plot( par.user_pars.tip_pos(:,1) , par.user_pars.tip_pos(:,2:4) , '--' , t , tip_sim , '-' , 'LineWidth' , 2 ) ;
+legend( 'x_{exp}' , 'y_{exp}' , 'z_{exp}' , 'x_{sim}' , 'y_{sim}' , 'z_{sim}' ) ; title( 'Sim.')
+
+% tip_exp_ali = transformed ( par.tip_exp(:,2:4) ) ;
+% figure  ;
+% plot( par.tip_exp(:,1) , tip_exp_ali , '--' , t_all , tip_sim , linetype , 'LineWidth' , 2 ) ;
+% legend( 'x_{exp}' , 'y_{exp}' , 'z_{exp}' , 'x_{sim}' , 'y_{sim}' , 'z_{sim}' ) ;
+
+% for i = 1 : 3
+%     tip_sim_avg(:,i) = smooth( tip_sim(:,i) , 'moving' , 31 ) ;
+% end
+% figure  ;
+% plot( par.tip_exp(:,1) , par.tip_exp(:,2:4) , '--' , t_all , tip_sim_avg , linetype , 'LineWidth' , 2 ) ;
+% legend( 'x_{exp}' , 'y_{exp}' , 'z_{exp}' , 'x_{sim}' , 'y_{sim}' , 'z_{sim}' ) ;
+
+subplot(1,2,2)
+windowSize = floor( 0.5 * par.n_datasample ) ;
+tmp = windowSize ;
+b_filter = (1/windowSize)*ones(1,windowSize);
+a_filter = 1;
+tip_sim_filter = filter( b_filter , a_filter , tip_sim ) ;
+plot( par.user_pars.tip_pos(:,1) , par.user_pars.tip_pos(:,2:4) , '--' , t(tmp:end) , tip_sim_filter(tmp:end,:) , '-' , 'LineWidth' , 2 ) ;
+legend( 'x_{exp}' , 'y_{exp}' , 'z_{exp}' , 'x_{sim}' , 'y_{sim}' , 'z_{sim}' ) ; title( 'Filtered')
+% 
+% subplot(1,2,2)
+% tip_sim_smooth = smoothV( tip_sim , 0.5 * stepT ) ;
+% plot( par.tip_exp(:,1) , par.tip_exp(:,2:4) , '--' , t_all , tip_sim_smooth , linetype , 'LineWidth' , 2 ) ;
+% legend( 'x_{exp}' , 'y_{exp}' , 'z_{exp}' , 'x_{sim}' , 'y_{sim}' , 'z_{sim}' ) ;  title( 'Smooth')
 
 pause( 1 )
-save( './results/results_post_proc.mat' ) ; % save workspace
-
-
+save( 'results/results_post_proc.mat' ) ; % save workspace
 
