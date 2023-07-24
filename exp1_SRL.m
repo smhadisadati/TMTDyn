@@ -9,7 +9,7 @@ addpath('./hll');
 
 
 %% parameters
-n_l = 3 ; % number of segments
+n_l = 2 ; % number of segments
 
 l_s = 44e-3 ; %44e-3 ; % manipulator length
 r_s1 = 4.5e-3 ; % manipulator inner radius
@@ -115,7 +115,7 @@ results = ...
         .simulation()... % simulation
             .variables(vars, var_vals)...
             .user_parameters(user_pars)...
-            .derive_eom('full_system')... % 'full_system', 'assume_small_velocities', 'no'
+            .derive_eom('assume_small_velocities')... % 'full_system', 'assume_small_velocities', 'no'
                 .optimize_code()...
             .analysis()...
                 .static_sim('generate_mex_file', t_exp_equil)... % edited_m_file, generate_m_file, generate_mex_file, old_mex_file, generate_mex_from_edited_m_file, generate_mex_from_c_files
